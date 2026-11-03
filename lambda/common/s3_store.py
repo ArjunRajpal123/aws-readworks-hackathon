@@ -15,7 +15,15 @@ from botocore.client import Config
 # against the presigned text/audio URLs fail with "Requests specifying
 # Server Side Encryption with AWS KMS managed keys require AWS Signature
 # Version 4."
-_s3 = boto3.client("s3", config=Config(signature_version="s3v4"))
+#
+# region_name is explicit because without it, generate_presigned_url can
+# fall back to the legacy global `s3.amazonaws.com` host, which replies
+# with a 307 TemporaryRedirect for any bucket outside us-east-1.
+_s3 = boto3.client(
+    "s3",
+    region_name=os.environ.get("AWS_REGION"),
+    config=Config(signature_version="s3v4"),
+)
 
 BUCKET = os.environ.get("TTS_MEDIA_BUCKET")
 TEXT_PREFIX = os.environ.get("TTS_TEXT_S3_KEY_PREFIX", "text")
