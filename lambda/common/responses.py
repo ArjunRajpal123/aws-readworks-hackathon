@@ -1,7 +1,5 @@
 """Shared helpers for building API Gateway Lambda-proxy responses."""
 import json
-<<<<<<< HEAD
-=======
 from decimal import Decimal
 
 
@@ -11,18 +9,13 @@ def _default(obj):
     if isinstance(obj, Decimal):
         return int(obj) if obj % 1 == 0 else float(obj)
     raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
->>>>>>> main
 
 
 def json_response(status_code, body):
     return {
         "statusCode": status_code,
         "headers": {"Content-Type": "application/json"},
-<<<<<<< HEAD
-        "body": json.dumps(body),
-=======
         "body": json.dumps(body, default=_default),
->>>>>>> main
     }
 
 
