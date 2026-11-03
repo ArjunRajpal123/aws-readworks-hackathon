@@ -15,8 +15,8 @@ const env: cdk.Environment = {
   region: config.region,
 };
 
-// Starting minimal: only the web stack (AWS Resource Group). More stacks
-// (pipeline, etc.) are added back incrementally.
+// Starting minimal: web stack (AWS Resource Group) + the text-to-speech API
+// stack. More stacks (pipeline, etc.) are added back incrementally.
 const web = new WebStack(app, `${config.projectName}-web`, {
   env,
   config,
@@ -31,13 +31,13 @@ const storage = new StorageStack(app, `${config.projectName}-storage`, {
 });
 
 // Text-to-speech API: Lambda + API Gateway, reusing the storage stack's
-// media bucket and reference table. Text-only for now (no Polly/audio).
+// media bucket and reference table.
 const api = new ApiStack(app, `${config.projectName}-api`, {
   env,
   config,
   mediaBucket: storage.mediaBucket,
   referenceTable: storage.referenceTable,
-  description: "ReadWorks Sound Along — text ingest API (Lambda + API Gateway).",
+  description: "ReadWorks Sound Along — text-to-speech API (Lambda + API Gateway).",
 });
 
 // Tag everything so the AWS Resource Group (rg-readworks-bb) captures it.

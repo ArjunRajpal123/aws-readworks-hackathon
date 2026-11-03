@@ -26,7 +26,8 @@ group" is Azure terminology; the AWS equivalent is this tag-based group.)
 
 Security follows the baseline in `docs/SoundAlong-Kiro.md`: no public exposure
 (S3 is reachable only via CloudFront OAC, added later), KMS on the media
-bucket, encryption + PITR on the table. In non-prod the resources use
+bucket, encryption + PITR on the table
+. In non-prod the resources use
 `DESTROY` so `cdk destroy` cleans up; in `prod` they `RETAIN`.
 
 ## Prerequisites
@@ -51,6 +52,8 @@ npx cdk deploy --all
 Deploy just the ETL storage stack:
 
 ```bash
+npx cdk de
+
 npx cdk deploy rg-readworks-bb-storage
 ```
 

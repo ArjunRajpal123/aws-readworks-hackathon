@@ -3,11 +3,11 @@ import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as iam from "aws-cdk-lib/aws-iam";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as fs from "fs";
 import * as path from "path";
-import * as crypto from "crypto";
 import { AppConfig, resourceName } from "./config";
 
 export interface ApiStackProps extends cdk.StackProps {
@@ -30,34 +30,14 @@ const COMMON_DIR = path.join(LAMBDA_ROOT, "common");
  * with the Lambda Python runtime already, so this is a plain file copy, not
  * a pip install.
  */
-// Hash every .py file under a dir so edits to shared `common/` (which lives
-// outside the function dir) invalidate the asset and trigger a redeploy.
-function hashPyTree(dir: string, hash: crypto.Hash): void {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
-    a.name.localeCompare(b.name)
-  )) {
-    if (entry.name === "__pycache__") continue;
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      hashPyTree(full, hash);
-    } else if (entry.name.endsWith(".py")) {
-      hash.update(full).update(fs.readFileSync(full));
-    }
-  }
-}
-
 function functionCode(functionDir: string): lambda.Code {
-  // Custom asset hash over the function dir + shared common/ so changes to
-  // either are detected (fromAsset alone only hashes functionDir).
-  const hash = crypto.createHash("sha256");
-  hashPyTree(functionDir, hash);
-  hashPyTree(COMMON_DIR, hash);
-
   return lambda.Code.fromAsset(functionDir, {
-    assetHash: hash.digest("hex"),
-    assetHashType: cdk.AssetHashType.CUSTOM,
+    // Default asset hashing only looks at `functionDir`, but tryBundle below
+    // also pulls in lambda/common from outside it -- hash the bundled
+    // OUTPUT instead, so edits to common/ actually trigger a redeploy.
+    assetHashType: cdk.AssetHashType.OUTPUT,
     bundling: {
-      image: lambda.Runtime.PYTHON_3_12.bundlingImage,
+      image: lambda.Runtime.PYTHON_3_14.bundlingImage,
       local: {
         tryBundle(outputDir: string): boolean {
           const skipPycache = (src: string) => !src.includes("__pycache__");
@@ -89,19 +69,22 @@ export class ApiStack extends cdk.Stack {
     const { config, mediaBucket, referenceTable } = props;
 
     // Names match what lambda/common/s3_store.py and
-    // lambda/common/reference_store.py read. Text-only: no Polly/audio vars.
+    // lambda/common/reference_store.py read.
     const ttsEnv = {
       TTS_MEDIA_BUCKET: mediaBucket.bucketName,
-      TTS_TEXT_S3_KEY_PREFIX: "text",
+      TTS_TEXT_S3_KEY_PREFIX: "tts/texts",
+      TTS_AUDIO_S3_KEY_PREFIX: "tts/audio",
       TTS_REFERENCE_TABLE: referenceTable.tableName,
       TTS_URL_TTL_SECONDS: "3600",
+      TTS_DEFAULT_VOICE_ID: "Joanna",
+      TTS_DEFAULT_ENGINE: "neural",
+      TTS_DEFAULT_LANGUAGE_CODE: "en-US",
     };
 
     const makeFunction = (id: string, dirName: string, nameSuffix: string) =>
       new lambda.Function(this, id, {
         functionName: resourceName(config, "lambda", nameSuffix),
-        // Lambda has no Python 3.14 runtime; use the latest available.
-        runtime: lambda.Runtime.PYTHON_3_12,
+        runtime: lambda.Runtime.PYTHON_3_14,
         handler: "handler.handler",
         code: functionCode(path.join(LAMBDA_ROOT, dirName)),
         environment: ttsEnv,
@@ -119,7 +102,12 @@ export class ApiStack extends cdk.Stack {
     referenceTable.grantWriteData(postFn);
     referenceTable.grantReadData(getFn);
 
-    // No Polly: text-only ingest, so no polly:SynthesizeSpeech grant needed.
+    // Polly's SynthesizeSpeech has no resource-level permissions, only "*".
+    const pollyPolicy = new iam.PolicyStatement({
+      actions: ["polly:SynthesizeSpeech"],
+      resources: ["*"],
+    });
+    postFn.addToRolePolicy(pollyPolicy);
 
     const httpApi = new apigwv2.HttpApi(this, "TtsHttpApi", {
       apiName: resourceName(config, "apigateway", "tts"),

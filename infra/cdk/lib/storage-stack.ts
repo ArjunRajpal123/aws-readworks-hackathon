@@ -3,7 +3,7 @@ import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as kms from "aws-cdk-lib/aws-kms";
-import { AppConfig, resourceName } from "./config";
+import { AppConfig, globalResourceName, resourceName } from "./config";
 
 export interface StorageStackProps extends cdk.StackProps {
   readonly config: AppConfig;
