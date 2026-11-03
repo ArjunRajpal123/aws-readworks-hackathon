@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.env
+*.log
+# Generated audio/timing used for local UI testing (see README)
+public/sa/

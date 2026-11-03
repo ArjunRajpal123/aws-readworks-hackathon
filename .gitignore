@@ -1,1 +1,31 @@
+<<<<<<< HEAD
 lambda/.env
+=======
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Env files (never commit secrets — repo is public)
+.env
+.env.*
+!.env.example
+
+# OS / editor junk
+.DS_Store
+
+# CDK
+infra/cdk/cdk.out/
+# Python venv for the ETL
+.venv-etl/
+__pycache__/
+*.pyc
+
+# CDK build artifacts
+infra/cdk/cdk.out/
+
+# Local env files (never commit real values)
+infra/cdk/.env
+>>>>>>> main
