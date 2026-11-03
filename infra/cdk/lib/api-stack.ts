@@ -37,7 +37,7 @@ function functionCode(functionDir: string): lambda.Code {
     // OUTPUT instead, so edits to common/ actually trigger a redeploy.
     assetHashType: cdk.AssetHashType.OUTPUT,
     bundling: {
-      image: lambda.Runtime.PYTHON_3_14.bundlingImage,
+      image: lambda.Runtime.PYTHON_3_13.bundlingImage,
       local: {
         tryBundle(outputDir: string): boolean {
           const skipPycache = (src: string) => !src.includes("__pycache__");
@@ -84,7 +84,8 @@ export class ApiStack extends cdk.Stack {
     const makeFunction = (id: string, dirName: string, nameSuffix: string) =>
       new lambda.Function(this, id, {
         functionName: resourceName(config, "lambda", nameSuffix),
-        runtime: lambda.Runtime.PYTHON_3_14,
+        // Lambda's newest Python runtime is 3.13 (no 3.14 yet).
+        runtime: lambda.Runtime.PYTHON_3_13,
         handler: "handler.handler",
         code: functionCode(path.join(LAMBDA_ROOT, dirName)),
         environment: ttsEnv,
