@@ -1,0 +1,21 @@
+meta {
+  name: Get (GET)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/text-to-speech?id=f8fbe542f5ed41cf9048631c00f3655d
+  body: none
+  auth: none
+}
+
+params:query {
+  id: f8fbe542f5ed41cf9048631c00f3655d
+}
+
+docs {
+  Fetches a previously created record by id. Run "Create (POST)" first in
+  this same session — it sets the `ttsId` variable used here — or paste an
+  id manually into `params:query.id`.
+}

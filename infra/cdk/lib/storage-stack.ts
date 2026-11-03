@@ -93,7 +93,7 @@ export class StorageStack extends cdk.Stack {
     });
 
     // ---------------------------------------------------------------------
-    // Outputs — handy for the ETL app to reference via env/SSM later.
+    // Outputs — the API stack and the ETL app reference these.
     // ---------------------------------------------------------------------
     new cdk.CfnOutput(this, "MediaBucketName", {
       value: this.mediaBucket.bucketName,

@@ -1,0 +1,38 @@
+meta {
+  name: Create (POST)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/text-to-speech
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "text": "Hello world, this is a Sound Along test.",
+    "voiceId": "Joanna",
+    "languageCode": "en-US",
+    "engine": "neural"
+  }
+}
+
+vars:post-response {
+  ttsId: res.body.id
+}
+
+docs {
+  Starts synthesis + word timing for `text` and stores the result in the
+  shared media bucket + reference table. Response id is captured into the
+  `ttsId` collection variable, so running "Get (GET)" right after this works
+  without manual copy/paste.
+
+  `voiceId` / `languageCode` / `engine` are optional — see lambda/README.md
+  for defaults and the full response shape (`text`, `audio`, `timestamp`).
+}
