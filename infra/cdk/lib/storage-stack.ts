@@ -47,7 +47,10 @@ export class StorageStack extends cdk.Stack {
     // S3 media bucket — audio + text blobs. No public exposure.
     // ---------------------------------------------------------------------
     this.mediaBucket = new s3.Bucket(this, "MediaBucket", {
-      bucketName: resourceName(config, "s3", "media"),
+      // S3 bucket names are GLOBALLY unique. Append the account id so the name
+      // can't collide with a bucket of the same base name in another account.
+      // (account is resolved from the CLI env at deploy time.)
+      bucketName: `${resourceName(config, "s3", "media")}-${cdk.Stack.of(this).account}`,
       // Private: all public access blocked. Reads go through CloudFront OAC.
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       publicReadAccess: false,

@@ -1,0 +1,8 @@
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Generated ETL inputs/outputs (regenerate from RW_Data.xlsx or the pipeline)
+inputs/*.json
+!inputs/e1-p1.json
