@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "id": "001",
+  "title": "Breaking Barriers",
+  "lang": "en",
+  "audio": "audio/001.mp3",
+  "durationMs": 120000,
+  "unit": "ms",
+  "words": [
+    { "i": 0, "s": 1050, "e": 1310, "t": "Today" },
+    { "i": 1, "s": 1330, "e": 1440, "t": "is" },
+    { "i": 2, "s": 1460, "e": 1520, "t": "a" },
+    { "i": 3, "s": 1540, "e": 1800, "t": "good" },
+    { "i": 4, "s": 1820, "e": 2150, "t": "day." }
+  ]
+}
