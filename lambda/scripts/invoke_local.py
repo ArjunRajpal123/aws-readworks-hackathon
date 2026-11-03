@@ -3,7 +3,7 @@
 
 Builds an API Gateway proxy-style event and calls the handler function
 directly (no SAM/Docker). Requires working AWS credentials and
-TTS_OUTPUT_BUCKET in the environment -- see ../.env.example.
+TTS_MEDIA_BUCKET / TTS_REFERENCE_TABLE in the environment -- see ../.env.example.
 """
 import argparse
 import json
