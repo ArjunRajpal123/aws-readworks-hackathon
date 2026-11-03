@@ -4,6 +4,7 @@
   "title": "Breaking Barriers",
   "lang": "en",
   "audio": "audio/001.mp3",
+  "text": "text/001.json",
   "durationMs": 120000,
   "unit": "ms",
   "words": [

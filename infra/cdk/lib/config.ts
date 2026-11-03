@@ -22,6 +22,33 @@ function optional(name: string, fallback: string): string {
   return value && value.trim() !== "" ? value : fallback;
 }
 
+/**
+ * Resource naming convention:
+ *
+ *   <resourceType>-<base>-<env>[-<suffix>]
+ *
+ * where <resourceType> is a short service prefix (s3, dynamodb, lambda, ...),
+ * <base> is the project base (readworks-bb), and <env> is dev/staging/prod.
+ * No account id or random suffix is appended.
+ *
+ * Example: resourceName(config, "s3", "media") -> "s3-readworks-bb-dev-media"
+ *
+ * `base` is derived from projectName by stripping any leading "rg-" so the
+ * resource-type prefix replaces it (rg-readworks-bb -> readworks-bb).
+ */
+export function resourceName(
+  config: AppConfig,
+  resourceType: string,
+  suffix?: string
+): string {
+  const base = config.projectName.replace(/^rg-/, "");
+  const parts = [resourceType, base, config.environment];
+  if (suffix) {
+    parts.push(suffix);
+  }
+  return parts.join("-");
+}
+
 export function loadConfig(): AppConfig {
   return {
     projectName: optional("PROJECT_NAME", "rg-readworks-bb"),
