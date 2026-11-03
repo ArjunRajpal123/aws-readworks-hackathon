@@ -3,6 +3,7 @@ import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
 import { loadConfig } from "../lib/config";
 import { WebStack } from "../lib/web-stack";
+import { StorageStack } from "../lib/storage-stack";
 
 const config = loadConfig();
 
@@ -21,7 +22,16 @@ const web = new WebStack(app, `${config.projectName}-web`, {
   description: "ReadWorks Sound Along — web stack (Resource Group only, for now).",
 });
 
+// Storage layer for the ETL pipeline: DynamoDB reference db + S3 media bucket.
+const storage = new StorageStack(app, `${config.projectName}-storage`, {
+  env,
+  config,
+  description: "ReadWorks Sound Along — ETL storage (DynamoDB + S3, private).",
+});
+
 // Tag everything so the AWS Resource Group (rg-readworks-bb) captures it.
-cdk.Tags.of(web).add("Project", config.projectName);
-cdk.Tags.of(web).add("Environment", config.environment);
-cdk.Tags.of(web).add("ManagedBy", "cdk");
+for (const stack of [web, storage]) {
+  cdk.Tags.of(stack).add("Project", config.projectName);
+  cdk.Tags.of(stack).add("Environment", config.environment);
+  cdk.Tags.of(stack).add("ManagedBy", "cdk");
+}
