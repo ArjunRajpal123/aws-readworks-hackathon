@@ -1,9 +1,9 @@
-"""Persists generated text to the shared media bucket.
+"""Persists generated text and audio to the shared media bucket.
 
 The bucket is provisioned by infra/cdk's StorageStack (shared with the rest
-of the ETL pipeline) and is KMS-encrypted. Text blobs land under the `text/`
-prefix, matching the passage data contract (see docs/baseref.txt).
-Audio is skipped for now (no Amazon Polly in this account).
+of the ETL pipeline) and is KMS-encrypted. Text/audio blobs land under the
+`text/`/`audio/` prefixes, matching the passage data contract (see
+docs/baseref.txt).
 """
 import os
 
@@ -15,10 +15,19 @@ from botocore.client import Config
 # against the presigned text/audio URLs fail with "Requests specifying
 # Server Side Encryption with AWS KMS managed keys require AWS Signature
 # Version 4."
-_s3 = boto3.client("s3", config=Config(signature_version="s3v4"))
+#
+# region_name is explicit because without it, generate_presigned_url can
+# fall back to the legacy global `s3.amazonaws.com` host, which replies
+# with a 307 TemporaryRedirect for any bucket outside us-east-1.
+_s3 = boto3.client(
+    "s3",
+    region_name=os.environ.get("AWS_REGION"),
+    config=Config(signature_version="s3v4"),
+)
 
 BUCKET = os.environ.get("TTS_MEDIA_BUCKET")
 TEXT_PREFIX = os.environ.get("TTS_TEXT_S3_KEY_PREFIX", "text")
+AUDIO_PREFIX = os.environ.get("TTS_AUDIO_S3_KEY_PREFIX", "audio")
 URL_TTL_SECONDS = int(os.environ.get("TTS_URL_TTL_SECONDS", "3600"))
 
 
@@ -38,5 +47,7 @@ def save_text(record_id, text):
     return key, _presigned_url(key)
 
 
-# save_audio() intentionally omitted for now — no Amazon Polly in this
-# account yet, so no audio is generated. Re-add when audio is enabled.
+def save_audio(record_id, audio_bytes):
+    key = f"{AUDIO_PREFIX}/{record_id}.mp3"
+    _put(key, audio_bytes, "audio/mpeg")
+    return key, _presigned_url(key)
