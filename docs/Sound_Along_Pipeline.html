@@ -1,0 +1,318 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sound Along Pipeline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: slim contents rail beside a single reading column; tables carry the detail. */
+:root{
+  --bg:#fbfcfc; --fg:#1d2730; --muted:#5a6772; --line:#d9e0e4; --panel:#f1f5f6;
+  --accent:#00657f; --accent-soft:#e0f0f4; --code:#e9eff1; --warn:#8a4b00;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171b; --fg:#e4e9ec; --muted:#9aa7b1; --line:#2c373f; --panel:#1a2127;
+  --accent:#5cc7e2; --accent-soft:#16333d; --code:#222c33; --warn:#f0b36b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171b; --fg:#e4e9ec; --muted:#9aa7b1; --line:#2c373f; --panel:#1a2127;
+  --accent:#5cc7e2; --accent-soft:#16333d; --code:#222c33; --warn:#f0b36b; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--sans);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 72px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav{position:sticky;top:24px;align-self:start;display:grid;gap:2px;font-size:14px}
+nav b{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+nav a{color:var(--muted);text-decoration:none;padding:5px 0 5px 12px;border-left:2px solid var(--line)}
+nav a:hover,nav a:focus-visible{color:var(--accent);border-left-color:var(--accent);outline:none}
+main{min-width:0}
+.draft{font:400 12px/1.5 var(--mono);color:var(--warn);margin:0 0 20px;max-width:70ch}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.15;font-weight:600;margin:0 0 12px;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:62ch;margin:0 0 36px}
+h2{font-size:24px;line-height:1.25;font-weight:600;margin:48px 0 12px;padding-top:24px;border-top:1px solid var(--line);scroll-margin-top:16px;text-wrap:balance}
+h3{font-size:18px;line-height:1.3;font-weight:600;margin:32px 0 8px;scroll-margin-top:16px;color:var(--accent)}
+p,li{max-width:74ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+a{color:var(--accent)}
+strong{font-weight:600}
+code{font:400 .88em var(--mono);background:var(--code);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
+.tw{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+th{text-align:left;font:500 12px var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--panel);padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:10px 12px;vertical-align:top;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:500}
+@media (max-width:820px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}nav{position:static;margin-bottom:24px;grid-auto-flow:row}}
+</style>
+<div class="wrap">
+<nav aria-label="Contents"><b>Contents</b>
+<a href="#1-ground-rule">1. Ground rule</a>
+<a href="#2-what-the-ui-reads-and-where-it-comes-from">2. What the UI reads, and where it comes from</a>
+<a href="#3-build-list">3. Build list</a>
+<a href="#4-data-the-database-holds">4. Data the database holds</a>
+<a href="#5-rules-for-ai-generation-backend">5. Rules for AI generation (backend)</a>
+<a href="#6-status-model">6. Status model</a>
+<a href="#7-what-exists-already-and-what-the-test-showed">7. What exists already, and what the test showed</a>
+<a href="#8-decisions-needed">8. Decisions needed</a>
+<a href="#9-done-means">9. Done means</a>
+</nav>
+<main>
+<p class="draft">Draft concept for the ReadWorks x AWS hackathon team, Nov 3, 2026. Not a ReadWorks product. Content marked "machine-translated draft" has not been reviewed.</p>
+<h1>Sound Along: what the pipeline must build (handoff to engineering)</h1>
+<p class="lede">What engineering needs to build so every passage ships with audio, word timing, a Spanish version, vocabulary cards and Word Stops, all generated ahead of time and stored.</p>
+
+<h2 id="1-ground-rule">1. Ground rule</h2>
+<p><strong>No AI runs for the student.</strong> All generation (translation, definitions, Word Stop questions, clue marking, audio) happens in the backend, ahead of time, and is stored. The browser only reads finished records and plays finished audio. This matches the tech brief: document-driven, audio and timing in S3, a frontend that does no processing beyond presentation.</p>
+<p>Consequences:</p>
+<ul>
+<li>Everything the student sees or hears must exist as stored data before the passage is published. That includes Spanish, definitions, every question, every answer choice, every feedback line, and the audio for those lines.</li>
+<li>Anything AI-written is a draft until it passes automated checks, and (decision in section 8) a human approval.</li>
+<li>If the passage text changes, everything derived from it is regenerated and re-checked.</li>
+</ul>
+<h2 id="2-what-the-ui-reads-and-where-it-comes-from">2. What the UI reads, and where it comes from</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>UI feature</th>
+<th>Record / field it reads</th>
+<th>Built in stage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Passage text, word highlight, tap a word</td>
+<td><code>contentTokenized</code>, <code>tokenCount</code>, <code>structure</code></td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Audio and live highlight</td>
+<td><code>tracks[]</code>, MP3, timing file (<code>start[]</code>, <code>end[]</code> per word, ms)</td>
+<td>P3</td>
+</tr>
+<tr>
+<td>Sentence highlight, reading strip, fallback</td>
+<td><code>structure.sentenceStarts</code>, <code>paragraphStarts</code>; <code>granularity</code></td>
+<td>P1, P3</td>
+</tr>
+<tr>
+<td>Spanish passage</td>
+<td>A second language version of the passage (own tokens, audio, timing)</td>
+<td>P2</td>
+</tr>
+<tr>
+<td>Word card (definition, example, synonyms, part of speech, English equivalent, cognate flag, "watch for", word parts, shades of meaning)</td>
+<td><code>vocabCards[]</code> per sense per language</td>
+<td>P4</td>
+</tr>
+<tr>
+<td>Dotted vocab words</td>
+<td><code>vocabAnchors[]</code> (occurrence to token index)</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Word Stop (question, choices, right/wrong feedback, clue note)</td>
+<td><code>wordStops[]</code></td>
+<td>P5</td>
+</tr>
+<tr>
+<td>Highlighted clue words and the "Example clue" notes</td>
+<td><code>wordStops[].clues[]</code> (token groups: clue, opposite, signal)</td>
+<td>P5</td>
+</tr>
+<tr>
+<td>Spoken question, choices, feedback, word pronunciation</td>
+<td>Audio keys on each Word Stop and card</td>
+<td>P6</td>
+</tr>
+<tr>
+<td>Picture choices (K-2)</td>
+<td>Image assets with alt text</td>
+<td>P5</td>
+</tr>
+<tr>
+<td>Passage details panel (grade, Lexile, author, type, vocabulary list)</td>
+<td>Passage metadata, localized labels</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Game features (jar, badges, streak, word bank)</td>
+<td>No generated content. Computed in the browser from student actions</td>
+<td>none</td>
+</tr>
+<tr>
+<td>Interface text (buttons, hints, headings)</td>
+<td>Shipped with the app, not the pipeline</td>
+<td>none</td>
+</tr>
+</tbody>
+</table></div>
+<p>The student UI never chooses a grade-band look by itself: the teacher's assignment supplies the band, and each Word Stop lists the <code>bands</code> it applies to.</p>
+<h2 id="3-build-list">3. Build list</h2>
+<p>Each stage writes to the database/S3 and leaves a <code>generation</code> record (run id, model or tool and prompt version, time, input hash).</p>
+<h3 id="p1-ingest-and-tokenize-no-ai">P1. Ingest and tokenize (no AI)</h3>
+<ul>
+<li>Read the passage JSON (<code>text</code>, <code>content</code>, <code>au</code>, vocab spans). Drop figures and captions.</li>
+<li>Whitespace tokens, numbered, wrapped in <code>&lt;span data-w="i"&gt;</code>; keep vocab spans around the word span.</li>
+<li>Pinned tokenizer per language (<code>sa-tok-en-1.0</code>, <code>sa-tok-es-1.0</code>). Spanish keeps the inverted marks and accents attached to the word.</li>
+<li>Compute <code>textHash</code> of the token list. Same hash as the last run: stop, no cost.</li>
+<li>Map <code>data-vocab-occurrence-id</code> (English) and bold paired words (Spanish) to token indexes.</li>
+</ul>
+<h3 id="p2-language-versions-ai-backend-only">P2. Language versions (AI, backend only)</h3>
+<ul>
+<li>Where ReadWorks already has a Spanish paired text, use it (tagged <code>lang: "ES"</code>). Do not retranslate.</li>
+<li>Where it does not (the prototype assumed grades 3-12), generate a Spanish version and store it as a separate passage version with <code>provenance: machine</code>, <code>reviewStatus: draft</code>.</li>
+<li>Use a glossary so vocabulary words stay consistent across the passage, questions and cards.</li>
+<li>Each language version then goes through P1 and P3 on its own text. Do not reuse English timing.</li>
+<li>Gate: automated language check, length ratio check, vocab terms present, plus human review (section 6).</li>
+</ul>
+<h3 id="p3-audio-and-word-timing">P3. Audio and word timing</h3>
+<ul>
+<li>Amazon Polly <strong>neural</strong>, English <code>Joanna</code>, Spanish <code>Lupe</code> (US Spanish; Mexican voices are an open question). Voice per language comes from config, never per passage.</li>
+<li>Async synthesis for text over about 3,000 characters (sync cap is 3,000 billed characters).</li>
+<li>Request speech marks with the same text, voice and engine as the audio. Offsets are <strong>bytes</strong> (UTF-8), not characters.</li>
+<li>Map marks to tokens by byte offset; token start = first mark inside it. End = next token's start; last end is estimated.</li>
+<li>Audio duration is not returned by Polly. Compute it from the MP3 frames, or store it from a probe.</li>
+<li>QA per track: every token mapped, times only increase, last start before audio end. On failure set <code>granularity: "sentence"</code> (UI falls back to sentence highlight).</li>
+<li>Pronunciation lexicons per language for names (Hunsford, Rosings). Not yet tested with neural voices.</li>
+<li>Human-recorded passages: keep the audio, add timing by forced alignment (WhisperX). Not prototyped.</li>
+<li>Retries, then a dead-letter queue and a daily failure report.</li>
+</ul>
+<h3 id="p4-vocabulary-cards-ai-for-non-english-backend-only">P4. Vocabulary cards (AI for non-English, backend only)</h3>
+<p>ReadWorks data already gives, per sense: English definition, example, synonyms, Spanish translation of the word, and a pronunciation MP3. Build per language:</p>
+<ul>
+<li>Localized definition and example (Spanish: generated, <code>provenance: machine</code>, <code>reviewStatus: draft</code>).</li>
+<li>Part of speech label in the target language.</li>
+<li>English equivalent and cognate flag (Spanish cards).</li>
+<li>Optional by band: word parts (<code>formal + -idad</code>), "watch for" note (homophones, other senses), shades-of-meaning scale (9-12).</li>
+<li>Pronunciation audio for the word in the target language (P6).</li>
+<li>Gate: matches the ReadWorks sense; definition reading level suits the band.</li>
+</ul>
+<h3 id="p5-word-stops-ai-backend-only">P5. Word Stops (AI, backend only)</h3>
+<p>One stop is a question attached to one vocab occurrence, for one band, in one language. Fields the UI needs:</p>
+<ul>
+<li><code>type</code>: <code>picture_choice</code> (K-2), <code>multiple_choice</code>, <code>tap_clue</code> (6-8), <code>written</code> (9-12).</li>
+<li><code>prompt</code>, <code>choices[]</code> with exactly one <code>correct</code>, <code>rightFeedback</code>, <code>wrongFeedback</code>, and a plain version of the right feedback (shown when game features are off).</li>
+<li><code>clues[]</code>: type (definition, restatement, example, contrast, inference, word parts, look back), the <strong>token ids</strong> to highlight, the signal word if any, and a note shown after solving.</li>
+<li><code>move</code> and <code>parts</code> (word-part stops), <code>bands[]</code>, <code>trigger: "tap"</code> only. Audio never pauses by itself.</li>
+<li>Picture choices need an image per choice (illustration source is an open decision), with alt text.</li>
+<li>Automated checks (a stop is shown only if all pass):
+  1. Schema valid and written in the target language.
+  2. Target is a tagged vocab occurrence; its token exists.
+  3. Exactly one correct choice, and it agrees with the ReadWorks definition.
+  4. Every clue token exists and lies in the allowed range for that clue type (for example the same or next sentence for a definition clue).
+  5. The question does not contain the answer; distractors are not synonyms of the answer; choices are unique and similar in length.
+  6. Reading level at or below the band; no unsafe or off-topic content.
+  7. Spanish: no English fragments; accents and inverted marks intact.</li>
+<li>Clue token ids depend on the text. Store them with <code>textHash</code> and <code>tokenizerVersion</code>; when the hash changes, regenerate the stop.</li>
+</ul>
+<h3 id="p6-audio-for-everything-the-student-hears-besides-the-passage">P6. Audio for everything the student hears besides the passage</h3>
+<p>The prototype currently uses the browser's built-in voice for these. They must be pre-generated with the same Polly voice:</p>
+<ul>
+<li>Word Stop prompt, each choice, right and wrong feedback.</li>
+<li>Word pronunciation on the card ("Hear it"). Reuse the ReadWorks MP3 for English if its quality is acceptable; Spanish needs generating.</li>
+<li>Store as small MP3s keyed by the hash of the text, so unchanged lines are never regenerated.</li>
+</ul>
+<h3 id="p7-assemble-version-and-publish">P7. Assemble, version and publish</h3>
+<ul>
+<li>Build one record per passage per language: the <code>soundAlong</code> block (see <code>03_JSON_Spec.md</code>) plus <code>vocabCards</code>, <code>wordStops</code>, asset keys.</li>
+<li>Publish atomically; keep the previous version; write <code>schemaVersion</code>, <code>generation</code>, review status.</li>
+<li>Only content with <code>reviewStatus: approved</code> (or <code>passed_checks</code>, if section 8 allows auto-publish) is included.</li>
+<li>Existing product JSON fields stay untouched; the sound block is added alongside (open question: inside the product JSON or as a sidecar file).</li>
+</ul>
+<h3 id="p8-review-tooling">P8. Review tooling</h3>
+<p>A queue for the content team showing, per passage and language: the AI draft beside the source, the automated check results, and approve / edit / reject with reviewer id and time. Machine translations should be sampled or fully reviewed (section 8).</p>
+<h3 id="p9-backfill-and-operations">P9. Backfill and operations</h3>
+<ul>
+<li>Run the catalog (6,893 passages, about 20M characters) through the same pipeline, safe to rerun, resumable.</li>
+<li>Cost report per run. Known list price: Polly neural speech and speech marks are each $16 per 1M characters. AI generation cost is not measured yet; measure on a 20-passage sample first.</li>
+<li>Metrics: runs, failures, QA fallbacks to sentence timing, items waiting for review.</li>
+</ul>
+<h2 id="4-data-the-database-holds">4. Data the database holds</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Record</th>
+<th>Key fields</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Passage</td>
+<td>id, source ids, grade, Lexile, type, author, title per language</td>
+</tr>
+<tr>
+<td>PassageVersion</td>
+<td>passageId, lang, <code>textHash</code>, tokenizerVersion, tokenCount, tokenized html, structure, provenance (<code>readworks</code> / <code>machine</code>), reviewStatus</td>
+</tr>
+<tr>
+<td>Track</td>
+<td>versionId, kind (<code>tts</code> / <code>human</code>), engine, voice, audio key, timing key, <code>granularity</code>, qa results, duration ms</td>
+</tr>
+<tr>
+<td>VocabSense</td>
+<td>senseId (ReadWorks), pos, English definition, example, synonyms</td>
+</tr>
+<tr>
+<td>VocabCard</td>
+<td>senseId, lang, definition, example, pos label, synonyms, cognate flag, word parts, watch-for, shades, English equivalent, audio key, provenance, reviewStatus</td>
+</tr>
+<tr>
+<td>VocabAnchor</td>
+<td>versionId, occurrenceId or paired-word source, senseId, tokenIndex</td>
+</tr>
+<tr>
+<td>WordStop</td>
+<td>versionId, occurrenceId, bands[], type, prompt, choices[], feedback texts, move, parts, clues[] (type, token ids, note), audio keys, image keys, checks[], status, proposedBy (model + prompt version), reviewer</td>
+</tr>
+<tr>
+<td>Asset</td>
+<td>key, kind (audio / image), text hash, alt text, license/source</td>
+</tr>
+<tr>
+<td>GenerationRun</td>
+<td>runId, trigger, stage, input hash, tool/model + prompt version, time, result</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-rules-for-ai-generation-backend">5. Rules for AI generation (backend)</h2>
+<ul>
+<li>Output must be structured JSON validated against a schema; reject and retry on failure. Never store free text that was not validated.</li>
+<li>Prompts and model ids are versioned and recorded on every record.</li>
+<li>The model is given only the passage text, the ReadWorks definition and sense, the band and the language. Nothing from students.</li>
+<li>Keep a glossary and examples in the prompt so Spanish terms are consistent.</li>
+<li>Low temperature; the same input hash must not silently produce a different published result. Regenerate only on hash change or an explicit request.</li>
+<li>Compare options on a small set before choosing: a general-purpose model on Bedrock versus Amazon Translate for passage translation (the second is a plain translation service and would still need the definition and question work done another way). This has not been tested.</li>
+</ul>
+<h2 id="6-status-model">6. Status model</h2>
+<p><code>draft</code> -&gt; <code>auto_checked</code> (passed / failed) -&gt; <code>in_review</code> -&gt; <code>approved</code> -&gt; <code>published</code>. Any text change returns dependent items to <code>draft</code>. The UI shows only <code>published</code> content.</p>
+<h2 id="7-what-exists-already-and-what-the-test-showed">7. What exists already, and what the test showed</h2>
+<p>Reference only; the team builds the real thing.</p>
+<ul>
+<li>The prototype in <code>infra/</code> (CDK, Python 3.14 Lambda, S3 event trigger, Polly neural audio + marks, timing file, <code>soundAlong</code> block, DLQ) is deployed in the sandbox account. Treat it as a worked example of P1 and P3.</li>
+<li>9 demo passages ran through it (4 English, 4 Spanish, 1 over 3,000 characters to exercise the async path). All 9 passed the token-mapping and timing-order checks.</li>
+<li>In 2 of the 9 (<code>35</code>, <code>long</code>), the number of Polly word marks differed from the whitespace token count, although every token still got a time. Cause not investigated.</li>
+<li>Spanish check: byte offsets start at 2 for text beginning with an inverted question mark, and Polly's sentence mark text drops that mark. Map by byte offset, not by string search.</li>
+<li>Not done: blind listening test of neural vs generative; pronunciation lexicons; human-audio alignment; Word Stop audio; any AI generation step; any review tooling.</li>
+<li>All Spanish passages, cards and Word Stops in the UI demo are <strong>machine-translated drafts written by Claude</strong>, not reviewed by ReadWorks or a Spanish editor.</li>
+</ul>
+<h2 id="8-decisions-needed">8. Decisions needed</h2>
+<ol>
+<li>Spanish for grades 3-12: translate with AI, only where a paired text exists, or Spanish interface with the English passage? (UI currently assumes translation.)</li>
+<li>Human approval before publish, or publish on automated checks alone? Is full review needed for machine translation, or a sample?</li>
+<li>Where do picture-choice images come from (license, illustrate, generate), and who approves them?</li>
+<li><code>soundAlong</code> inside the product JSON, or a sidecar file?</li>
+<li>US or Mexican Spanish voice?</li>
+<li>How much highlight lag is acceptable?</li>
+<li>Does ReadWorks want Spanish vocabulary definitions in its own data, or only generated ones?</li>
+<li>Do names and acronyms get lexicons, and who maintains them?</li>
+</ol>
+<h2 id="9-done-means">9. Done means</h2>
+<ul>
+<li>Give it a passage id; with no manual step it produces audio, timing, tokenized text, Spanish version, cards and stops, all stored and passing checks.</li>
+<li>The UI loads only those stored records and files; no call to any AI or TTS service from the browser.</li>
+<li>Re-running with unchanged text costs nothing; changing the text regenerates and re-checks everything that depends on it.</li>
+<li>A reviewer can see what is awaiting approval and what changed.</li>
+</ul>
+</main>
+</div>
+</html>
