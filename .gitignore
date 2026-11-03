@@ -15,3 +15,13 @@ venv/
 
 # CDK
 infra/cdk/cdk.out/
+# Python venv for the ETL
+.venv-etl/
+__pycache__/
+*.pyc
+
+# CDK build artifacts
+infra/cdk/cdk.out/
+
+# Local env files (never commit real values)
+infra/cdk/.env
