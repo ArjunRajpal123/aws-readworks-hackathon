@@ -2,7 +2,6 @@
 import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
 import { loadConfig } from "../lib/config";
-import { PipelineStack } from "../lib/pipeline-stack";
 import { WebStack } from "../lib/web-stack";
 
 const config = loadConfig();
@@ -14,22 +13,15 @@ const env: cdk.Environment = {
   region: config.region,
 };
 
-// Two stacks, as the design doc specifies: `pipeline` and `web`.
-const pipeline = new PipelineStack(app, `${config.projectName}-pipeline`, {
-  env,
-  config,
-  description: "ReadWorks Sound Along — CI/CD pipeline (validation stack).",
-});
-
+// Starting minimal: only the web stack (AWS Resource Group). More stacks
+// (pipeline, etc.) are added back incrementally.
 const web = new WebStack(app, `${config.projectName}-web`, {
   env,
   config,
-  description: "ReadWorks Sound Along — web/content delivery (validation stack).",
+  description: "ReadWorks Sound Along — web stack (Resource Group only, for now).",
 });
 
-// Tag everything so the AWS Resource Group (rg-readworks-bb) captures it all.
-for (const stack of [pipeline, web]) {
-  cdk.Tags.of(stack).add("Project", config.projectName);
-  cdk.Tags.of(stack).add("Environment", config.environment);
-  cdk.Tags.of(stack).add("ManagedBy", "cdk");
-}
+// Tag everything so the AWS Resource Group (rg-readworks-bb) captures it.
+cdk.Tags.of(web).add("Project", config.projectName);
+cdk.Tags.of(web).add("Environment", config.environment);
+cdk.Tags.of(web).add("ManagedBy", "cdk");
