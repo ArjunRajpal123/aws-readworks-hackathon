@@ -1,16 +1,21 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as fs from "fs";
 import * as path from "path";
-import { AppConfig } from "./config";
+import { AppConfig, resourceName } from "./config";
 
 export interface ApiStackProps extends cdk.StackProps {
   readonly config: AppConfig;
+  /** Shared media bucket from StorageStack — audio/text blobs land here. */
+  readonly mediaBucket: s3.Bucket;
+  /** Shared reference table from StorageStack — one item per request, PK `id`. */
+  readonly referenceTable: dynamodb.Table;
 }
 
 // ../../lambda relative to this file (infra/cdk/lib/api-stack.ts -> lambda/)
@@ -18,9 +23,6 @@ const LAMBDA_ROOT = path.join(__dirname, "..", "..", "..", "lambda");
 const COMMON_DIR = path.join(LAMBDA_ROOT, "common");
 
 /**
- * API stack: the two text-to-speech Lambda functions (source in /lambda)
- * behind an API Gateway HTTP API at /api/v1/text-to-speech.
- *
  * Each function's asset bundle is the function's own directory plus a copy
  * of the shared `lambda/common` package, laid out as siblings exactly like
  * local dev (see lambda/scripts/invoke_local.py) so `from common.x import y`
@@ -47,38 +49,37 @@ function functionCode(functionDir: string): lambda.Code {
   });
 }
 
+/**
+ * API stack: the two text-to-speech Lambda functions (source in /lambda)
+ * behind an API Gateway HTTP API at /api/v1/text-to-speech.
+ *
+ * Storage is the shared StorageStack: blobs go in the media bucket under a
+ * `tts/` prefix (kept separate from the main passage pipeline's eventual key
+ * layout), and the per-request record (id, text/audio paths, word timing)
+ * goes in the reference table alongside passage metadata.
+ */
 export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
 
-    const { config } = props;
-    const namePrefix = `${config.projectName}-${config.environment}`.toLowerCase();
-    const isProd = config.environment === "prod";
+    const { config, mediaBucket, referenceTable } = props;
 
-    const ttsBucket = new s3.Bucket(this, "TtsBucket", {
-      bucketName: `${namePrefix}-tts`,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      encryption: s3.BucketEncryption.S3_MANAGED,
-      enforceSSL: true,
-      removalPolicy: isProd ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: !isProd,
-    });
-
-    // Names match what lambda/common/polly.py and lambda/common/s3_store.py read.
+    // Names match what lambda/common/s3_store.py and
+    // lambda/common/reference_store.py read.
     const ttsEnv = {
-      TTS_OUTPUT_BUCKET: ttsBucket.bucketName,
-      TTS_TEXT_S3_KEY_PREFIX: "texts",
-      TTS_AUDIO_S3_KEY_PREFIX: "audio",
-      TTS_RECORD_S3_KEY_PREFIX: "records",
+      TTS_MEDIA_BUCKET: mediaBucket.bucketName,
+      TTS_TEXT_S3_KEY_PREFIX: "tts/texts",
+      TTS_AUDIO_S3_KEY_PREFIX: "tts/audio",
+      TTS_REFERENCE_TABLE: referenceTable.tableName,
       TTS_URL_TTL_SECONDS: "3600",
       TTS_DEFAULT_VOICE_ID: "Joanna",
       TTS_DEFAULT_ENGINE: "neural",
       TTS_DEFAULT_LANGUAGE_CODE: "en-US",
     };
 
-    const makeFunction = (id: string, dirName: string) =>
+    const makeFunction = (id: string, dirName: string, nameSuffix: string) =>
       new lambda.Function(this, id, {
-        functionName: `${namePrefix}-${dirName.replace(/_/g, "-")}`,
+        functionName: resourceName(config, "lambda", nameSuffix),
         runtime: lambda.Runtime.PYTHON_3_14,
         handler: "handler.handler",
         code: functionCode(path.join(LAMBDA_ROOT, dirName)),
@@ -87,11 +88,15 @@ export class ApiStack extends cdk.Stack {
         memorySize: 512,
       });
 
-    const postFn = makeFunction("TextToSpeechPostFn", "text_to_speech_post");
-    const getFn = makeFunction("TextToSpeechGetFn", "text_to_speech_get");
+    const postFn = makeFunction("TextToSpeechPostFn", "text_to_speech_post", "tts-post");
+    const getFn = makeFunction("TextToSpeechGetFn", "text_to_speech_get", "tts-get");
 
-    ttsBucket.grantReadWrite(postFn);
-    ttsBucket.grantRead(getFn);
+    // grantReadWrite/grantRead also grant the needed KMS actions on the
+    // bucket's and table's customer-managed keys.
+    mediaBucket.grantReadWrite(postFn);
+    mediaBucket.grantRead(getFn);
+    referenceTable.grantWriteData(postFn);
+    referenceTable.grantReadData(getFn);
 
     // Polly's SynthesizeSpeech has no resource-level permissions, only "*".
     const pollyPolicy = new iam.PolicyStatement({
@@ -101,7 +106,7 @@ export class ApiStack extends cdk.Stack {
     postFn.addToRolePolicy(pollyPolicy);
 
     const httpApi = new apigwv2.HttpApi(this, "TtsHttpApi", {
-      apiName: `${namePrefix}-api`,
+      apiName: resourceName(config, "apigateway", "tts"),
       description: "ReadWorks Sound Along — text-to-speech API",
       corsPreflight: {
         allowOrigins: ["*"],

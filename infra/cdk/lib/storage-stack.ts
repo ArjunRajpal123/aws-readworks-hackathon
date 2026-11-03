@@ -3,7 +3,7 @@ import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as kms from "aws-cdk-lib/aws-kms";
-import { AppConfig, resourceName } from "./config";
+import { AppConfig, globalResourceName, resourceName } from "./config";
 
 export interface StorageStackProps extends cdk.StackProps {
   readonly config: AppConfig;
@@ -47,7 +47,10 @@ export class StorageStack extends cdk.Stack {
     // S3 media bucket — audio + text blobs. No public exposure.
     // ---------------------------------------------------------------------
     this.mediaBucket = new s3.Bucket(this, "MediaBucket", {
-      bucketName: resourceName(config, "s3", "media"),
+      // S3 bucket names are unique across all of AWS, not just this
+      // account — resourceName() alone collided with an existing bucket
+      // of the same name, so this one is suffixed with the account id.
+      bucketName: globalResourceName(config, "s3", "media"),
       // Private: all public access blocked. Reads go through CloudFront OAC.
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       publicReadAccess: false,

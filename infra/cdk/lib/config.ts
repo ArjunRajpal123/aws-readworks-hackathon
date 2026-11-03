@@ -49,6 +49,30 @@ export function resourceName(
   return parts.join("-");
 }
 
+/**
+ * Like resourceName, but for resources whose names must be unique across
+ * ALL of AWS, not just this account+region (S3 buckets). Appends the
+ * account id so a second deploy attempt in this account, or a teammate
+ * deploying the same project name into a different account, never collides
+ * with an existing bucket this stack doesn't own.
+ *
+ * Example: globalResourceName(config, "s3", "media") ->
+ *   "s3-readworks-bb-dev-media-788911762900"
+ */
+export function globalResourceName(
+  config: AppConfig,
+  resourceType: string,
+  suffix?: string
+): string {
+  if (!config.account) {
+    throw new Error(
+      "AWS account id is required to build a globally-unique resource name " +
+        "(e.g. an S3 bucket). Ensure AWS credentials are configured before running cdk."
+    );
+  }
+  return `${resourceName(config, resourceType, suffix)}-${config.account}`;
+}
+
 export function loadConfig(): AppConfig {
   return {
     projectName: optional("PROJECT_NAME", "rg-readworks-bb"),
