@@ -32,6 +32,10 @@ const COMMON_DIR = path.join(LAMBDA_ROOT, "common");
  */
 function functionCode(functionDir: string): lambda.Code {
   return lambda.Code.fromAsset(functionDir, {
+    // Default asset hashing only looks at `functionDir`, but tryBundle below
+    // also pulls in lambda/common from outside it -- hash the bundled
+    // OUTPUT instead, so edits to common/ actually trigger a redeploy.
+    assetHashType: cdk.AssetHashType.OUTPUT,
     bundling: {
       image: lambda.Runtime.PYTHON_3_14.bundlingImage,
       local: {
