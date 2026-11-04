@@ -1,35 +1,10 @@
 {
   "id": "rws-e7-en",
   "lang": "en",
-  "title": "Save the World (E7, en)",
+  "title": "Save the World",
   "text": "Stop right there!\n\nIf you are writing in your room and have scrap paper, you can toss it into a recycling bin instead of throwing it out.\n\nAccording to the Environmental Protection Agency, the United States recycles more than 30 percent of its waste.\n\nIn 1999, recycling kept more than 64 tons of material from ending up in landfills.",
   "source": {
-    "workbook": "RW_Sentences.xlsx",
-    "sheet": "Sentences",
-    "rowId": "E7",
-    "sourceUrl": "https://www.readworks.org/article/Save-the-World/40fa3460-ebba-456a-a59a-10d7bdc09b65",
-    "machineTranslated": false,
-    "segments": [
-      {
-        "paragraph": 0,
-        "column": "Short simple sentence",
-        "case": "short"
-      },
-      {
-        "paragraph": 1,
-        "column": "Complex longer sentence",
-        "case": "complex"
-      },
-      {
-        "paragraph": 2,
-        "column": "Sentence with a number",
-        "case": "number"
-      },
-      {
-        "paragraph": 3,
-        "column": "Sentence with a date/year",
-        "case": "date"
-      }
-    ]
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode rw-E7-k2"
   }
 }
