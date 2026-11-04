@@ -12,12 +12,14 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import sys
 from pathlib import Path
 
 import boto3
 
+import audio as audio_mod
 from pipeline import PassageInput, run
 from storage import LocalStorage
 
@@ -41,9 +43,10 @@ def main(argv=None):
     )
 
     polly = boto3.client("polly", region_name=args.region)
+    synthesize_fn = functools.partial(audio_mod.synthesize, polly)
     storage = LocalStorage(args.sa_dir)
 
-    result = run(passage, polly, storage)
+    result = run(passage, synthesize_fn, storage)
     print(json.dumps(result, indent=2))
     print(f"\nWrote output under: {args.sa_dir}")
     print(f"Open the player at: .../proxy/5173/?m={passage.id}")

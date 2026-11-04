@@ -12,12 +12,14 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import sys
 from pathlib import Path
 
 import boto3
 
+import audio as audio_mod
 from pipeline import PassageInput, run
 from storage import AwsStorage
 
@@ -57,11 +59,12 @@ def main(argv=None) -> int:
     print(f"Target table:  {table}")
 
     polly = session.client("polly")
+    synthesize_fn = functools.partial(audio_mod.synthesize, polly)
     s3 = session.client("s3")
     dynamodb = session.resource("dynamodb")
     storage = AwsStorage(bucket, table, s3, dynamodb, prefix=args.prefix)
 
-    result = run(passage, polly, storage)
+    result = run(passage, synthesize_fn, storage)
     print(json.dumps(result, indent=2))
     print(f"\nWrote s3://{bucket}/{args.prefix}product/{passage.id}.soundAlong.json")
     print(f"Wrote DynamoDB item id={passage.id} in {table}")

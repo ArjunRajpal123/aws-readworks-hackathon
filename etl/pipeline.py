@@ -50,8 +50,15 @@ class Storage(Protocol):
     def put_record(self, record_id: str, record: dict) -> None: ...
 
 
-def run(passage: PassageInput, polly_client, storage: Storage) -> dict:
-    """Run P1+P3 for one passage and write the player-facing output."""
+def run(passage: PassageInput, synthesize_fn, storage: Storage) -> dict:
+    """Run P1+P3 for one passage and write the player-facing output.
+
+    synthesize_fn(text, voice_id, engine) -> (mp3_bytes, marks_jsonlines),
+    same return shape as audio.synthesize() minus the polly_client arg --
+    callers bind their audio source with functools.partial (direct Polly in
+    run_local.py/run_aws.py, the deployed text-to-speech API in
+    run_api.py), so this function doesn't care which one it's talking to.
+    """
     lang2 = (passage.lang or "en").lower()[:2]
 
     # --- P1: tokenize ------------------------------------------------------
@@ -69,9 +76,7 @@ def run(passage: PassageInput, polly_client, storage: Storage) -> dict:
             "sync cap; async synthesis path not implemented yet"
         )
 
-    mp3_bytes, marks = audio_mod.synthesize(
-        polly_client, polly_text, voice["voiceId"], voice["engine"]
-    )
+    mp3_bytes, marks = synthesize_fn(polly_text, voice["voiceId"], voice["engine"])
     duration = mp3duration.duration_ms(mp3_bytes)
 
     timing = audio_mod.build_timing(
