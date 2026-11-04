@@ -32,6 +32,7 @@ from datetime import datetime, timezone
 
 from botocore.exceptions import BotoCoreError, ClientError
 
+from common.rbac import require_groups
 from common.responses import error_response, json_response
 from common.s3_store import KEY_PREFIX, s3_client
 
@@ -193,6 +194,9 @@ def handler(event, _context):
     method = (event.get("requestContext", {}).get("http", {}).get("method") or "").upper()
     try:
         if method == "POST":
+            denied = require_groups(event)
+            if denied:
+                return error_response(403, denied)
             return _post(event)
         if method == "GET":
             return _get(event)

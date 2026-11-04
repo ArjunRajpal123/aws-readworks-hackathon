@@ -4,6 +4,7 @@
 // when configured, or straight from sa/ (etl/run_local.py output, or the EKS
 // pod's S3 sync) for local dev. A build-time env var would not work here:
 // the Docker image is built before the API stack's URL is known.
+import { authHeaders } from './auth.js'
 const API = window.SA_API_URL
 
 // sa/ has no presigned URLs: the files are already public to whatever is
@@ -43,9 +44,9 @@ export async function fetchProduct(id) {
 export async function createProduct(body) {
   if (!API) return null
   try {
-    const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+    const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json', ...(await authHeaders()) }, body: JSON.stringify(body) })
     const j = await r.json().catch(() => ({}))
-    if (!r.ok) return { ok: false, error: j.error || `HTTP ${r.status}` }
+    if (!r.ok) return { ok: false, error: r.status === 401 ? 'Sign in as an admin or teacher to generate audio' : j.error || `HTTP ${r.status}` }
     return { ok: true, record: j }
   } catch (e) {
     return { ok: false, error: e.message || 'Network error' }
@@ -65,9 +66,9 @@ export const submissionsEnabled = () => !!SUBMISSIONS
 export async function createSubmission(items, { overwrite = false } = {}) {
   if (!SUBMISSIONS) return null
   try {
-    const r = await fetch(SUBMISSIONS, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items, overwrite }) })
+    const r = await fetch(SUBMISSIONS, { method: 'POST', headers: { 'content-type': 'application/json', ...(await authHeaders()) }, body: JSON.stringify({ items, overwrite }) })
     const j = await r.json().catch(() => ({}))
-    if (!r.ok && !(j.items && j.items.length)) return { ok: false, error: j.error || `HTTP ${r.status}` }
+    if (!r.ok && !(j.items && j.items.length)) return { ok: false, error: r.status === 401 ? 'Sign in as an admin or teacher to submit' : j.error || `HTTP ${r.status}` }
     return { ok: (j.queued || 0) > 0, submissionId: j.submissionId, items: j.items || [], error: j.queued ? undefined : (j.items || []).map(i => i.error).filter(Boolean).join('; ') || j.error }
   } catch (e) {
     return { ok: false, error: e.message || 'Network error' }

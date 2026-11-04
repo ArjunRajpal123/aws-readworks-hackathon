@@ -40,6 +40,7 @@ import uuid
 from botocore.exceptions import BotoCoreError, ClientError
 
 from common import pipeline_runtime, reference_store
+from common.rbac import require_groups
 from common.responses import error_response, json_response
 from common.s3_store import with_urls
 from pipeline import PassageInput, run
@@ -108,6 +109,9 @@ def _read_body(event):
 
 
 def handler(event, context):
+    denied = require_groups(event)
+    if denied:
+        return error_response(403, denied)
     try:
         body = json.loads(_read_body(event))
     except (json.JSONDecodeError, binascii.Error, UnicodeDecodeError):

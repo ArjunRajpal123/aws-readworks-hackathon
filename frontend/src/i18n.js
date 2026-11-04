@@ -6,6 +6,7 @@ import { AS } from './assist_i18n.js'
 import { TR } from './tour_i18n.js'
 import { V3 } from './v3_i18n.js'
 import { V4 } from './v4_i18n.js'
+import { AU } from './auth_i18n.js'
 
 export const I18N = {
   en: {
@@ -106,5 +107,5 @@ export const I18N = {
   },
 }
 
-Object.assign(I18N.en, AD.en, QI.en, AS.en, TR.en, V3.en, V4.en)
-Object.assign(I18N.es, AD.es, QI.es, AS.es, TR.es, V3.es, V4.es)
+Object.assign(I18N.en, AD.en, QI.en, AS.en, TR.en, V3.en, V4.en, AU.en)
+Object.assign(I18N.es, AD.es, QI.es, AS.es, TR.es, V3.es, V4.es, AU.es)

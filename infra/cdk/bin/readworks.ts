@@ -7,6 +7,7 @@ import { StorageStack } from "../lib/storage-stack";
 import { ApiStack } from "../lib/api-stack";
 import { EtlStack } from "../lib/etl-stack";
 import { FrontendStack } from "../lib/frontend-stack";
+import { AuthStack } from "../lib/auth-stack";
 
 const config = loadConfig();
 
@@ -35,11 +36,19 @@ const storage = new StorageStack(app, `${config.projectName}-storage`, {
 
 // Text-to-speech API: Lambda + API Gateway, reusing the storage stack's
 // media bucket and reference table.
+// Sign-in: Cognito user pool with admin/teacher/parent/student groups.
+const auth = new AuthStack(app, `${config.projectName}-auth`, {
+  env,
+  config,
+  description: "ReadWorks Sound Along — sign-in (Cognito user pool, role groups).",
+});
 const api = new ApiStack(app, `${config.projectName}-api`, {
   env,
   config,
   mediaBucket: storage.mediaBucket,
   referenceTable: storage.referenceTable,
+  userPool: auth.userPool,
+  userPoolClient: auth.client,
   description: "ReadWorks Sound Along — text-to-speech API (Lambda + API Gateway).",
 });
 
@@ -57,10 +66,11 @@ const frontend = new FrontendStack(app, `${config.projectName}-frontend`, {
   config,
   mediaBucket: storage.mediaBucket,
   apiUrl: api.apiUrl,
+  auth: { userPoolId: auth.userPool.userPoolId, clientId: auth.client.userPoolClientId },
   description: "ReadWorks Sound Along — web player on Amazon EKS.",
 });
 // Tag everything so the AWS Resource Group (rg-readworks-bb) captures it.
-for (const stack of [web, storage, api, etl, frontend]) {
+for (const stack of [web, storage, auth, api, etl, frontend]) {
   cdk.Tags.of(stack).add("Project", config.projectName);
   cdk.Tags.of(stack).add("Environment", config.environment);
   cdk.Tags.of(stack).add("ManagedBy", "cdk");

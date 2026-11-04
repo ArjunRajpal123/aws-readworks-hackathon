@@ -171,3 +171,20 @@ def can_append_session(caller_person, student_id):
 def can_manage_people(caller_person):
     """Create/update people, link parent<->student and teacher<->class, enrol: admin only."""
     return _role(caller_person) == "admin"
+
+
+def require_groups(event):
+    """Route-level role check for handlers behind the JWT authorizer.
+
+    Returns None when allowed, else an error message. The allowed groups come
+    from the REQUIRED_GROUPS env var (comma-separated, set by the CDK stack);
+    with it unset (local runs, offline tests) every caller is allowed.
+    """
+    import os
+    required = [g.strip() for g in os.environ.get("REQUIRED_GROUPS", "").split(",") if g.strip()]
+    if not required:
+        return None
+    groups = parse_groups(claims_from_event(event))
+    if any(g in groups for g in required):
+        return None
+    return f"Requires one of these roles: {', '.join(required)}"

@@ -62,6 +62,7 @@ onMounted(init)
 
 <section id="admin" class="admin" aria-label="Admin" hidden></section>
 <section id="family" class="family" aria-label="Teachers and families" hidden></section>
+<section id="signin" class="admin signin" aria-label="Sign in" hidden></section>
 
 <div class="main"><div class="in">
   <section class="col" id="col" aria-label="Passage">

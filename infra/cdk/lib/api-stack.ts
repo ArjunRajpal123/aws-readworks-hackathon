@@ -6,6 +6,8 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import { HttpJwtAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
+import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as fs from "fs";
 import * as path from "path";
 import { AppConfig, resourceName } from "./config";
@@ -16,6 +18,9 @@ export interface ApiStackProps extends cdk.StackProps {
   readonly mediaBucket: s3.Bucket;
   /** Shared reference table from StorageStack — one item per request, PK `id`. */
   readonly referenceTable: dynamodb.Table;
+  /** Sign-in (AuthStack). POST routes require a token from this pool and client. */
+  readonly userPool: cognito.UserPool;
+  readonly userPoolClient: cognito.IUserPoolClient;
 }
 
 // ../../lambda relative to this file (infra/cdk/lib/api-stack.ts -> lambda/)
@@ -99,7 +104,7 @@ export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
 
-    const { config, mediaBucket, referenceTable } = props;
+    const { config, mediaBucket, referenceTable, userPool, userPoolClient } = props;
 
     // Names match what lambda/common/s3_store.py and
     // lambda/common/reference_store.py read.
@@ -127,6 +132,7 @@ export class ApiStack extends cdk.Stack {
     // POST tokenizes, builds SSML and gzips timing: more memory = more CPU.
     const postFn = makeFunction("TextToSpeechPostFn", "text_to_speech_post", "tts-post", 1024);
     const getFn = makeFunction("TextToSpeechGetFn", "text_to_speech_get", "tts-get", 256);
+    postFn.addEnvironment("REQUIRED_GROUPS", "admin,teacher");
 
     // grantReadWrite/grantRead also grant the needed KMS actions on the
     // bucket's and table's customer-managed keys.
@@ -166,14 +172,24 @@ export class ApiStack extends cdk.Stack {
       corsPreflight: {
         allowOrigins: ["*"],
         allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST],
-        allowHeaders: ["Content-Type"],
+        allowHeaders: ["Content-Type", "Authorization"],
       },
     });
+
+    // Generating audio costs Polly money: POST routes need a signed-in user.
+    // The authorizer checks the token (issuer, audience = web client, expiry);
+    // the Lambda then checks `cognito:groups` against REQUIRED_GROUPS.
+    const authorizer = new HttpJwtAuthorizer("CognitoAuthorizer", userPool.userPoolProviderUrl, {
+      authorizerName: "cognito",
+      jwtAudience: [userPoolClient.userPoolClientId],
+    });
+    const postGroups = "admin,teacher";
 
     httpApi.addRoutes({
       path: "/api/v1/text-to-speech",
       methods: [apigwv2.HttpMethod.POST],
       integration: new HttpLambdaIntegration("PostIntegration", postFn),
+      authorizer,
     });
     httpApi.addRoutes({
       path: "/api/v1/text-to-speech",
@@ -186,6 +202,7 @@ export class ApiStack extends cdk.Stack {
     // API Gateway limit. Least privilege: write incoming/ + submissions/,
     // read processed/ + failed/ + submissions/ + sa/product/ (existence checks).
     const subFn = makeFunction("SubmissionsFn", "submissions", "submissions", 256);
+    subFn.addEnvironment("REQUIRED_GROUPS", postGroups);
     mediaBucket.grantPut(subFn, "incoming/*");
     mediaBucket.grantPut(subFn, "submissions/*");
     for (const prefix of ["submissions/*", "processed/*", "failed/*", "sa/product/*", "incoming/*"]) {
@@ -195,6 +212,7 @@ export class ApiStack extends cdk.Stack {
       path: "/api/v1/submissions",
       methods: [apigwv2.HttpMethod.POST],
       integration: new HttpLambdaIntegration("SubmissionsPostIntegration", subFn),
+      authorizer,
     });
     httpApi.addRoutes({
       path: "/api/v1/submissions/{submissionId}",

@@ -15,6 +15,8 @@ export interface FrontendStackProps extends cdk.StackProps {
   readonly mediaBucket: s3.Bucket;
   /** ApiStack's apiUrl — written into the running pod as SA_API_URL (see docker-entrypoint.d/10-write-config.sh). */
   readonly apiUrl: string;
+  /** Sign-in settings for the player (AuthStack), written into config.js in the pod. */
+  readonly auth: { userPoolId: string; clientId: string };
 }
 
 const APP = "sound-along-web";
@@ -103,7 +105,12 @@ export class FrontendStack extends cdk.Stack {
                 // Read by docker-entrypoint.d/10-write-config.sh at container start, which writes
                 // it into /usr/share/nginx/html/config.js (window.SA_API_URL) for src/api.js to
                 // read at runtime -- the image itself is built with no API URL baked in.
-                env: [{ name: "SA_API_URL", value: apiUrl }],
+                env: [
+                  { name: "SA_API_URL", value: apiUrl },
+                  { name: "SA_AUTH_REGION", value: cdk.Aws.REGION },
+                  { name: "SA_AUTH_USER_POOL_ID", value: props.auth.userPoolId },
+                  { name: "SA_AUTH_CLIENT_ID", value: props.auth.clientId },
+                ],
                 volumeMounts: [{ name: "sa-data", mountPath: "/data/sa", readOnly: true }],
                 resources: { requests: { cpu: "50m", memory: "64Mi" }, limits: { memory: "128Mi" } },
                 readinessProbe: { httpGet: { path: "/healthz", port: 80 }, periodSeconds: 5 },

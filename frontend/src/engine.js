@@ -14,6 +14,8 @@ import { art } from './art.js'
 import { getProfile, setProfile, addSession, setSessionQuiz, upNext, bandOf } from './people.js'
 import { createNext } from './next.js'
 import { createProfile } from './profile.js'
+import { authEnabled, currentUser, signOut } from './auth.js'
+import { createSignin, createAccount } from './signin.js'
 import { initNav } from './nav.js'
 import { fetchProduct } from './api.js'
 import { SPK, MUTE, GLOW, JAR, BADGE, ICON, CARDS, MODES, ACCENTS } from './data.js'
@@ -324,7 +326,9 @@ function renderHero(){const f=$('#heroArt');if(!f)return;const e=curEntry();if(!
  const im=new Image();im.onload=()=>{if(curEntry()!==e)return;const box=f.querySelector('.hero-art');if(!box)return;box.innerHTML='';box.appendChild(im);CRED.then(()=>{if(curEntry()!==e)return;const c=f.querySelector('figcaption');if(c)c.innerHTML=cap(true)})};
  im.alt='';im.src='img/'+e.pid+'.jpg'}
 function updateNext(){const b=$('#nextBtn');if(!b)return;const p=getProfile();const n=p.role==='student'?upNext(p.id).length:0;b.textContent=n?t('nextBtnN',n):t('nextBtn')}
-function updateProfBtn(){const b=$('#profBtn');if(!b)return;const p=getProfile();const nm=p.role==='guest'?t('pfGuest'):p.name;b.innerHTML='<span class="pn"></span><span class="pi" aria-hidden="true"></span>';b.firstChild.textContent=nm;b.lastChild.textContent=nm.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();b.setAttribute('aria-label',t('pfBtn',nm))}
+function updateProfBtn(){const b=$('#profBtn');if(!b)return;const p=getProfile(),u=authEnabled()?currentUser():null;
+ if(authEnabled()&&!u){b.innerHTML='<span class="pn"></span><span class="pi" aria-hidden="true">→</span>';b.firstChild.textContent=t('navSignIn');b.setAttribute('aria-label',t('navSignIn'));return}
+ const nm=u&&u.role!=='admin'?u.name:p.role==='guest'?(u?u.name:t('pfGuest')):p.name;b.innerHTML='<span class="pn"></span><span class="pi" aria-hidden="true"></span>';b.firstChild.textContent=nm;b.lastChild.textContent=nm.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();b.setAttribute('aria-label',t('pfBtn',nm))}
 function applyProfile(p){updateProfBtn();updateNext();
  if(p.role==='student'){setFam(false);setAdmin(false);const up=upNext(p.id)[0];const e=up?byPid(up.pid):bandEntry(bandOf(p.st));if(e)load(modeFor(e,uiLang==='es'))}
  else if(p.role==='parent'){setFam(true);fam.show({tab:'parent',fam:p.id,stu:p.pa.kids[0],sub:'log'})}
@@ -333,20 +337,35 @@ function applyProfile(p){updateProfBtn();updateNext();
 function fillPassages(){const sel=$('#passageSel');if(!sel)return;const es=uiLang==='es';
  sel.innerHTML=byBand(B()).map(p=>`<option value="${p.modes.en}">${p.title} · ${es?(/^\d+$/.test(p.grade)?'Grado ':'Grados '):(/^\d+$/.test(p.grade)?'Grade ':'Grades ')}${p.grade}${p.lexile?' · '+p.lexile:''}</option>`).join('');
  const ce=curEntry();if(ce)sel.value=ce.modes.en}
-let admin=null;
+let admin=null,sgn=null,acct=null;
+// ---- sign-in and role-based access (src/auth.js, src/signin.js) ----
+// The role comes from the signed-in Cognito account; with no auth configured (local dev) everything stays open.
+function authRole(){if(!authEnabled())return 'off';const u=currentUser();return u?(u.role||'none'):'guest'}
+function applyAuthClass(){const r=authRole();document.body.className=document.body.className.replace(/\bauth-\w+/g,'').trim()+' auth-'+r;
+ // Non-admins are always "themselves": the person linked to their account, or nobody.
+ const u=r==='off'?null:currentUser();
+ if(r!=='off'&&r!=='admin'){const want=u&&u.personId&&['teacher','parent','student'].includes(u.role)?u.personId:null;if(getProfile().id!==(want||'guest'))setProfile(want)}}
+const canFam=()=>['off','admin','teacher','parent'].includes(authRole()),canAdmin=()=>['off','admin'].includes(authRole());
+function gate(){toast(t('siNeedRole'));if(authRole()==='guest')setSignin(true)}
+function setSignin(on){if(on){if(document.body.classList.contains('admin'))setAdmin(false);if(document.body.classList.contains('fam'))setFam(false);setSide(false);stopAll()}
+ document.body.classList.toggle('signin',on);$('#signin').hidden=!on;if(on&&sgn){sgn.reset();sgn.render()}
+ try{history.replaceState(null,'',on?'#signin':location.pathname+location.search)}catch(e){}if(on)window.scrollTo(0,0)}
+function onSignedIn(u){setSignin(false);applyAuthClass();updateProfBtn();updateNext();
+ if(!u)return;toast(t('siSignedIn',u.name));const p=getProfile();if(p.role!=='guest')applyProfile(p);else if(u.role==='admin')setAdmin(true)}
+async function doSignOut(){await signOut();setProfile(null);if(document.body.classList.contains('admin'))setAdmin(false);if(document.body.classList.contains('fam'))setFam(false);applyAuthClass();updateProfBtn();updateNext();toast(t('siSignedOut'))}
 function navActive(){const a=document.body.classList.contains('admin'),f=document.body.classList.contains('fam');[['#navContent',!a&&!f],['#famBtn',f],['#adminBtn',a]].forEach(([q,on])=>{const b=$(q);if(!b)return;b.classList.toggle('on',on);on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')})}
 function famLabel(){const on=document.body.classList.contains('fam');const b=$('#famBtn');if(!b)return;b.setAttribute('aria-pressed',on);navActive()}
-function setFam(on){if(on&&document.body.classList.contains('admin'))setAdmin(false);document.body.classList.toggle('fam',on);$('#family').hidden=!on;
+function setFam(on){if(on&&!canFam()){gate();return}if(on&&document.body.classList.contains('signin'))setSignin(false);if(on&&document.body.classList.contains('admin'))setAdmin(false);document.body.classList.toggle('fam',on);$('#family').hidden=!on;
  if(on){setSide(false);stopAll();fam&&fam.show()}famLabel();try{history.replaceState(null,'',on?'#family':location.pathname+location.search)}catch(e){}
  if(on)window.scrollTo(0,0)}
 function adminLabel(){const on=document.body.classList.contains('admin');const b=$('#adminBtn');if(!b)return;b.setAttribute('aria-pressed',on);navActive()}
-function setAdmin(on){if(on&&document.body.classList.contains('fam')){document.body.classList.remove('fam');$('#family').hidden=true;famLabel()}document.body.classList.toggle('admin',on);$('#admin').hidden=!on;$('#adminTag').hidden=!on;if(on){setSide(false);stopAll()}adminLabel();
+function setAdmin(on){if(on&&!canAdmin()){gate();return}if(on&&document.body.classList.contains('signin'))setSignin(false);if(on&&document.body.classList.contains('fam')){document.body.classList.remove('fam');$('#family').hidden=true;famLabel()}document.body.classList.toggle('admin',on);$('#admin').hidden=!on;$('#adminTag').hidden=!on;if(on){setSide(false);stopAll()}adminLabel();
  try{history.replaceState(null,'',on?'#admin':location.pathname+location.search)}catch(e){}
  if(on)window.scrollTo(0,0)}
 function applyStatic(){document.querySelectorAll('[data-i18n]').forEach(e=>{e.textContent=t(e.dataset.i18n)});
  document.querySelectorAll('[data-i18n-html]').forEach(e=>{e.innerHTML=t(e.dataset.i18nHtml)});
  document.querySelectorAll('[data-i18n-label]').forEach(e=>{const v=t(e.dataset.i18nLabel);e.setAttribute('aria-label',v);if(e.hasAttribute('title'))e.title=v});
- adminLabel();famLabel();updateProfBtn();updateNext();admin&&admin.render();fam&&fam.render();info&&info.label();fillPassages();fillSupport();fillVoice();$('#stopsBtn').textContent=t('stopsBtn',stopsOn);syncGame();applyTheme();
+ adminLabel();famLabel();updateProfBtn();updateNext();admin&&admin.render();fam&&fam.render();if(sgn&&document.body.classList.contains('signin'))sgn.render();info&&info.label();fillPassages();fillSupport();fillVoice();$('#stopsBtn').textContent=t('stopsBtn',stopsOn);syncGame();applyTheme();
  $('#voiceBtn').setAttribute('aria-label',voiceOn?t('voiceOn'):t('voiceOff'));updatePlay()}
 $('#page').addEventListener('click',e=>{const w=e.target.closest('.w');if(!w)return;const i=+w.dataset.i;if(picking===null)trackTap(i);
  if(picking!==null){w.classList.toggle('picked');picked.has(i)?picked.delete(i):picked.add(i);return}
@@ -429,17 +448,19 @@ dlg=createDialogs({t,getMode:()=>mode,getAudioId:aid,getVoice:()=>{const a=SA[ai
 fam=createFamily({t,getLang:()=>uiLang,getProfile,onRead:(pid,asfor)=>{if(asfor){setProfile(asfor);updateProfBtn();updateNext()}setFam(false);openPid(pid)}});info=createInfo({t});
 nxt=createNext({t,getCurrent:curEntry,getAssigned:()=>{const p=getProfile();return p.role==='student'?upNext(p.id):[]},getLang:()=>uiLang,onOpen:openPid});
 pfd=createProfile({t,onPick:applyProfile});
-$('#nextBtn').onclick=()=>nxt.open();$('#profBtn').onclick=()=>pfd.open();
+$('#nextBtn').onclick=()=>nxt.open();sgn=createSignin({t,onSignedIn});acct=createAccount({t,onSignOut:doSignOut,onViewAs:()=>pfd.open()});
+$('#profBtn').onclick=()=>{if(!authEnabled()){pfd.open();return}const u=currentUser();if(!u)setSignin(true);else acct.open(u.role==='admin'&&getProfile().role!=='guest'?getProfile().name:null)};
+addEventListener('sa-auth',()=>{applyAuthClass();updateProfBtn();updateNext()});applyAuthClass();
 addEventListener('sa-people',()=>{updateNext();updateProfBtn()});
 $('#vtP').onclick=()=>setView('p');$('#vtQ').onclick=()=>setView('q');$('#rateBtn').onclick=()=>dlg.openRate();
 $('#voice').onchange=()=>{const L=voiceLang();try{localStorage.setItem('ws-voice-'+L,$('#voice').value)}catch(e){}stopAll();qs&&qs.stop();SA[aid()]=undefined;loadAudio(aid());showSource()};
 const tour=createTour({t,view:()=>document.body.classList.contains('admin')?'admin':document.body.classList.contains('fam')?'fam':'student',before:()=>{if(!document.body.classList.contains('admin')&&!document.body.classList.contains('fam')){setOpts(true);setView('p');setSide(false);stopAll()}}});
 $('#howBtn').onclick=()=>tour.start();
 $('#optBtn').onclick=()=>setOpts(document.body.classList.contains('opts-closed'));
-$('#famBtn').onclick=()=>setFam(true);$('#navContent').onclick=()=>{setAdmin(false);setFam(false);window.scrollTo(0,0)};
+$('#famBtn').onclick=()=>setFam(true);$('#navContent').onclick=()=>{setAdmin(false);setFam(false);setSignin(false);window.scrollTo(0,0)};
 $('#adminBtn').onclick=()=>setAdmin(true);initNav();
 // ?m=<id> that isn't built in: try a pipeline/API product record (GET /api/v1/text-to-speech, src/api.js).
 if(q&&!MODES.some(m=>m.id===q))addPipelineMode(MODES,q).then(m=>load(m?m.id:start));else load(start);
-if(location.hash==='#admin')setAdmin(true);else if(location.hash==='#family')setFam(true);
+if(location.hash==='#signin')setSignin(true);else if(location.hash==='#admin')setAdmin(true);else if(location.hash==='#family')setFam(true);
 else if(!q&&getProfile().role!=='guest')applyProfile(getProfile());
 }

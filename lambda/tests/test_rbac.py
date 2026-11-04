@@ -148,3 +148,37 @@ def test_end_to_end_parent_sends_reading(store):
     store.attach_cognito_sub("s-maya", "sub-maya")
     me = rbac.resolve_caller(event("sub-maya", "[student]"), store)
     assert [a["byName"] for a in store.up_next(me["id"])] == ["Priya Chen"]
+
+
+# --- route-level check (REQUIRED_GROUPS) ---------------------------------------
+from common.rbac import require_groups  # noqa: E402
+
+
+def _event(groups):
+    claims = {} if groups is None else {"cognito:groups": groups}
+    return {"requestContext": {"authorizer": {"jwt": {"claims": claims}}}}
+
+
+def test_require_groups_unset_allows_everyone(monkeypatch):
+    monkeypatch.delenv("REQUIRED_GROUPS", raising=False)
+    assert require_groups({}) is None
+
+
+@pytest.mark.parametrize("groups, allowed", [
+    ("[admin]", True), ("[teacher parent]", True), (["teacher"], True),
+    ("[parent]", False), ("[student]", False), (None, False), ("", False),
+])
+def test_require_groups_admin_teacher(monkeypatch, groups, allowed):
+    monkeypatch.setenv("REQUIRED_GROUPS", "admin,teacher")
+    assert (require_groups(_event(groups)) is None) is allowed
+
+
+def test_post_handlers_return_403_for_wrong_role(monkeypatch):
+    import json
+    from submissions import handler as sub
+    from text_to_speech_post import handler as post
+    monkeypatch.setenv("REQUIRED_GROUPS", "admin,teacher")
+    ev = {**_event("[student]"), "body": json.dumps({"text": "hi"})}
+    ev["requestContext"]["http"] = {"method": "POST"}
+    assert sub.handler(ev, None)["statusCode"] == 403
+    assert post.handler(ev, None)["statusCode"] == 403
