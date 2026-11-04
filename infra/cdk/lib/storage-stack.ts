@@ -4,6 +4,7 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as kms from "aws-cdk-lib/aws-kms";
 import { AppConfig, globalResourceName, resourceName } from "./config";
+import { PeopleTable } from "./people-table";
 
 export interface StorageStackProps extends cdk.StackProps {
   readonly config: AppConfig;
@@ -22,6 +23,8 @@ export interface StorageStackProps extends cdk.StackProps {
 export class StorageStack extends cdk.Stack {
   public readonly mediaBucket: s3.Bucket;
   public readonly referenceTable: dynamodb.Table;
+  /** People/RBAC table (docs/PEOPLE_DATA_MODEL.md). Same KMS key. */
+  public readonly peopleTable: dynamodb.Table;
 
   constructor(scope: Construct, id: string, props: StorageStackProps) {
     super(scope, id, props);
@@ -102,6 +105,16 @@ export class StorageStack extends cdk.Stack {
     });
 
     // ---------------------------------------------------------------------
+    // DynamoDB people table — admins/teachers/parents/students, classes,
+    // links, assignments, reading sessions. Separate from the reference
+    // table (the content pipeline writes there); shares the same CMK.
+    // ---------------------------------------------------------------------
+    this.peopleTable = new PeopleTable(this, "PeopleTable", {
+      config,
+      encryptionKey: key,
+    }).table;
+
+    // ---------------------------------------------------------------------
     // Outputs — the API stack and the ETL app reference these.
     // ---------------------------------------------------------------------
     new cdk.CfnOutput(this, "MediaBucketName", {
@@ -111,6 +124,10 @@ export class StorageStack extends cdk.Stack {
     new cdk.CfnOutput(this, "ReferenceTableName", {
       value: this.referenceTable.tableName,
       description: "DynamoDB reference table.",
+    });
+    new cdk.CfnOutput(this, "PeopleTableName", {
+      value: this.peopleTable.tableName,
+      description: "DynamoDB people table (users, classes, assignments, sessions).",
     });
     new cdk.CfnOutput(this, "StorageKeyArn", {
       value: key.keyArn,
