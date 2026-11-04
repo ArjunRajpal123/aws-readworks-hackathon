@@ -1,0 +1,30 @@
+{
+  "id": "rws-e2-en",
+  "lang": "en",
+  "title": "Losing Power (E2, en)",
+  "text": "Karla smiled.\n\nKarla thought the shadows that the candlelight cast on her parents’ faces made it look like they were about to tell ghost stories.\n\nThe weather forecast said that it was going to snow for another twelve hours.",
+  "source": {
+    "workbook": "RW_Sentences.xlsx",
+    "sheet": "Sentences",
+    "rowId": "E2",
+    "sourceUrl": "https://www.readworks.org/article/Losing-Power/88a5273b-2e19-497b-a771-ef8f5c107198",
+    "machineTranslated": false,
+    "segments": [
+      {
+        "paragraph": 0,
+        "column": "Short simple sentence",
+        "case": "short"
+      },
+      {
+        "paragraph": 1,
+        "column": "Complex longer sentence",
+        "case": "complex"
+      },
+      {
+        "paragraph": 2,
+        "column": "Sentence with a number",
+        "case": "number"
+      }
+    ]
+  }
+}

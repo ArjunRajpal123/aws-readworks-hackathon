@@ -5,17 +5,17 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/v1/text-to-speech?id=f8fbe542f5ed41cf9048631c00f3655d
+  url: {{baseUrl}}/api/v1/text-to-speech?id={{ttsId}}
   body: none
   auth: none
 }
 
 params:query {
-  id: f8fbe542f5ed41cf9048631c00f3655d
+  id: {{ttsId}}
 }
 
 docs {
-  Fetches a previously created record by id. Run "Create (POST)" first in
-  this same session — it sets the `ttsId` variable used here — or paste an
-  id manually into `params:query.id`.
+  Fetches a product record by id, with fresh presigned audio/timing URLs.
+  Run "Create (POST)" first in this same session (it sets `ttsId`), or put
+  any passage id here, e.g. a catalog id written by etl/run_aws.py.
 }

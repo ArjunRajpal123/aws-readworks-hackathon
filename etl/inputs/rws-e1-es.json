@@ -1,0 +1,30 @@
+{
+  "id": "rws-e1-es",
+  "lang": "es",
+  "title": "The Most Important Question (E1, es)",
+  "text": "Era un lugar muy tranquilo.\n\nLas cebras sabían que debían mantenerse alejadas de los leones que las cazaban, y los ratones sabían que debían permanecer escondidos bajo los árboles, lejos de las grandes aves que se lanzaban en picada para comerlos.\n\nLos cuatro animales miraron al hipopótamo, que ya estaba a un tercio del camino dentro del estanque, masticando unas hojas muy verdes con una expresión de satisfacción y felicidad en el rostro.",
+  "source": {
+    "workbook": "RW_Sentences.xlsx",
+    "sheet": "Spanish_MT",
+    "rowId": "E1",
+    "sourceUrl": "https://www.readworks.org/article/The-Most-Important-Question/1bc604a7-d7af-4631-a220-b4ec77a3bb73",
+    "machineTranslated": true,
+    "segments": [
+      {
+        "paragraph": 0,
+        "column": "Short simple sentence",
+        "case": "short"
+      },
+      {
+        "paragraph": 1,
+        "column": "Complex longer sentence",
+        "case": "complex"
+      },
+      {
+        "paragraph": 2,
+        "column": "Sentence with a number",
+        "case": "number"
+      }
+    ]
+  }
+}

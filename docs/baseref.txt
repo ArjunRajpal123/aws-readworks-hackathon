@@ -1,17 +1,140 @@
+Sound Along data contract (schema v3, sa-pipeline-0.3.1)
+=========================================================
+
+One pipeline produces everything: etl/pipeline.py run(). It is called by
+  - etl/run_local.py   -> frontend/public/sa/  (local dev, Vite serves it)
+  - etl/run_aws.py     -> S3 media bucket under sa/ + DynamoDB reference table
+  - POST /api/v1/text-to-speech (Lambda) -> same S3 layout + same table
+so the player and GET read API passages and catalog passages the same way.
+
+Voices are configured in etl/voices.json, never per passage:
+  en-US  tts-1 Danielle (female, default)   tts-2 Stephen (male)
+  es-US  tts-1 Lupe     (female, default)   tts-2 Pedro   (male)
+  Polly Neural, SSML (<p>/<s>, prosody 95%, DRC), lexicons saEnUS / saEsUS.
+
+
+1. S3 layout (bucket = StorageStack MediaBucketName, prefix "sa/")
+------------------------------------------------------------------
+sa/product/<id>.soundAlong.json        product record (section 2), written LAST
+sa/audio/<id>/<trackId>.mp3            audio, 24 kHz MP3
+sa/audio/<id>/<trackId>.timing.json.gz word timing (section 3), Content-Encoding: gzip
+sa/audio/<id>/<trackId>.marks.jsonl    raw Polly word+sentence marks (review only)
+sa/audio/<id>/<trackId>.input.ssml     exact Polly input (review only; .txt if ssml=false)
+
+Keys stored on the record (audioKey, timingKey) are relative to sa/.
+<id> matches [A-Za-z0-9._-]{1,64} (catalog ids like rws-e1-en, or random hex from the API).
+
+
+2. Product record
+-----------------
+Same JSON in sa/product/<id>.soundAlong.json and in DynamoDB (PK "id",
+GSI "lang-index" on "lang"). In DynamoDB, floats are stored as Number
+(Decimal) and null fields are omitted.
+
 {
-  "version": 1,
+  "schemaVersion": 3,
   "id": "001",
+  "lang": "en",                                   // "en" | "es", lowercase
   "title": "Breaking Barriers",
-  "lang": "en",
-  "audio": "audio/001.mp3",
-  "text": "text/001.json",
-  "durationMs": 120000,
-  "unit": "ms",
-  "words": [
-    { "i": 0, "s": 1050, "e": 1310, "t": "Today" },
-    { "i": 1, "s": 1330, "e": 1440, "t": "is" },
-    { "i": 2, "s": 1460, "e": 1520, "t": "a" },
-    { "i": 3, "s": 1540, "e": 1800, "t": "good" },
-    { "i": 4, "s": 1820, "e": 2150, "t": "day." }
-  ]
+  "textHash": "sha256:a633...302a",               // timing is only valid for this text
+  "tokenizerVersion": "sa-tok-en-1.0",
+  "tokenCount": 8,
+  "contentTokenized": "<p><span data-w=\"0\">Today</span> <span data-w=\"1\">is</span> ... <span data-w=\"4\">day.</span></p><p><span data-w=\"5\">Mr.</span> ...</p>",
+  "structure": {
+    "paragraphStarts": [0, 5],                    // token indices
+    "sentenceStarts": [0, 5, 6]
+  },
+  "tracks": [                                     // tracks[0] = default voice (what the player plays)
+    {
+      "id": "tts-1",
+      "kind": "tts",
+      "default": true,
+      "engine": "neural",
+      "voiceId": "Danielle",
+      "voiceGender": "female",
+      "lexicon": "saEnUS",
+      "audioKey": "audio/001/tts-1.mp3",
+      "timingKey": "audio/001/tts-1.timing.json.gz",
+      "timingSource": "polly-speech-marks",
+      "granularity": "word",                      // "word" | "sentence"
+      "configVersion": "en-US/neural/Danielle/ssml/lex-1/r95%/drc1/pb0",
+      "settings": {
+        "textType": "ssml", "rate": "95%", "drc": true, "paragraphBreakMs": 0,
+        "sampleRate": "24000", "lexiconMode": "polly", "pronunciationOverrides": 0
+      },
+      "qa": {
+        "status": "passed",                       // "passed" | "fallback_sentence"
+        "tokens": 8,
+        "marks": 8,                               // Polly word marks received
+        "lowConfidence": [],                      // token indices with interpolated times
+        "durationMs": 24000,
+        "sentences": 3,                           // tokenizer sentences
+        "pollySentences": 2,                      // sentence marks from Polly
+        "ssmlSentences": 2,                       // <s> sent (after merging "Mr." etc.)
+        "mergedSentenceBreaks": [6],
+        "billedChars": 70,
+        "estCostUsd": 0.00112
+      }
+    }
+    // , { "id": "tts-2", "default": false, "voiceId": "Stephen", "voiceGender": "male", ... }
+  ],
+  "generation": {
+    "pipelineVersion": "sa-pipeline-0.3.1",
+    "runAt": "2026-11-04T14:38:37Z",
+    "inputHash": "sha256:a633...302a",
+    "configVersion": "en-US/neural/Danielle/ssml/lex-1/r95%/drc1/pb0",
+    "billedChars": 70,
+    "estCostUsd": 0.00112
+  }
 }
+
+
+3. Timing file (sa/audio/<id>/<trackId>.timing.json.gz, gzipped JSON)
+--------------------------------------------------------------------
+Parallel arrays, milliseconds from audio start, index i = token i
+(= data-w="i" in contentTokenized). end[i] = start[i+1]; last end = duration.
+
+{
+  "v": 1,
+  "trackId": "tts-1",
+  "start": [0, 300, 600, 900, 1200, 1500, 1800, 2100],
+  "end":   [300, 600, 900, 1200, 1500, 1800, 2100, 24000],
+  "n": 8,
+  "durationMs": 24000,
+  "textHash": "sha256:a633...302a"
+}
+
+Player rules (frontend/src/engine.js loadAudio):
+  - use word timing only if tracks[0].qa.status == "passed"
+  - ignore the timing file if timing.textHash != product.textHash
+  - never tokenizes; renders contentTokenized, binary-searches start[], seeks on tap
+
+
+4. API (HTTP API Gateway, ApiStack output ApiUrl)
+-------------------------------------------------
+POST /api/v1/text-to-speech
+  {
+    "text": "Today is a good day.",     // required, <= 3000 chars
+    "languageCode": "en-US",            // optional: en-US (default) | es-US  ("lang": "en" also accepted)
+    "id": "001",                        // optional, default random hex; existing id is regenerated
+    "title": "Breaking Barriers",       // optional, default = id
+    "voiceId": "Stephen",               // optional: add that configured voice's track
+    "allVoices": false,                 // optional: generate every configured track
+    "pronunciation": {"3": {"w": "amazon:VB"}}   // optional per-token overrides
+  }
+  -> 201  product record (section 2) + "urls" (response only, not stored):
+          "urls": { "tts-1": { "audio": "https://<bucket>.s3.us-west-2.amazonaws.com/sa/audio/001/tts-1.mp3?X-Amz-...",
+                               "timing": "https://.../sa/audio/001/tts-1.timing.json.gz?X-Amz-..." } }
+          presigned, expire after TTS_URL_TTL_SECONDS (3600)
+  -> 400  validation error {"error": "..."}
+  -> 502  Polly/S3/DynamoDB failure {"error": "..."}
+  By default only tts-1 is generated so the call fits the 25 s Lambda timeout.
+
+GET /api/v1/text-to-speech?id=001
+  -> 200  same body as POST (stored record + fresh urls)
+  -> 400  missing id      -> 404  unknown id
+
+
+Superseded (pre-PR #9, do not produce): {version:1, audio:"audio/001.mp3",
+text:"text/001.json", words:[{i,s,e,t}]} and the API's
+{id, text_path, audio_path, timestamp:[{id,s,e,block}]} under tts/.

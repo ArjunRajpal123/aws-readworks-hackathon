@@ -1,14 +1,14 @@
 """GET /api/v1/text-to-speech?id=...
 
-Fetches a previously generated text-to-speech record (text url, audio url,
-word timing) by id from the shared reference table. text/audio URLs are
-presigned fresh on every call (see common/s3_store.presigned_url) rather
-than read from storage, so they're always valid for a full
-TTS_URL_TTL_SECONDS from the moment of this request.
+Fetches a Sound Along product record by passage id from the shared
+reference table (written by the pipeline: the API's POST or the ETL's
+run_aws.py) and adds fresh presigned URLs for each track's audio and
+timing file under `urls`.
 """
+
 from common.reference_store import load_record
 from common.responses import error_response, json_response
-from common.s3_store import presigned_url
+from common.s3_store import with_urls
 
 
 def handler(event, context):
@@ -21,9 +21,4 @@ def handler(event, context):
     if record is None:
         return error_response(404, f"No record found for id '{record_id}'")
 
-    response = {
-        **record,
-        "text": presigned_url(record["text_path"]) if record.get("text_path") else None,
-        "audio": presigned_url(record["audio_path"]) if record.get("audio_path") else None,
-    }
-    return json_response(200, response)
+    return json_response(200, with_urls(record))

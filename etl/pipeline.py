@@ -15,6 +15,8 @@ Produces exactly what the player (frontend/src/engine.js, loadAudio) reads:
 
 The player ignores the timing file unless tracks[0].qa.status == 'passed' and
 timing.textHash == product.textHash, so both are written consistently.
+Otherwise qa.status is 'fallback_sentence' and granularity is 'sentence'.
+The full contract (S3 layout, DynamoDB item, API) is docs/baseref.txt.
 """
 
 from __future__ import annotations
@@ -28,9 +30,17 @@ from typing import Protocol
 
 import audio as audio_mod
 import mp3duration
+from ssml import build_ssml, load_inline_lexicon, parse_overrides
 from tokenizer import tokenize
+from voices import tracks_for
 
-PIPELINE_VERSION = "sa-pipeline-0.1.0"
+# 0.3.1: qa.status fallback is "fallback_sentence" (schema v3); API runs this pipeline.
+PIPELINE_VERSION = "sa-pipeline-0.3.1"
+# Polly Neural list price per 1M characters; speech marks are billed separately
+# at the same rate, so billed_chars already counts both requests.
+NEURAL_USD_PER_MCHAR = 16.0
+# Synchronous SynthesizeSpeech also caps total input (SSML tags included).
+SYNC_TOTAL_CHAR_CAP = 6000
 
 
 @dataclass
@@ -39,6 +49,23 @@ class PassageInput:
     lang: str
     title: str
     text: str
+    # Optional per-word pronunciation fixes: {"<tokenIndex>": {"w": "amazon:VB"}}.
+    pronunciation: dict | None = None
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "PassageInput":
+        """Build from an input JSON / API body: {id, lang, title, text, pronunciation?}.
+
+        Shared by run_local.py, run_aws.py and the API Lambda so every entry
+        point reads passages the same way.
+        """
+        return cls(
+            id=data["id"],
+            lang=data.get("lang", "en"),
+            title=data.get("title", data["id"]),
+            text=data["text"],
+            pronunciation=data.get("pronunciation"),
+        )
 
 
 class Storage(Protocol):
@@ -61,16 +88,18 @@ def run(passage: PassageInput, synthesize_fn, storage: Storage) -> dict:
     """
     lang2 = (passage.lang or "en").lower()[:2]
 
-    # --- P1: tokenize ------------------------------------------------------
-    tk = tokenize(passage.text, lang=lang2)
 
-    # detokenized text we send to Polly = the token stream joined by spaces,
-    # so the byte offsets Polly returns line up with our token byte spans.
-    polly_text = " ".join(t.text for t in tk.tokens)
+def _gzip_json(obj: dict) -> bytes:
+    gz = io.BytesIO()
+    with gzip.GzipFile(fileobj=gz, mode="wb") as f:
+        f.write(json.dumps(obj, separators=(",", ":")).encode("utf-8"))
+    return gz.getvalue()
 
-    # --- P3: audio + timing ------------------------------------------------
-    voice = audio_mod.VOICE_BY_LANG.get(lang2, audio_mod.VOICE_BY_LANG["en"])
-    if len(polly_text.encode("utf-8")) > audio_mod.SYNC_CHAR_CAP:
+
+def _make_track(passage: PassageInput, tk, voice, polly_client) -> tuple[dict, dict, dict]:
+    """Synthesize one voice track. Returns (track record, files to write, summary)."""
+    pin = _polly_input(tk, voice, passage)
+    if pin["spoken_chars"] > audio_mod.SYNC_CHAR_CAP or len(pin["text"]) > SYNC_TOTAL_CHAR_CAP:
         raise ValueError(
             f"passage {passage.id} is over Polly's {audio_mod.SYNC_CHAR_CAP}-char "
             "sync cap; async synthesis path not implemented yet"
@@ -81,32 +110,124 @@ def run(passage: PassageInput, synthesize_fn, storage: Storage) -> dict:
 
     timing = audio_mod.build_timing(
         tokens=tk.tokens,
-        polly_text=polly_text,
-        marks_jsonlines=marks,
+        polly_text=pin["text"],
+        marks_jsonlines=synth.marks_jsonlines,
         duration_ms=duration,
-        voice_id=voice["voiceId"],
-        engine=voice["engine"],
+        voice_id=voice.voice_id,
+        engine=voice.engine,
         text_hash=tk.text_hash,
+        token_spans=pin["spans"],
     )
 
-    # --- keys --------------------------------------------------------------
-    audio_key = f"audio/{passage.id}/tts-1.mp3"
-    timing_key = f"audio/{passage.id}/tts-1.timing.json.gz"
+    tid = voice.track_id
+    ext = "ssml" if pin["type"] == "ssml" else "txt"
+    audio_key = f"audio/{passage.id}/{tid}.mp3"
+    timing_key = f"audio/{passage.id}/{tid}.timing.json.gz"
+    # Review/debug artifacts (not read by the player).
+    marks_key = f"audio/{passage.id}/{tid}.marks.jsonl"
+    input_key = f"audio/{passage.id}/{tid}.input.{ext}"
 
-    # --- timing blob (gzipped JSON) ---------------------------------------
+    # start/end/n/textHash are what the player reads; v/trackId/durationMs
+    # complete the team schema's timingFile shape (the player ignores them).
     timing_json = {
+        "v": 1,
+        "trackId": tid,
         "start": timing.start,
         "end": timing.end,
         "n": timing.n,
+        "durationMs": timing.duration_ms,
         "textHash": tk.text_hash,
     }
-    gz = io.BytesIO()
-    with gzip.GzipFile(fileobj=gz, mode="wb") as f:
-        f.write(json.dumps(timing_json, separators=(",", ":")).encode("utf-8"))
-    timing_gz = gz.getvalue()
+    cost = round(synth.billed_chars * NEURAL_USD_PER_MCHAR / 1_000_000, 5)
+
+    track = {
+        "id": tid,
+        "kind": "tts",
+        "default": voice.default,
+        "engine": voice.engine,
+        "voiceId": voice.voice_id,
+        "voiceGender": voice.gender,
+        "lexicon": voice.lexicon_name if voice.lexicon_name else None,
+        "audioKey": audio_key,
+        "timingKey": timing_key,
+        "timingSource": "polly-speech-marks",
+        "granularity": "word" if timing.qa_status == "passed" else "sentence",
+        "configVersion": voice.config_version,
+        "settings": {
+            "textType": pin["type"],
+            "rate": voice.rate,
+            "drc": voice.drc,
+            "paragraphBreakMs": voice.paragraph_break_ms,
+            "sampleRate": voice.sample_rate,
+            "lexiconMode": ("inline" if voice.inline_lexicon
+                            else "polly" if voice.lexicon_names else "none"),
+            "pronunciationOverrides": len(passage.pronunciation or {}),
+        },
+        "qa": {
+            "status": timing.qa_status,
+            "tokens": timing.n,
+            "marks": word_marks,
+            "lowConfidence": timing.low_conf,
+            "durationMs": timing.duration_ms,
+            "sentences": len(tk.sentence_starts),
+            "pollySentences": polly_sentences,
+            # Sentences Polly was given (<s>): tokenizer sentences minus
+            # false breaks after "Mr."/"U.S." etc. Should equal pollySentences.
+            "ssmlSentences": pin["ssml_sentences"],
+            "mergedSentenceBreaks": pin["merged"],
+            "billedChars": synth.billed_chars,
+            "estCostUsd": cost,
+        },
+    }
+    files = {
+        audio_key: (synth.mp3, "audio/mpeg", None),
+        timing_key: (_gzip_json(timing_json), "application/json", "gzip"),
+        marks_key: (synth.marks_jsonlines.encode("utf-8"), "application/x-ndjson", None),
+        input_key: (pin["text"].encode("utf-8"),
+                    "application/ssml+xml" if ext == "ssml" else "text/plain", None),
+    }
+    summary = {
+        "track": tid,
+        "voiceId": voice.voice_id,
+        "voiceGender": voice.gender,
+        "qa": timing.qa_status,
+        "lowConfidence": len(timing.low_conf),
+        "durationMs": timing.duration_ms,
+        "pollySentences": polly_sentences,
+        "ssmlSentences": pin["ssml_sentences"],
+        "billedChars": synth.billed_chars,
+        "estCostUsd": cost,
+        "audioKey": audio_key,
+        "timingKey": timing_key,
+    }
+    return track, files, summary
+
+
+def run(passage: PassageInput, polly_client, storage: Storage,
+        track_ids: list[str] | None = None) -> dict:
+    """Run P1+P3 for one passage and write the player-facing output.
+
+    One audio track per voice in voices.json for the passage's language
+    (e.g. tts-1 female = default, tts-2 male). tracks[0] is the default
+    track, which is what the player plays. `track_ids` limits which extra
+    tracks are generated (the default track is always included).
+    """
+    lang2 = (passage.lang or "en").lower()[:2]
+
+    # --- P1: tokenize ------------------------------------------------------
+    tk = tokenize(passage.text, lang=lang2)
+
+    # --- P3: audio + timing, one track per configured voice -----------------
+    voices = [v for v in tracks_for(lang2)
+              if v.default or track_ids is None or v.track_id in track_ids]
+    built = [_make_track(passage, tk, v, polly_client) for v in voices]
+    tracks = [b[0] for b in built]
+    summaries = [b[2] for b in built]
+    default = summaries[0]
 
     # --- product record ----------------------------------------------------
     now = datetime.now(timezone.utc).isoformat()
+    billed = sum(s["billedChars"] for s in summaries)
     product = {
         "schemaVersion": 3,
         "id": passage.id,
@@ -120,38 +241,21 @@ def run(passage: PassageInput, synthesize_fn, storage: Storage) -> dict:
             "paragraphStarts": tk.paragraph_starts,
             "sentenceStarts": tk.sentence_starts,
         },
-        "tracks": [
-            {
-                "id": "tts-1",
-                "kind": "tts",
-                "engine": voice["engine"],
-                "voiceId": voice["voiceId"],
-                "lexicon": None,
-                "audioKey": audio_key,
-                "timingKey": timing_key,
-                "timingSource": "polly-speech-marks",
-                "granularity": "word" if timing.qa_status == "passed" else "sentence",
-                "qa": {
-                    "status": timing.qa_status,
-                    "tokens": timing.n,
-                    "marks": timing.n,
-                    "lowConfidence": timing.low_conf,
-                    "durationMs": timing.duration_ms,
-                },
-            }
-        ],
+        "tracks": tracks,
         "generation": {
             "pipelineVersion": PIPELINE_VERSION,
             "runAt": now,
             "inputHash": tk.text_hash,
+            "configVersion": tracks[0]["configVersion"],
+            "billedChars": billed,
+            "estCostUsd": round(billed * NEURAL_USD_PER_MCHAR / 1_000_000, 5),
         },
     }
 
-    # --- write -------------------------------------------------------------
-    storage.put_bytes(audio_key, mp3_bytes, "audio/mpeg")
-    storage.put_bytes(
-        timing_key, timing_gz, "application/json", content_encoding="gzip"
-    )
+    # --- write: every track's files first, the product record last ---------
+    for _, files, _ in built:
+        for key, (data, ctype, enc) in files.items():
+            storage.put_bytes(key, data, ctype, content_encoding=enc)
     storage.put_bytes(
         f"product/{passage.id}.soundAlong.json",
         json.dumps(product, ensure_ascii=False, indent=2).encode("utf-8"),
@@ -159,12 +263,16 @@ def run(passage: PassageInput, synthesize_fn, storage: Storage) -> dict:
     )
     storage.put_record(passage.id, product)
 
+    # Top-level fields describe the default track (unchanged shape), plus
+    # one summary per track.
+    keep = ("durationMs", "qa", "lowConfidence", "pollySentences",
+            "ssmlSentences", "voiceId", "audioKey", "timingKey")
     return {
         "id": passage.id,
         "tokenCount": tk.token_count,
-        "durationMs": timing.duration_ms,
-        "qa": timing.qa_status,
-        "lowConfidence": len(timing.low_conf),
-        "audioKey": audio_key,
-        "timingKey": timing_key,
+        "sentences": len(tk.sentence_starts),
+        **{k: default[k] for k in keep},
+        "billedChars": billed,
+        "estCostUsd": product["generation"]["estCostUsd"],
+        "tracks": summaries,
     }
