@@ -1,0 +1,10 @@
+{
+  "id": "k2es",
+  "lang": "es",
+  "title": "Encuentra los colores del arcoíris",
+  "text": "¿Puedes imaginar los colores del arcoíris? Nuestro planeta está lleno de estos colores.\n\nLas fresas son rojas. Las catarinas también son rojas.\n\nLas calabazas son naranjas. ¿Qué más es naranja? Unas hojas en otoño son naranjas.\n\nLos girasoles y los limones son amarillos. A veces, los patitos también son amarillos.\n\nUn animal verde es el cocodrilo. Y el pasto es verde.\n\nEl cielo sin nubes es azul. Otra cosa azul es el océano y sus grandes olas.\n\nHay uvas moradas. ¿Sabías que las medusas también pueden ser moradas?\n\nBusca los colores del arcoíris en el mundo. ¡Quizá puedas sacarles fotos!",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode k2es"
+  }
+}

@@ -1,14 +1,10 @@
 {
   "id": "rwq-e2q1-en",
   "lang": "en",
-  "title": "Losing Power (E2q1, en)",
+  "title": "Losing Power: E2q1",
   "text": "Why is Karla able to leave school early?",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E2",
-    "readworksUuid": "88a5273b-2e19-497b-a771-ef8f5c107198",
-    "abridged": true,
-    "question": "E2q1",
-    "readworksQid": 22941
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E2-k2"
   }
 }

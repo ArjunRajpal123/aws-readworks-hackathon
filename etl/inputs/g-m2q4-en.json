@@ -1,0 +1,10 @@
+{
+  "id": "g-m2q4-en",
+  "lang": "en",
+  "title": "The Last Page of the Library: M2q4",
+  "text": "What does Mara most likely decide to do at the end?\n\nA. Try to convince the council to rethink closing the library\n\nB. Take the atlas home for herself\n\nC. Finish boxing the books as fast as possible\n\nD. Ask Eli to help her pack",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-M2"
+  }
+}

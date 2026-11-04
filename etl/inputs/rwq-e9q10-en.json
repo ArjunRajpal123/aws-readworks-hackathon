@@ -1,14 +1,10 @@
 {
   "id": "rwq-e9q10-en",
   "lang": "en",
-  "title": "Lizzie Escapes (E9q10, en)",
+  "title": "Lizzie Escapes: E9q10",
   "text": "Why does Lizzie ask Jenny whether she wants to help sort the books in the library? Support your answer with evidence from the passage.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E9",
-    "readworksUuid": "6b5dc923-b7a2-475b-8a26-6dde0ef73e50",
-    "abridged": true,
-    "question": "E9q10",
-    "readworksQid": 11921
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E9-k2"
   }
 }

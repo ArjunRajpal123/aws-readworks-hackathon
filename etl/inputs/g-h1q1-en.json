@@ -1,0 +1,10 @@
+{
+  "id": "g-h1q1-en",
+  "lang": "en",
+  "title": "How the Printing Press Changed the World: H1q1",
+  "text": "How were books produced in Europe before the printing press?\n\nA. They were printed on wooden blocks\n\nB. They were imported ready-made\n\nC. They were copied by hand\n\nD. They were made in large factories",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-H1"
+  }
+}

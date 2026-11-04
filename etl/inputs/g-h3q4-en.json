@@ -1,0 +1,10 @@
+{
+  "id": "g-h3q4-en",
+  "lang": "en",
+  "title": "The Weight of an Unsent Letter: H3q4",
+  "text": "Why does the night feel \"wide rather than heavy\" at the end?\n\nA. The streetlamp becomes brighter\n\nB. He feels relief after letting go of a long-held burden\n\nC. He knows Tomas will answer quickly\n\nD. He decides to move away from the town",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-H3"
+  }
+}

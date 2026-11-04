@@ -1,14 +1,10 @@
 {
   "id": "rwq-e6q4-en",
   "lang": "en",
-  "title": "Breaking (E6q4, en)",
+  "title": "Breaking: E6q4",
   "text": "How can Oliver best be described?\n\nA. talented but lazy\n\nB. athletic and busy\n\nC. curious and inquisitive\n\nD. intelligent and friendly",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E6",
-    "readworksUuid": "3632d2cb-d424-4c87-96e6-f851b4b9e185",
-    "abridged": true,
-    "question": "E6q4",
-    "readworksQid": 9434
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E6-k2"
   }
 }

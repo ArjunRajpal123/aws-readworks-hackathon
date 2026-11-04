@@ -1,0 +1,10 @@
+{
+  "id": "g-h3-en",
+  "lang": "en",
+  "title": "The Weight of an Unsent Letter",
+  "text": "The letter had lived in the pocket of Daniel's coat for eleven winters, and its envelope had softened like cloth. He had written it meticulously, over three evenings, crossing out each clumsy phrase until what remained sounded like a man who had never been angry. Yet he had never mailed it. Each time he reached the box on Calder Street, his hand paused over the slot, held there by something he could not name, and he walked on.\n\nHis brother Tomas had left after the argument about their father's house, and the years since had thinned their tenuous connection to a card at the holidays, signed with initials only. Daniel told himself that his silence was a form of dignity. His wife called it reticence, gently, the way one names an illness one hopes is not serious. What he felt, if he was honest, was a deep ambivalence: he longed to be forgiven, and he longed even more not to be the one who asked.\n\nOn the anniversary of their father's death, he finally took the letter out and read it under the streetlamp. The words seemed to belong to someone else, someone who still believed that sentences could repair what stubbornness had broken. Reading it, he understood that the letter's true purpose had never been to reach Tomas. It was a vestige of the argument, a way of keeping the quarrel alive by never ending it.\n\nHe folded the pages once more, and then he did what eleven winters had not allowed. He let the envelope fall into the box and listened to it land in the dark below. It was not courage exactly, only a decision to relinquish the comfort of being the wronged one. Behind him, the streetlamp hummed, and for the first time in years the night felt wide rather than heavy.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode g-H3"
+  }
+}

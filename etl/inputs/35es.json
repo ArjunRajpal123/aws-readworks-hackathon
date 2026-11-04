@@ -1,0 +1,10 @@
+{
+  "id": "35es",
+  "lang": "es",
+  "title": "Una fiesta del té muy desordenada",
+  "text": "A muchos ingleses les encanta el té. Les encanta desde que se trajo a Inglaterra por primera vez desde China. En el siglo XVIII, llevaron su amor por el té a sus colonias de América del Norte.\n\nEn esa época, existía una empresa inglesa llamada Compañía de las Indias Orientales. Esta empresa traía té de la India a Inglaterra. Llevarlo hasta allí costaba mucho dinero. Los impuestos hacían que ese costo fuera aún más alto. Un impuesto es dinero que la gente tiene que pagar al gobierno. El gobierno inglés hizo un trato con la Compañía de las Indias Orientales a principios del siglo XVIII.\n\nSin embargo, a la gente de las colonias de América del Norte no le gustaba pagar tanto por el té. Decidieron comprar otro té. Lo compraban a unos holandeses que lo metían a escondidas en las colonias. Este té era tan bueno como el té inglés. Además, era más barato. ¿Y qué si comprarlo iba contra la ley? A los colonos no les importaba. Aun así tomaban su taza de té y les quedaba dinero.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode 35es"
+  }
+}

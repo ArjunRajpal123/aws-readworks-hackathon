@@ -1,0 +1,10 @@
+{
+  "id": "g-m1q3-en",
+  "lang": "en",
+  "title": "How Bees Find Flowers: M1q3",
+  "text": "Why are the patterns on some petals useful to bees?\n\nA. They point the way to the nectar\n\nB. They warn bees to stay away\n\nC. They tell bees which way is the hive\n\nD. They make the flowers smell stronger",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-M1"
+  }
+}

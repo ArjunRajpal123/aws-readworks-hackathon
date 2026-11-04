@@ -1,0 +1,10 @@
+{
+  "id": "g-k1q1-en",
+  "lang": "en",
+  "title": "The Red Wagon: K1q1",
+  "text": "What does Sam see in the yard?\n\nA. A small dog\n\nB. A big box\n\nC. A red kite\n\nD. A pile of leaves",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-K1"
+  }
+}

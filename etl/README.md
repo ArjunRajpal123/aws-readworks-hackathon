@@ -39,7 +39,17 @@ cd ../frontend && npm install && npm run dev     # then http://127.0.0.1:5173/?m
 
 Use `--track tts-1` to generate only the default voice (half the cost). To compare voices, run `audition.py inputs/rws-e9-en.json --voices Danielle,Stephen,Ruth --profile <your-profile>` and open `frontend/public/sa/audition/audition.html`.
 
-The UI's full ReadWorks passages and comprehension questions are inputs too: `inputs/rwf-<passage>-en.json` (full passage) and `inputs/rwq-<passage>q<n>-en.json` (one question with its choices), exported from `frontend/src/data_q.js` by `node frontend/scripts/export_inputs.mjs`. Generate them with `run_local.py "inputs/rwf-*.json" "inputs/rwq-*.json"` (about $5 for both voices). Passages over Polly's 3,000-character limit are synthesized in parts and joined (see `docs/STAGE2_AUDIO.md`).
+Every passage and question the player shows has an input, named by the audio id the player requests (set once in `frontend/src`: `mode.audio` / `question.audio`):
+
+| Inputs | What | Count |
+|---|---|---|
+| `rws-<passage>-<en\|es>` | ReadWorks sentence sets (from `docs/RW_Sentences.xlsx`) | 18 |
+| `rwf-<passage>-en` | full ReadWorks passages | 9 |
+| `rwq-<passage>q<n>-en` | ReadWorks comprehension questions (question, then choices) | 90 |
+| `g-<story>-en`, `g-<story>q<n>-en` | original grade-level stories and their questions | 9 + 36 |
+| `k2`, `35`, `68`, `912` (+ `es`) | demo passages | 8 |
+
+Refresh them after the UI's text changes with `node etl/export_player_inputs.mjs --out-dir etl/inputs --only rwf-,rwq-,g-,k2,35,68,912` (the `rws-*` files come from `extract_sentences.py`). The same script without `--out-dir` feeds the cloud ETL (`upload_incoming.py`). Generating all 170 costs about $6.20 for both voices (full passages + their questions, `run_local.py "inputs/rwf-*.json" "inputs/rwq-*.json"`, about $4.30; `--track tts-1` halves it). Passages over Polly's 3,000-character limit are synthesized in parts and joined (see `docs/STAGE2_AUDIO.md`).
 
 After generating new audio, restart `npm run dev`: the dev server ignores `public/sa/` changes (`vite.config.js`), so new files are only served after a restart.
 

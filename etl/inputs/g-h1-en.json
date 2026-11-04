@@ -1,0 +1,10 @@
+{
+  "id": "g-h1-en",
+  "lang": "en",
+  "title": "How the Printing Press Changed the World",
+  "text": "Before the middle of the fifteenth century, every book in Europe was copied by hand. A single manuscript could take a scribe months to finish, so books were expensive and rare, and few people ever owned one, and most belonged to monasteries, universities, or wealthy families. Around the 1450s, a German craftsman named Johannes Gutenberg combined several existing technologies, including a press adapted from those used for making wine, with metal type that could be rearranged and reused. The result was a method of producing identical pages quickly and at far lower cost, which transformed what a single workshop could accomplish.\n\nPrinting soon proliferated across European cities. Within a few decades, the number of books in circulation had grown, and soon the supply reached far beyond anything scribes could have produced. The dissemination of information no longer depended on rare handwritten copies, and ideas could travel farther and faster than ever before, crossing borders and languages with surprising ease. Because printers could produce many copies of the same text, scholars could compare identical editions, spot errors, and build on one another's work, which helped to standardize spelling, grammar, and even scientific diagrams.\n\nThe press also served as a catalyst for social and religious upheaval. When Martin Luther criticized certain practices of the church in the early sixteenth century, printers reproduced his pamphlets and spread them across Germany with a speed that authorities could not match. Rulers and church leaders, accustomed to controlling what people read, found their influence undermined by cheap pamphlets that were difficult to suppress. Over time, as printed material became more affordable and reached more households, reading spread beyond the elite, and literacy gradually rose, although the change took generations and was uneven from place to place.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode g-H1"
+  }
+}

@@ -1,14 +1,10 @@
 {
   "id": "rwq-e8q4-en",
   "lang": "en",
-  "title": "Field Trip (E8q4, en)",
+  "title": "Field Trip: E8q4",
   "text": "At the end of the story Jeremy refers to the exhibits on the field trip as “kiddie” exhibits. What does this suggest he feels?\n\nA. He is only interested in astronomy if he can use a telescope.\n\nB. He feels that science is a subject for little kids.\n\nC. He’s lost his interest in space because he missed the field trip to the museum and ended up at the conservatory.\n\nD. He has learned something he considers more grown up and useful at the conservatory than he would have on his field trip.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E8",
-    "readworksUuid": "eeff0e15-58d8-45b1-8161-93ef6ab4ad49",
-    "abridged": true,
-    "question": "E8q4",
-    "readworksQid": 10528
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E8-k2"
   }
 }

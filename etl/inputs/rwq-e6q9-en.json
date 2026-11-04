@@ -1,14 +1,10 @@
 {
   "id": "rwq-e6q9-en",
   "lang": "en",
-  "title": "Breaking (E6q9, en)",
+  "title": "Breaking: E6q9",
   "text": "What started Oliver’s interest in newspapers and reporters?",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E6",
-    "readworksUuid": "3632d2cb-d424-4c87-96e6-f851b4b9e185",
-    "abridged": true,
-    "question": "E6q9",
-    "readworksQid": 9439
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E6-k2"
   }
 }

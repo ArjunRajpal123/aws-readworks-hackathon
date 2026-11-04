@@ -15,8 +15,7 @@ export function createQuestions({ t, stopPassage, voiceOn, voice }) {
     if (cache[ck] !== undefined) return cache[ck]
     cache[ck] = null
     try {
-      // Pipeline product for this question: rwq-<id>-en (scripts/export_inputs.mjs).
-      const prod = await (await fetch(`sa/product/rwq-${id.toLowerCase()}-en.soundAlong.json`)).json()
+      const prod = await (await fetch(`sa/product/${id}.soundAlong.json`)).json()
       const want = voice(), ok = x => x.qa && x.qa.status !== 'failed'
       const tr = prod.tracks.find(x => x.voiceId === want && ok(x)) || prod.tracks.find(x => x.default && ok(x)) || prod.tracks.find(ok)
       if (!tr) return null
@@ -45,7 +44,7 @@ export function createQuestions({ t, stopPassage, voiceOn, voice }) {
     if (cur && cur.btn === btn) { stop(); return }
     stopPassage() // also stops any other question
     const spans = [...card.querySelectorAll('[data-qw]')]
-    const a = await loadAudio(q.id)
+    const a = await loadAudio(q.audio || q.id) // pipeline product id (set in data_full.js / grade_modes.js)
     if (!a || a.n !== spans.length) { btn.querySelector('span').textContent = t('qNoAudio'); return }
     const au = a.audio
     cur = { id: q.id, audio: au, btn, spans, raf: 0 }
@@ -108,6 +107,7 @@ export function createQuestions({ t, stopPassage, voiceOn, voice }) {
     const done = Object.keys(answered).length
     const ok = Object.values(answered).filter(Boolean).length
     el.textContent = mc ? t('qScore', done, mc, ok) : ''
+    window.dispatchEvent(new CustomEvent('sa-quiz', { detail: { done, mc, ok } }))
   }
 
   sec.addEventListener('click', e => {

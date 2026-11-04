@@ -1,14 +1,10 @@
 {
   "id": "rwq-e9q2-en",
   "lang": "en",
-  "title": "Lizzie Escapes (E9q2, en)",
+  "title": "Lizzie Escapes: E9q2",
   "text": "What is the conflict in this story?\n\nA. Lizzie wants to go to summer camp, but her mom wants her to stay home.\n\nB. Lizzie does not want to go to summer camp, but her mom is making her go.\n\nC. Lizzie likes the early writing of Don DeLillo, but she does not like DeLillo’s later writing.\n\nD. Lizzie wants to go to the library at six in the morning, but the library does not open until nine.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E9",
-    "readworksUuid": "6b5dc923-b7a2-475b-8a26-6dde0ef73e50",
-    "abridged": true,
-    "question": "E9q2",
-    "readworksQid": 11909
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E9-k2"
   }
 }

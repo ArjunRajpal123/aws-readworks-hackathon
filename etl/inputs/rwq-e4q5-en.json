@@ -1,14 +1,10 @@
 {
   "id": "rwq-e4q5-en",
   "lang": "en",
-  "title": "Experiments (E4q5, en)",
+  "title": "Experiments: E4q5",
   "text": "What is this story mainly about?\n\nA. Joey’s food experiments and DeSean’s weight experiment\n\nB. how to make chocolate corn-cake-flavored spaghetti and green-bean meatballs\n\nC. how to make sure that leftover food weighs as little as possible\n\nD. the reasons that Kayla thinks Joey’s food experiments are gross",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E4",
-    "readworksUuid": "7c0ac02b-78d6-44ba-b843-df81b31938e1",
-    "abridged": true,
-    "question": "E4q5",
-    "readworksQid": 10447
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E4-k2"
   }
 }

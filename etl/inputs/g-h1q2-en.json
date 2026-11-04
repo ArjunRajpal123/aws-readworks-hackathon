@@ -1,0 +1,10 @@
+{
+  "id": "g-h1q2-en",
+  "lang": "en",
+  "title": "How the Printing Press Changed the World: H1q2",
+  "text": "What was Gutenberg's key contribution, according to the passage?\n\nA. He combined existing technologies, including a press and reusable metal type, into a fast printing method\n\nB. He invented paper\n\nC. He was the first person to write a book in German\n\nD. He founded the first university",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-H1"
+  }
+}

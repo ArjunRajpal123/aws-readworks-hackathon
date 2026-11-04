@@ -1,14 +1,10 @@
 {
   "id": "rwq-e6q1-en",
   "lang": "en",
-  "title": "Breaking (E6q1, en)",
+  "title": "Breaking: E6q1",
   "text": "Who is Oliver Acton?\n\nA. a journalist at a television network\n\nB. a reporter for the school paper\n\nC. a famous journalist for the New York Times\n\nD. a talented boy in the second grade",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E6",
-    "readworksUuid": "3632d2cb-d424-4c87-96e6-f851b4b9e185",
-    "abridged": true,
-    "question": "E6q1",
-    "readworksQid": 9431
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E6-k2"
   }
 }

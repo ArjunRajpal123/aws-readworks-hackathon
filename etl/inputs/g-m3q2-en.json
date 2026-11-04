@@ -1,0 +1,10 @@
+{
+  "id": "g-m3q2-en",
+  "lang": "en",
+  "title": "Why the Moon Has Phases: M3q2",
+  "text": "Why does the Moon shine?\n\nA. It makes its own light\n\nB. It reflects light from Earth's oceans\n\nC. It burns hot gases\n\nD. It reflects light from the Sun",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-M3"
+  }
+}

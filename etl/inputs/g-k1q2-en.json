@@ -1,0 +1,10 @@
+{
+  "id": "g-k1q2-en",
+  "lang": "en",
+  "title": "The Red Wagon: K1q2",
+  "text": "Who helps Sam?\n\nA. Mom\n\nB. A friend\n\nC. Dad\n\nD. A neighbor",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-K1"
+  }
+}

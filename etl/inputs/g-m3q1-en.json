@@ -1,0 +1,10 @@
+{
+  "id": "g-m3q1-en",
+  "lang": "en",
+  "title": "Why the Moon Has Phases: M3q1",
+  "text": "According to the passage, what causes the phases of the Moon?\n\nA. Earth's shadow falling on the Moon\n\nB. The Moon changing how much light it makes\n\nC. Clouds covering parts of the Moon\n\nD. Our changing view of the Moon's lit half as it orbits Earth",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-M3"
+  }
+}

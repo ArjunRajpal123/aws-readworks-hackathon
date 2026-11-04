@@ -1,14 +1,10 @@
 {
   "id": "rwq-e5q6-en",
   "lang": "en",
-  "title": "Slow and Steady (E5q6, en)",
+  "title": "Slow and Steady: E5q6",
   "text": "The author begins the passage by asking several questions. Why does the author begin the passage that way?\n\nA. The author could not decide which question he should answer later in the passage.\n\nB. The author wants the readers to give the answers to all of the questions he provides.\n\nC. The author wants to ask questions that no one will be able to answer.\n\nD. The author wants to introduce the questions that will be answered later in the passage.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E5",
-    "readworksUuid": "4012bc7e-1e10-4df1-a285-99856d4148b5",
-    "abridged": true,
-    "question": "E5q6",
-    "readworksQid": 11687
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E5-k2"
   }
 }

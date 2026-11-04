@@ -1,0 +1,10 @@
+{
+  "id": "912es",
+  "lang": "es",
+  "title": "Fragmento de Orgullo y prejuicio",
+  "text": "Por fin se hizo perceptible la Rectoría. El jardín en pendiente hasta el camino, la casa que se alzaba en él, las empalizadas verdes y el seto de laurel, todo anunciaba que habían llegado. El señor Collins y Charlotte aparecieron en la puerta, y el carruaje se detuvo ante la pequeña verja que conducía, por un corto sendero de grava, hasta la casa, entre los gestos de cabeza y las sonrisas de toda la comitiva. En un momento todos estaban fuera del coche, regocijándose al verse unos a otros. La señora Collins recibió a su amiga con la más viva alegría, y Elizabeth se sentía cada vez más satisfecha de haber venido al encontrarse recibida con tanto afecto. Vio al instante que los modales de su primo no se habían alterado con el matrimonio; su cortesía formal era la misma de siempre, y la retuvo unos minutos en la verja para oír y satisfacer sus preguntas por toda su familia. Luego, sin más demora que la de señalar lo cuidada que estaba la entrada, los hicieron pasar a la casa; y en cuanto estuvieron en el salón, les dio la bienvenida por segunda vez, con ostentosa formalidad, a su humilde morada, y repitió puntualmente todos los ofrecimientos de refrigerio de su esposa.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode 912es"
+  }
+}

@@ -1,14 +1,10 @@
 {
   "id": "rwq-e9q9-en",
   "lang": "en",
-  "title": "Lizzie Escapes (E9q9, en)",
+  "title": "Lizzie Escapes: E9q9",
   "text": "What does Lizzie ask Jenny at the end of the story?",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E9",
-    "readworksUuid": "6b5dc923-b7a2-475b-8a26-6dde0ef73e50",
-    "abridged": true,
-    "question": "E9q9",
-    "readworksQid": 11920
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E9-k2"
   }
 }

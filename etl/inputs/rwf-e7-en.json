@@ -1,12 +1,10 @@
 {
   "id": "rwf-e7-en",
   "lang": "en",
-  "title": "Save the World (E7, full, en)",
+  "title": "Save the World",
   "text": "That chocolate pudding you had for dessert was delicious! You lick the lid, and you're ready to throw out the container—along with the plastic spoon. Stop right there! You can recycle that spoon!\n\nRecycling is the practice of using items or materials again. That cuts down on the amount of waste on the planet. Americans recycle much of their garbage. According to the Environmental Protection Agency, the United States recycles more than 30 percent of its waste.\n\nIn 1999, recycling kept more than 64 tons of material from ending up in landfills. But there is still more that can be done.\n\nThere are several ways to recycle around the home. If your community has a curbside pickup program, you can leave recyclable materials outside. The materials are then collected and brought to recycling centers. Another option is to take recyclable items to a refund center. For example, you can take many types of cans to can-return machines at supermarkets. Drop in the cans and you receive a small amount of money for each one.\n\nIt is easy to separate recyclable items from other trash. Paper, plastic bottles, and aluminum cans can usually be recycled. To make it easy, keep separate recycling bins in various places in your home. If you are writing in your room and have scrap paper, you can toss it into a recycling bin instead of throwing it out.\n\nPlant a tree. You can gather seeds, or you can buy a tree to plant. Trees help give us oxygen, which we need in order to live. Visit arborday.org for more information.\n\nReuse plasticware. If you use plastic forks, knives, or spoons during meals, wash them and then use them again the next day. You will have less garbage, and you won't need to spend as much money on utensils.\n\nTurn off the lights when you leave a room. If no one is in a room, why keep it lit? Turn off lights, televisions, and other power-using devices when you don't need them. You will save energy.\n\nDonate old clothes. When clothing doesn't fit anymore, don't just throw it out. Donate the clothing to someone who needs it. Visit salvationarmyusa.org. You will not only cut down on waste but also help someone who might be unable to afford clothes.\n\nReturn cell phone batteries. Cell phone batteries contain chemicals that can pollute air and water. Find out whether the phone store has a recycling program; if not, ask the employees whether they know of a program that collects the batteries. Visit recyclewirelessphones.com for more information.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E7",
-    "readworksUuid": "40fa3460-ebba-456a-a59a-10d7bdc09b65",
-    "abridged": true
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode rwf-E7-k2"
   }
 }

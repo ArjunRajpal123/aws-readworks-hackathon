@@ -1,0 +1,10 @@
+{
+  "id": "g-m1q4-en",
+  "lang": "en",
+  "title": "How Bees Find Flowers: M1q4",
+  "text": "Which statement best summarizes the passage?\n\nA. Bees prefer bright red flowers above all others\n\nB. Bees cannot find flowers without help from people\n\nC. Bees collect pollen only to feed adult bees\n\nD. Bees use sight, smell, and a special dance to find and share food, and in doing so help plants",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-M1"
+  }
+}

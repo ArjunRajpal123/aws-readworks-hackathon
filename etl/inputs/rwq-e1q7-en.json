@@ -1,14 +1,10 @@
 {
   "id": "rwq-e1q7-en",
   "lang": "en",
-  "title": "The Most Important Question (E1q7, en)",
+  "title": "The Most Important Question: E1q7",
   "text": "Choose the answer that best completes the sentence below.\n\nThe giraffe was worried about the hippopotamus __________ they eat the same plants.\n\nA. because\n\nB. although\n\nC. but\n\nD. so",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E1",
-    "readworksUuid": "1bc604a7-d7af-4631-a220-b4ec77a3bb73",
-    "abridged": true,
-    "question": "E1q7",
-    "readworksQid": 10269
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E1-k2"
   }
 }

@@ -1,14 +1,10 @@
 {
   "id": "rwq-e4q9-en",
   "lang": "en",
-  "title": "Experiments (E4q9, en)",
+  "title": "Experiments: E4q9",
   "text": "What experiment does DeSean decide to conduct?",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E4",
-    "readworksUuid": "7c0ac02b-78d6-44ba-b843-df81b31938e1",
-    "abridged": true,
-    "question": "E4q9",
-    "readworksQid": 10451
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E4-k2"
   }
 }

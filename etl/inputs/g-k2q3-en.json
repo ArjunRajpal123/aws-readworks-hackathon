@@ -1,0 +1,10 @@
+{
+  "id": "g-k2q3-en",
+  "lang": "en",
+  "title": "Why Leaves Change Color: K2q3",
+  "text": "Why is there less sunlight in autumn?\n\nA. The sun goes away\n\nB. The days get shorter\n\nC. Clouds cover all the trees\n\nD. The leaves block it",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-K2"
+  }
+}
