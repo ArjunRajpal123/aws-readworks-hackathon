@@ -1,0 +1,10 @@
+{
+  "id": "g-h3q3-en",
+  "lang": "en",
+  "title": "The Weight of an Unsent Letter: H3q3",
+  "text": "What does Daniel realize about the letter under the streetlamp?\n\nA. It was well written enough to persuade Tomas\n\nB. It proved that he had been right\n\nC. It was a gift for his wife\n\nD. It had become a way of keeping the quarrel alive without ending it",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-H3"
+  }
+}

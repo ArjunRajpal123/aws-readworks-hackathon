@@ -1,14 +1,10 @@
 {
   "id": "rwq-e9q8-en",
   "lang": "en",
-  "title": "Lizzie Escapes (E9q8, en)",
+  "title": "Lizzie Escapes: E9q8",
   "text": "What job does Mr. Scottadino ask Lizzie to do?",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E9",
-    "readworksUuid": "6b5dc923-b7a2-475b-8a26-6dde0ef73e50",
-    "abridged": true,
-    "question": "E9q8",
-    "readworksQid": 11919
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E9-k2"
   }
 }

@@ -1,0 +1,10 @@
+{
+  "id": "g-m2q1-en",
+  "lang": "en",
+  "title": "The Last Page of the Library: M2q1",
+  "text": "Why is the Alder Street Library being emptied?\n\nA. A flood damaged the building\n\nB. Too many books were stolen\n\nC. The town council voted to close it\n\nD. Mara's grandmother sold it",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-M2"
+  }
+}

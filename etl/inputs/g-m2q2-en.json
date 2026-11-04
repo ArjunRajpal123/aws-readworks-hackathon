@@ -1,0 +1,10 @@
+{
+  "id": "g-m2q2-en",
+  "lang": "en",
+  "title": "The Last Page of the Library: M2q2",
+  "text": "How does Mara feel about the work at the beginning of the story?\n\nA. Excited to be part of it\n\nB. Unwilling and bored\n\nC. Angry at her grandmother\n\nD. Afraid of the empty building",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-M2"
+  }
+}

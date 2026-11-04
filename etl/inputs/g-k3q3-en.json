@@ -1,0 +1,10 @@
+{
+  "id": "g-k3q3-en",
+  "lang": "en",
+  "title": "Ana and the Lost Kitten: K3q3",
+  "text": "Why does Ana ask the neighbors for help?\n\nA. She wants a new friend\n\nB. She is lost herself\n\nC. The kitten has no collar, so she does not know where it lives\n\nD. The kitten is hungry",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-K3"
+  }
+}

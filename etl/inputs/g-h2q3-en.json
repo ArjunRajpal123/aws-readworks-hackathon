@@ -1,0 +1,10 @@
+{
+  "id": "g-h2q3-en",
+  "lang": "en",
+  "title": "How Vaccines Train the Immune System: H2q3",
+  "text": "What is the role of memory cells after a vaccine?\n\nA. They allow the body to recognize the same threat years later\n\nB. They destroy the vaccine\n\nC. They make the person sick\n\nD. They produce new viruses",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-H2"
+  }
+}

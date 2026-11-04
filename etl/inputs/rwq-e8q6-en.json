@@ -1,14 +1,10 @@
 {
   "id": "rwq-e8q6-en",
   "lang": "en",
-  "title": "Field Trip (E8q6, en)",
+  "title": "Field Trip: E8q6",
   "text": "“Not so fast champ. Finish your sandwich, and then we’ll go. You haven’t eaten anything all day, remember?”\n\nWhy might the author have included the above sentence?\n\nA. to point out how difficult it is to eat when you feel sick\n\nB. to show how strict Jeremy’s dad is\n\nC. to show the reader what kind of food Jeremy likes\n\nD. to illustrate how excited Jeremy is",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E8",
-    "readworksUuid": "eeff0e15-58d8-45b1-8161-93ef6ab4ad49",
-    "abridged": true,
-    "question": "E8q6",
-    "readworksQid": 10533
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E8-k2"
   }
 }

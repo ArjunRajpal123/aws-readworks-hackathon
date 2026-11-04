@@ -1,14 +1,10 @@
 {
   "id": "rwq-e1q2-en",
   "lang": "en",
-  "title": "The Most Important Question (E1q2, en)",
+  "title": "The Most Important Question: E1q2",
   "text": "Where does the story take place?\n\nA. in the jungle\n\nB. in the desert\n\nC. under the sea\n\nD. in the zoo",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E1",
-    "readworksUuid": "1bc604a7-d7af-4631-a220-b4ec77a3bb73",
-    "abridged": true,
-    "question": "E1q2",
-    "readworksQid": 10264
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E1-k2"
   }
 }

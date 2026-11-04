@@ -1,14 +1,10 @@
 {
   "id": "rwq-e4q7-en",
   "lang": "en",
-  "title": "Experiments (E4q7, en)",
+  "title": "Experiments: E4q7",
   "text": "Choose the answer that best completes the sentence below.\n\nMost campers do not want to try Joey’s food experiments _______ they are too gross to eat.\n\nA. although\n\nB. because\n\nC. before\n\nD. especially",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E4",
-    "readworksUuid": "7c0ac02b-78d6-44ba-b843-df81b31938e1",
-    "abridged": true,
-    "question": "E4q7",
-    "readworksQid": 10449
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E4-k2"
   }
 }

@@ -1,0 +1,10 @@
+{
+  "id": "g-m1q1-en",
+  "lang": "en",
+  "title": "How Bees Find Flowers: M1q1",
+  "text": "What is nectar?\n\nA. A kind of pollen\n\nB. A sugary liquid made by flowers\n\nC. A dance bees perform\n\nD. A scent made by antennae",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-M1"
+  }
+}

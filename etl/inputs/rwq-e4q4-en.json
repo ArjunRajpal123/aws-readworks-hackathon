@@ -1,14 +1,10 @@
 {
   "id": "rwq-e4q4-en",
   "lang": "en",
-  "title": "Experiments (E4q4, en)",
+  "title": "Experiments: E4q4",
   "text": "What could be a reason that Joey’s table keeps losing the wasted food challenge?\n\nA. Joey likes to mix together dirt and sand, stir glue into glasses of water, and combine all his food at lunch.\n\nB. The weight of Joey’s uneaten food makes the total weight of his table’s plates higher than the total weight of plates at other tables.\n\nC. The worst part about doing the dishes is having to clean the wet, grimy mess of food scum out of the sinks at the end.\n\nD. DeSean decides to conduct an experiment to figure out whose fault it is that the Scrub Pine table keeps losing the wasted food challenge at lunch.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E4",
-    "readworksUuid": "7c0ac02b-78d6-44ba-b843-df81b31938e1",
-    "abridged": true,
-    "question": "E4q4",
-    "readworksQid": 10442
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E4-k2"
   }
 }

@@ -1,0 +1,10 @@
+{
+  "id": "g-k1q4-en",
+  "lang": "en",
+  "title": "The Red Wagon: K1q4",
+  "text": "Why does Sam feel proud?\n\nA. Sam got a new wagon\n\nB. Sam won a game\n\nC. Sam found a toy\n\nD. Sam used the wagon to move a heavy box",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-K1"
+  }
+}

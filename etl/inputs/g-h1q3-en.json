@@ -1,0 +1,10 @@
+{
+  "id": "g-h1q3-en",
+  "lang": "en",
+  "title": "How the Printing Press Changed the World: H1q3",
+  "text": "Why did Luther's pamphlets spread so quickly?\n\nA. Church leaders helped distribute them\n\nB. Few people in Germany could read other writing\n\nC. Luther traveled to every town himself\n\nD. Printing allowed many copies to be made quickly and cheaply, faster than authorities could stop them",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-H1"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "g-m2q3-en",
+  "lang": "en",
+  "title": "The Last Page of the Library: M2q3",
+  "text": "What does the date stamped \"yesterday\" on the due-date slip most likely suggest?\n\nA. The atlas had been stolen\n\nB. Mara had stamped it herself\n\nC. The slip was printed with a mistake\n\nD. Someone had borrowed the atlas very recently",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-M2"
+  }
+}

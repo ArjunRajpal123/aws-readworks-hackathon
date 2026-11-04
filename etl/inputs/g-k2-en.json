@@ -1,0 +1,10 @@
+{
+  "id": "g-k2-en",
+  "lang": "en",
+  "title": "Why Leaves Change Color",
+  "text": "In autumn, many leaves change color. They turn red, yellow, and orange. Why does this happen?\n\nAll summer, leaves are green. They have a green stuff inside. It helps the leaf use sunlight to make food for the tree. In autumn, the days get shorter. There is less sunlight. The tree stops making the green stuff. Then the green fades away.\n\nYellow and orange were hidden in the leaf all along. We could not see them under the green. Now they show! Soon the leaves drop to the ground. Many trees rest for the winter.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode g-K2"
+  }
+}

@@ -1,14 +1,10 @@
 {
   "id": "rwq-e9q1-en",
   "lang": "en",
-  "title": "Lizzie Escapes (E9q1, en)",
+  "title": "Lizzie Escapes: E9q1",
   "text": "Where does Lizzie not want to return?\n\nA. school\n\nB. the hospital\n\nC. summer camp\n\nD. the second floor of the library",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E9",
-    "readworksUuid": "6b5dc923-b7a2-475b-8a26-6dde0ef73e50",
-    "abridged": true,
-    "question": "E9q1",
-    "readworksQid": 11908
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E9-k2"
   }
 }

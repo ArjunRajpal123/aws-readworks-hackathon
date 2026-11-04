@@ -1,14 +1,10 @@
 {
   "id": "rwq-e7q3-en",
   "lang": "en",
-  "title": "Save the World (E7q3, en)",
+  "title": "Save the World: E7q3",
   "text": "Recycling can reduce the amount of waste on the planet.\n\nWhat evidence in the text supports this statement?\n\nA. You can receive a small amount of money for each can you recycle.\n\nB. Some people might not be able to afford clothes.\n\nC. In 1999, recycling kept more than 64 tons of material from ending up in landfills.\n\nD. It is easy to separate recyclable items from other trash.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E7",
-    "readworksUuid": "40fa3460-ebba-456a-a59a-10d7bdc09b65",
-    "abridged": true,
-    "question": "E7q3",
-    "readworksQid": 24266
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E7-k2"
   }
 }

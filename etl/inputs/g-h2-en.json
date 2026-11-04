@@ -1,0 +1,10 @@
+{
+  "id": "g-h2-en",
+  "lang": "en",
+  "title": "How Vaccines Train the Immune System",
+  "text": "The immune system is the body's defense against pathogens, the viruses, bacteria, and other microorganisms that cause disease. When a pathogen enters the body for the first time, the immune system must identify the invader, learn how to fight it, and mount a response, a process that can take several days, since the body has no prior record of that particular threat. During that delay, the person may become seriously ill.\n\nVaccines shorten this learning process by allowing the body to rehearse its defense safely, before a real infection ever occurs. A vaccine does not contain a fully active pathogen capable of causing the disease. Instead, it presents the body with a harmless mimic, such as a weakened or inactivated germ, or a fragment of one. Some newer vaccines carry instructions that let the body's own cells make a single harmless protein. In each case, the key ingredient is an antigen, a molecule that the immune system recognizes as foreign, usually found on the surface of a germ.\n\nOnce the immune system detects the antigen, it launches a response, producing antibodies and activating specialized cells. Afterward, some of these cells persist as memory cells that can recognize the same threat years later. This acquired immunity allows the body to respond swiftly and precisely if the real pathogen ever appears, often stopping an infection before symptoms develop.\n\nVaccination also protects people indirectly. When enough of a community is immune, a disease has difficulty spreading, which shields those who are susceptible, such as infants, elderly people, or those whose immune systems are weakened by illness or medical treatment. Because the protection is shared across a population, sustained vaccination has even made it possible to eradicate smallpox, a disease that once killed millions of people.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode g-H2"
+  }
+}

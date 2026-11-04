@@ -1,0 +1,10 @@
+{
+  "id": "68",
+  "lang": "en",
+  "title": "A Very Messy Tea Party",
+  "text": "With the Tea Act of 1773, Parliament let the East India Company sell tea to the colonists for less money than before. As a result, the East India Tea Company was able to cut American traders out of the tea selling process completely. Suddenly, English tea was cheaper than illegal Dutch tea. This should have made the colonists happy, but it didn’t.\n\nThat’s partly because the act hurt the American economy. And it’s also because the tax was still in place, and colonists didn't want any of their money going toward something they thought was unfair. It was a question of principle, or of the colonists’ moral code. And a few colonists in Boston were very principled indeed.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode 68"
+  }
+}

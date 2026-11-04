@@ -1,14 +1,10 @@
 {
   "id": "rwq-e2q6-en",
   "lang": "en",
-  "title": "Losing Power (E2q6, en)",
+  "title": "Losing Power: E2q6",
   "text": "Read the sentences and answer the question.\n\n\"When Karla walked through the front door, her parents were already home. They had been to the grocery store and stocked up on candles, water, milk, bread, and canned food for several days. Six years ago, there had been a blizzard, and her parents weren’t prepared. This time they wouldn’t make the same mistake.\"\n\nWhat does the phrase “stocked up” mean in this text?",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E2",
-    "readworksUuid": "88a5273b-2e19-497b-a771-ef8f5c107198",
-    "abridged": true,
-    "question": "E2q6",
-    "readworksQid": 22946
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E2-k2"
   }
 }

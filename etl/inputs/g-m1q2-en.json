@@ -1,0 +1,10 @@
+{
+  "id": "g-m1q2-en",
+  "lang": "en",
+  "title": "How Bees Find Flowers: M1q2",
+  "text": "What does the length of the waggle dance tell other bees?\n\nA. Which type of flower to look for\n\nB. The direction of the flowers\n\nC. How far away the flowers are\n\nD. How many bees should go",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-M1"
+  }
+}

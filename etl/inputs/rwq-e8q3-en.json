@@ -1,14 +1,10 @@
 {
   "id": "rwq-e8q3-en",
   "lang": "en",
-  "title": "Field Trip (E8q3, en)",
+  "title": "Field Trip: E8q3",
   "text": "Which of the following statements best supports the conclusion that Jeremy thinks discovery is an exciting part of science?\n\nA. Jeremy asks Professor Helfand “‘how many suns are there?’”\n\nB. Jeremy refers to the night as the best night of his life.\n\nC. He is angry that he cannot go to the Rose Center.\n\nD. Jeremy was “marveling at the possibilities of discovery in front of them.”",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E8",
-    "readworksUuid": "eeff0e15-58d8-45b1-8161-93ef6ab4ad49",
-    "abridged": true,
-    "question": "E8q3",
-    "readworksQid": 10527
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E8-k2"
   }
 }

@@ -1,0 +1,10 @@
+{
+  "id": "g-h3q1-en",
+  "lang": "en",
+  "title": "The Weight of an Unsent Letter: H3q1",
+  "text": "How long had Daniel carried the letter?\n\nA. Three evenings\n\nB. One winter\n\nC. Eleven winters\n\nD. Thirty years",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-H3"
+  }
+}

@@ -1,14 +1,10 @@
 {
   "id": "rwq-e1q8-en",
   "lang": "en",
-  "title": "The Most Important Question (E1q8, en)",
+  "title": "The Most Important Question: E1q8",
   "text": "Why were the animals frightened and nervous when the hippopotamus came to drink at their pond?",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E1",
-    "readworksUuid": "1bc604a7-d7af-4631-a220-b4ec77a3bb73",
-    "abridged": true,
-    "question": "E1q8",
-    "readworksQid": 10270
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E1-k2"
   }
 }
