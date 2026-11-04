@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Word Stops</title>
+    <!-- Runtime config (window.SA_API_URL): written by the deployed pod's
+         docker-entrypoint.d/10-write-config.sh; public/config.js is the
+         local-dev/no-container default. A plain blocking script, so it runs
+         before Vite's deferred module bundle regardless of build-time reordering. -->
+    <script src="/config.js"></script>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Atkinson+Hyperlegible:wght@400;700&family=Special+Elite&family=Space+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
   </head>
   <body>

@@ -15,6 +15,7 @@ import { getProfile, setProfile, addSession, setSessionQuiz, upNext, bandOf } fr
 import { createNext } from './next.js'
 import { createProfile } from './profile.js'
 import { initNav } from './nav.js'
+import { fetchProduct } from './api.js'
 import { SPK, MUTE, GLOW, JAR, BADGE, ICON, CARDS, MODES, ACCENTS } from './data.js'
 
 // Imperative player ported from WordStops_v8; drives the markup rendered by App.vue.
@@ -95,21 +96,21 @@ function stopAll(){run++;qs&&qs.stop();clearInterval(timer);timer=null;if(synth)
 function setOpts(open){document.body.classList.toggle('opts-closed',!open);const b=document.getElementById('optBtn');if(b)b.setAttribute('aria-expanded',open)}
 function updatePlay(){if(playing){hideResume()}$('#play').textContent=playing?'❚❚':'▶';$('#play').setAttribute('aria-label',playing?t('pause'):t('play'));if('mediaSession' in navigator)navigator.mediaSession.playbackState=playing?'playing':'paused'}
 const rateNow=()=>parseFloat($('#speed').value)*(mode.voice||1);
-// Polly audio: files produced by the pipeline (product JSON, gzipped timing, MP3), served from sa/ in dev.
+// Polly audio: files produced by the pipeline (product JSON, gzipped timing, MP3), fetched via GET /api/v1/text-to-speech (see src/api.js).
 const SA={};
 if(import.meta.env.DEV){window.__SA=SA;window.__done=()=>{finAt=0;maybeDone()}} // dev only: lets tests read the audio state
 const lastAtOrBefore=(arr,t)=>{let lo=0,hi=arr.length-1,a=-1;while(lo<=hi){const m=(lo+hi)>>1;if(arr[m]<=t){a=m;lo=m+1}else hi=m-1}return a};
 async function loadAudio(mid){if(SA[mid]!==undefined)return;SA[mid]=null;
- try{const base='sa/';
-  const prod=await (await fetch(`${base}product/${mid}.soundAlong.json`)).json();
+ try{
+  const prod=await fetchProduct(mid);if(!prod)return;
   const want=curVoice(),okT=x=>x.qa&&x.qa.status!=='failed';
   const tr=prod.tracks.find(x=>x.voiceId===want&&okT(x))||prod.tracks.find(x=>x.default&&okT(x))||prod.tracks.find(okT);if(!tr)return;
-  const gz=await fetch(`${base}${tr.timingKey}`);
+  const gz=await fetch(prod.urls[tr.id].timing);
   // S3 sends Content-Encoding: gzip, so the browser usually inflates it already; fall back to doing it here if not.
   const raw=await gz.arrayBuffer();let tm;
   try{tm=JSON.parse(new TextDecoder().decode(raw))}catch{tm=await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('gzip'))).json()}
   if(tm.textHash!==prod.textHash)return;
-  const audio=new Audio(`${base}${tr.audioKey}`);audio.preload='auto';
+  const audio=new Audio(prod.urls[tr.id].audio);audio.preload='auto';
   SA[mid]={audio,start:tm.start,end:tm.end,n:tm.n,dur:tm.durationMs,voice:tr.voiceId,want,sentOnly:tr.granularity!=='word',sent:prod.structure.sentenceStarts};
   if(mode&&aid()===mid){showSource();computeChunks()}}catch(e){SA[mid]=null}}
 function showSource(){}
@@ -437,7 +438,7 @@ $('#howBtn').onclick=()=>tour.start();
 $('#optBtn').onclick=()=>setOpts(document.body.classList.contains('opts-closed'));
 $('#famBtn').onclick=()=>setFam(true);$('#navContent').onclick=()=>{setAdmin(false);setFam(false);window.scrollTo(0,0)};
 $('#adminBtn').onclick=()=>setAdmin(true);initNav();
-// ?m=<id> that isn't built in: try a pipeline/API product record (sa/product/<id>.soundAlong.json).
+// ?m=<id> that isn't built in: try a pipeline/API product record (GET /api/v1/text-to-speech, src/api.js).
 if(q&&!MODES.some(m=>m.id===q))addPipelineMode(MODES,q).then(m=>load(m?m.id:start));else load(start);
 if(location.hash==='#admin')setAdmin(true);else if(location.hash==='#family')setFam(true);
 else if(!q&&getProfile().role!=='guest')applyProfile(getProfile());

@@ -1,13 +1,16 @@
 """Read access to the pipeline's files in the shared media bucket.
 
 Writes are done by the Sound Along pipeline itself (etl/pipeline.py via
-etl/storage.py's AwsStorage), under the `sa/` prefix. This module only turns
-the keys stored on a product record (`tracks[].audioKey` / `timingKey`, which
-are relative to `sa/`) into presigned GET URLs for API callers.
+etl/storage.py's AwsStorage), under the `sa/` prefix. This module turns the
+keys stored on a product record (`tracks[].audioKey` / `timingKey`, which are
+relative to `sa/`) into presigned GET URLs for API callers, and reads the
+product record itself straight from its S3 object so callers get exactly
+what the pipeline wrote (see get_product).
 
 The bucket is provisioned by infra/cdk's StorageStack and is KMS-encrypted.
 """
 
+import json
 import os
 
 import boto3
@@ -41,6 +44,24 @@ def s3_client():
             config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
         )
     return _s3
+
+
+def get_product(record_id):
+    """The product record straight from sa/product/<id>.soundAlong.json.
+
+    Reading the file the pipeline wrote (rather than the DynamoDB mirror)
+    keeps the response byte-identical to the S3 record: DynamoDB drops null
+    fields and stores floats as Decimal (see docs/baseref.txt). None if the
+    id has no product record.
+    """
+    client = s3_client()
+    try:
+        body = client.get_object(
+            Bucket=BUCKET, Key=f"{KEY_PREFIX}product/{record_id}.soundAlong.json"
+        )["Body"].read()
+    except client.exceptions.NoSuchKey:
+        return None
+    return json.loads(body)
 
 
 def presigned_url(key):

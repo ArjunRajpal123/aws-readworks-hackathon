@@ -11,4 +11,6 @@ RUN npm run build
 FROM public.ecr.aws/nginx/nginx:stable-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
+COPY docker-entrypoint.d/10-write-config.sh /docker-entrypoint.d/10-write-config.sh
+RUN chmod +x /docker-entrypoint.d/10-write-config.sh
 EXPOSE 80
