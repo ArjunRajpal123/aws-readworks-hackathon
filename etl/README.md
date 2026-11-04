@@ -21,8 +21,9 @@ cd etl
 
 # 1. Make inputs. Either a passage from docs/RW_Data.xlsx ...
 uv run --with openpyxl python extract_passage.py --id E1 --max-words 150
-# ... or the Stage 2 sample sentences (one input per workbook row, EN + ES)
-uv run --with openpyxl python extract_sentences.py "<path>/RW_Sentences.xlsx"
+# ... or the Stage 2 sample sentences: docs/RW_Sentences.xlsx -> inputs/rws-*.json
+#     (already committed; re-run only if the workbook changes)
+uv run --with openpyxl python extract_sentences.py
 
 # 2. Generate audio + timing with real Polly (about $0.01 per short passage)
 uv run python run_local.py "inputs/rws-*.json" --profile <your-profile>
@@ -35,7 +36,7 @@ uv run python run_local.py "inputs/rws-*.json" --profile <your-profile>
 cd ../frontend && npm install && npm run dev     # then http://127.0.0.1:5173/?m=rws-e9-en
 ```
 
-`run_local.py` prints the AWS account it's using, uploads the pronunciation lexicons (`--no-lexicon` to skip), keeps going if one passage fails, and prints a summary table. Inputs and outputs are git-ignored, because ReadWorks text stays out of this public repo.
+`run_local.py` prints the AWS account it's using, uploads the pronunciation lexicons (`--no-lexicon` to skip), keeps going if one passage fails, and prints a summary table. The Stage 2 sample inputs (`inputs/rws-*.json`) are committed; other inputs and all generated output (`frontend/public/sa/`) are git-ignored.
 
 ## Tests
 

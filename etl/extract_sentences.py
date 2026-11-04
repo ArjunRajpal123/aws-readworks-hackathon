@@ -11,12 +11,13 @@ Each filled sentence cell becomes its own paragraph (blank line between), so
 the shared tokenizer gives one paragraph per edge case. Cells marked
 "NOT FOUND" / "N/A" are skipped; the Notes column is not read.
 
-Output goes to etl/inputs/ (git-ignored: ReadWorks text stays out of this
-public repo). Then run:  python run_local.py inputs/rws-*.json
+Output goes to etl/inputs/rws-*.json (committed, so the team shares the same
+sample set). Then run:  python run_local.py inputs/rws-*.json
 
 Usage:
-    python extract_sentences.py "<path>/RW_Sentences.xlsx"
-    python extract_sentences.py "<path>/RW_Sentences.xlsx" --ids E1,E8 --lang en
+    python extract_sentences.py                      # default: docs/RW_Sentences.xlsx
+    python extract_sentences.py --ids E1,E8 --lang en
+    python extract_sentences.py "<path>/other.xlsx"
 """
 
 from __future__ import annotations
@@ -30,6 +31,7 @@ from pathlib import Path
 import openpyxl
 
 INPUTS_DIR = Path(__file__).resolve().parent / "inputs"
+DEFAULT_XLSX = str(Path(__file__).resolve().parent.parent / "docs" / "RW_Sentences.xlsx")
 SKIP_PREFIXES = ("not found", "n/a")
 
 # sheet -> (lang, title column, [(column, edge-case label)])
@@ -107,7 +109,8 @@ def rows_to_inputs(wb, ids: set[str] | None = None, lang: str | None = None) -> 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("xlsx", help="path to RW_Sentences.xlsx")
+    ap.add_argument("xlsx", nargs="?", default=DEFAULT_XLSX,
+                    help="path to the sample workbook (default: docs/RW_Sentences.xlsx)")
     ap.add_argument("--out-dir", default=str(INPUTS_DIR), help="default: etl/inputs/")
     ap.add_argument("--ids", help="comma-separated row IDs, e.g. E1,E8")
     ap.add_argument("--lang", choices=["en", "es"], help="only this language")

@@ -42,7 +42,7 @@
 - Timing file: adds `v`, `trackId`, `durationMs` (team schema v3 `timingFile`).
 
 ## First run (Nov 3, 2026, sandbox)
-18 sample inputs (9 EN with Ruth, 9 ES with Lupe; grade 4 edge cases: numbers, `½`, ordinals, `Mr./Sr.`, `U.S./EE. UU.`, dates):
+Sample set: `docs/RW_Sentences.xlsx` -> `etl/inputs/rws-*.json` (the Spanish sheet is a machine translation, not reviewed). 18 sample inputs (9 EN with Ruth, 9 ES with Lupe; grade 4 edge cases: numbers, `½`, ordinals, `Mr./Sr.`, `U.S./EE. UU.`, dates):
 - **18/18 `qa.status: passed`.** Polly's sentence count matched the intended sentences in all 18.
 - Title and abbreviation breaks were merged in 6 passages.
 - 1 word estimated (the "el patio" case).

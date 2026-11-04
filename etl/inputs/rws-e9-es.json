@@ -1,0 +1,35 @@
+{
+  "id": "rws-e9-es",
+  "lang": "es",
+  "title": "Lizzie Escapes (E9, es)",
+  "text": "Lizzie se encogió de hombros.\n\nLizzie había intentado argumentar que un par de chanclas y las novelas completas de Henry James eran todo lo que se necesitaba para tres semanas en el norte del estado de Nueva York, pero su mamá no lo aceptó y la obligó a volver a hacer la maleta.\n\nSe había graduado de 7.º grado dos semanas antes y desde entonces llegaba a la biblioteca a las nueve menos cuarto de la mañana, quince minutos antes de que abriera.\n\n«El Sr. Scottadino no vendió tu canasta para conseguir dinero para el póquer», dijo la mamá de Lizzie, mientras revisaba distraídamente su maquillaje en el espejo retrovisor.",
+  "source": {
+    "workbook": "RW_Sentences.xlsx",
+    "sheet": "Spanish_MT",
+    "rowId": "E9",
+    "sourceUrl": "https://www.readworks.org/article/Lizzie-Escapes/6b5dc923-b7a2-475b-8a26-6dde0ef73e50",
+    "machineTranslated": true,
+    "segments": [
+      {
+        "paragraph": 0,
+        "column": "Short simple sentence",
+        "case": "short"
+      },
+      {
+        "paragraph": 1,
+        "column": "Complex longer sentence",
+        "case": "complex"
+      },
+      {
+        "paragraph": 2,
+        "column": "Sentence with a number",
+        "case": "number"
+      },
+      {
+        "paragraph": 3,
+        "column": "Sentence with Sr./Sra. (from Mr./Mrs.)",
+        "case": "title_abbrev"
+      }
+    ]
+  }
+}
