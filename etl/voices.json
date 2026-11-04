@@ -1,0 +1,34 @@
+{
+  "_comment": "Stage 2 (P3) voice + naturalness settings, one entry per language. Never chosen per passage. Polly Neural cannot do emphasis, pitch, breaths or whispering; these are the levers it does respond to. See docs/STAGE2_AUDIO.md. Set \"ssml\": false to fall back to the original plain-text request.",
+  "v": 1,
+  "voices": {
+    "en": {
+      "languageCode": "en-US",
+      "engine": "neural",
+      "voiceId": "Ruth",
+      "ssml": true,
+      "rate": "95%",
+      "drc": true,
+      "paragraphBreakMs": 0,
+      "sampleRate": "24000",
+      "lexiconName": "saEnUS",
+      "lexiconFile": "lexicons/en-US.pls",
+      "lexiconRevision": 1,
+      "inlineLexicon": false
+    },
+    "es": {
+      "languageCode": "es-US",
+      "engine": "neural",
+      "voiceId": "Lupe",
+      "ssml": true,
+      "rate": "95%",
+      "drc": true,
+      "paragraphBreakMs": 0,
+      "sampleRate": "24000",
+      "lexiconName": "saEsUS",
+      "lexiconFile": "lexicons/es-US.pls",
+      "lexiconRevision": 1,
+      "inlineLexicon": false
+    }
+  }
+}

@@ -28,9 +28,16 @@ from typing import Protocol
 
 import audio as audio_mod
 import mp3duration
+from ssml import build_ssml, load_inline_lexicon, parse_overrides
 from tokenizer import tokenize
+from voices import voice_for
 
-PIPELINE_VERSION = "sa-pipeline-0.1.0"
+PIPELINE_VERSION = "sa-pipeline-0.2.0"
+# Polly Neural list price per 1M characters; speech marks are billed separately
+# at the same rate, so billed_chars already counts both requests.
+NEURAL_USD_PER_MCHAR = 16.0
+# Synchronous SynthesizeSpeech also caps total input (SSML tags included).
+SYNC_TOTAL_CHAR_CAP = 6000
 
 
 @dataclass
@@ -39,6 +46,8 @@ class PassageInput:
     lang: str
     title: str
     text: str
+    # Optional per-word pronunciation fixes: {"<tokenIndex>": {"w": "amazon:VB"}}.
+    pronunciation: dict | None = None
 
 
 class Storage(Protocol):
@@ -57,42 +66,68 @@ def run(passage: PassageInput, polly_client, storage: Storage) -> dict:
     # --- P1: tokenize ------------------------------------------------------
     tk = tokenize(passage.text, lang=lang2)
 
-    # detokenized text we send to Polly = the token stream joined by spaces,
-    # so the byte offsets Polly returns line up with our token byte spans.
-    polly_text = " ".join(t.text for t in tk.tokens)
-
     # --- P3: audio + timing ------------------------------------------------
-    voice = audio_mod.VOICE_BY_LANG.get(lang2, audio_mod.VOICE_BY_LANG["en"])
-    if len(polly_text.encode("utf-8")) > audio_mod.SYNC_CHAR_CAP:
+    # Voice + naturalness settings per language come from voices.json.
+    voice = voice_for(lang2)
+    if voice.ssml:
+        # SSML: <p>/<s> pauses from the tokenizer's structure, pace, DRC,
+        # lexicon fallback and per-word overrides. Token byte spans are
+        # recorded while building, because Polly's offsets count the tags.
+        overrides = parse_overrides(passage.pronunciation, tk.token_count)
+        inline = (load_inline_lexicon(voice.lexicon_path)
+                  if voice.inline_lexicon and voice.lexicon_path else None)
+        doc = build_ssml(tk, voice, overrides=overrides, inline_lexicon=inline)
+        polly_text, text_type = doc.text, "ssml"
+        token_spans, spoken_chars = doc.token_spans, doc.plain_chars
+        ssml_sentences, merged_breaks = doc.sentence_count, list(doc.merged_breaks)
+    else:
+        # Original path: detokenized text = tokens joined by spaces, so the
+        # byte offsets Polly returns line up with our token byte spans.
+        polly_text = " ".join(t.text for t in tk.tokens)
+        text_type, token_spans, spoken_chars = "text", None, len(polly_text)
+        ssml_sentences, merged_breaks = None, []
+
+    if spoken_chars > audio_mod.SYNC_CHAR_CAP or len(polly_text) > SYNC_TOTAL_CHAR_CAP:
         raise ValueError(
             f"passage {passage.id} is over Polly's {audio_mod.SYNC_CHAR_CAP}-char "
             "sync cap; async synthesis path not implemented yet"
         )
 
-    mp3_bytes, marks = audio_mod.synthesize(
-        polly_client, polly_text, voice["voiceId"], voice["engine"]
-    )
+    synth = audio_mod.synthesize_track(polly_client, polly_text, voice, text_type)
+    mp3_bytes = synth.mp3
     duration = mp3duration.duration_ms(mp3_bytes)
+    all_marks = [json.loads(l) for l in synth.marks_jsonlines.splitlines() if l.strip()]
+    word_marks = sum(1 for m in all_marks if m.get("type") == "word")
+    polly_sentences = sum(1 for m in all_marks if m.get("type") == "sentence")
 
     timing = audio_mod.build_timing(
         tokens=tk.tokens,
         polly_text=polly_text,
-        marks_jsonlines=marks,
+        marks_jsonlines=synth.marks_jsonlines,
         duration_ms=duration,
-        voice_id=voice["voiceId"],
-        engine=voice["engine"],
+        voice_id=voice.voice_id,
+        engine=voice.engine,
         text_hash=tk.text_hash,
+        token_spans=token_spans,
     )
 
     # --- keys --------------------------------------------------------------
     audio_key = f"audio/{passage.id}/tts-1.mp3"
     timing_key = f"audio/{passage.id}/tts-1.timing.json.gz"
+    # Review/debug artifacts (not read by the player).
+    marks_key = f"audio/{passage.id}/tts-1.marks.jsonl"
+    input_key = f"audio/{passage.id}/tts-1.input.{'ssml' if text_type == 'ssml' else 'txt'}"
 
     # --- timing blob (gzipped JSON) ---------------------------------------
+    # start/end/n/textHash are what the player reads; v/trackId/durationMs
+    # complete the team schema's timingFile shape (the player ignores them).
     timing_json = {
+        "v": 1,
+        "trackId": "tts-1",
         "start": timing.start,
         "end": timing.end,
         "n": timing.n,
+        "durationMs": timing.duration_ms,
         "textHash": tk.text_hash,
     }
     gz = io.BytesIO()
@@ -119,19 +154,36 @@ def run(passage: PassageInput, polly_client, storage: Storage) -> dict:
             {
                 "id": "tts-1",
                 "kind": "tts",
-                "engine": voice["engine"],
-                "voiceId": voice["voiceId"],
-                "lexicon": None,
+                "engine": voice.engine,
+                "voiceId": voice.voice_id,
+                "lexicon": voice.lexicon_name if voice.lexicon_name else None,
                 "audioKey": audio_key,
                 "timingKey": timing_key,
                 "timingSource": "polly-speech-marks",
                 "granularity": "word" if timing.qa_status == "passed" else "sentence",
+                "configVersion": voice.config_version,
+                "settings": {
+                    "textType": text_type,
+                    "rate": voice.rate,
+                    "drc": voice.drc,
+                    "paragraphBreakMs": voice.paragraph_break_ms,
+                    "sampleRate": voice.sample_rate,
+                    "lexiconMode": ("inline" if voice.inline_lexicon
+                                    else "polly" if voice.lexicon_names else "none"),
+                    "pronunciationOverrides": len(passage.pronunciation or {}),
+                },
                 "qa": {
                     "status": timing.qa_status,
                     "tokens": timing.n,
-                    "marks": timing.n,
+                    "marks": word_marks,
                     "lowConfidence": timing.low_conf,
                     "durationMs": timing.duration_ms,
+                    "sentences": len(tk.sentence_starts),
+                    "pollySentences": polly_sentences,
+                    # Sentences Polly was given (<s>): tokenizer sentences minus
+                    # false breaks after "Mr."/"U.S." etc. Should equal pollySentences.
+                    "ssmlSentences": ssml_sentences,
+                    "mergedSentenceBreaks": merged_breaks,
                 },
             }
         ],
@@ -139,6 +191,9 @@ def run(passage: PassageInput, polly_client, storage: Storage) -> dict:
             "pipelineVersion": PIPELINE_VERSION,
             "runAt": now,
             "inputHash": tk.text_hash,
+            "configVersion": voice.config_version,
+            "billedChars": synth.billed_chars,
+            "estCostUsd": round(synth.billed_chars * NEURAL_USD_PER_MCHAR / 1_000_000, 5),
         },
     }
 
@@ -147,6 +202,10 @@ def run(passage: PassageInput, polly_client, storage: Storage) -> dict:
     storage.put_bytes(
         timing_key, timing_gz, "application/json", content_encoding="gzip"
     )
+    storage.put_bytes(marks_key, synth.marks_jsonlines.encode("utf-8"),
+                      "application/x-ndjson")
+    storage.put_bytes(input_key, polly_text.encode("utf-8"),
+                      "application/ssml+xml" if text_type == "ssml" else "text/plain")
     storage.put_bytes(
         f"product/{passage.id}.soundAlong.json",
         json.dumps(product, ensure_ascii=False, indent=2).encode("utf-8"),
@@ -160,6 +219,12 @@ def run(passage: PassageInput, polly_client, storage: Storage) -> dict:
         "durationMs": timing.duration_ms,
         "qa": timing.qa_status,
         "lowConfidence": len(timing.low_conf),
+        "sentences": len(tk.sentence_starts),
+        "pollySentences": polly_sentences,
+        "ssmlSentences": ssml_sentences,
+        "billedChars": synth.billed_chars,
+        "estCostUsd": product["generation"]["estCostUsd"],
+        "voiceId": voice.voice_id,
         "audioKey": audio_key,
         "timingKey": timing_key,
     }
