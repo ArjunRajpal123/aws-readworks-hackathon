@@ -56,7 +56,7 @@ Sample set: `docs/RW_Sentences.xlsx` -> `etl/inputs/rws-*.json` (the Spanish she
 - 1 word estimated (the "el patio" case).
 - About $0.20 in total.
 
-The Vue player loaded them as "Amazon Polly neural (Ruth)" with live highlighting. That run used one voice (Ruth). Since then, the audition picked Danielle, Stephen, Lupe and Pedro, and each passage gets two tracks.
+The Vue player loaded them as "Amazon Polly neural (Ruth)" with live highlighting. That run used one voice (Ruth). After the audition, all 18 were regenerated with both voices: **36/36 tracks passed**, the sentence counts matched in every track, 1 estimated word per Spanish voice ("el patio"), about $0.40 in total.
 
 **Voice audition:** `etl/audition.py` reads one passage with any list of voices, using the same SSML settings, and writes `frontend/public/sa/audition/audition.html` for side-by-side listening.
 
