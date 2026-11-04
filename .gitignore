@@ -25,3 +25,13 @@ infra/cdk/cdk.out/
 
 # Local env files (never commit real values)
 infra/cdk/.env
+
+# Local tool output
+.archify/
+*.bak
+# CDK context lookups contain the account id (repo is public)
+infra/cdk/cdk.context.json
+
+# Node deps and Playwright output from local skills
+node_modules/
+.kiro/skills/ui-e2e-test/out/

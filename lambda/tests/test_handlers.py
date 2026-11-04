@@ -118,3 +118,103 @@ def test_get_returns_stored_product_with_fresh_urls(fake_aws):
 def test_get_errors(fake_aws):
     assert get_mod.handler({"queryStringParameters": None}, None)["statusCode"] == 400
     assert get_mod.handler({"queryStringParameters": {"id": "missing"}}, None)["statusCode"] == 404
+
+
+# ---- Open-endpoint guards: never overwrite, bounded inputs ------------------
+
+def test_post_existing_id_is_rejected_and_nothing_is_overwritten(fake_aws):
+    polly, storage = fake_aws
+    status, _ = _post({"text": "Ana smiled.", "id": "dup-1", "title": "Original"})
+    assert status == 201
+    objects_before = dict(storage.objects)
+    record_before = storage.records["dup-1"]
+    calls_before = len(polly.calls)
+
+    status, resp = _post({"text": "Totally different words here.", "id": "dup-1",
+                          "title": "Hijack"})
+
+    assert status == 409 and "already exists" in resp["error"]
+    assert storage.objects == objects_before            # no file rewritten
+    assert storage.records["dup-1"] is record_before    # record untouched
+    assert storage.records["dup-1"]["title"] == "Original"
+    assert len(polly.calls) == calls_before             # no Polly spend
+
+
+def test_post_cannot_overwrite_a_preexisting_catalog_record(fake_aws):
+    polly, storage = fake_aws
+    # A record the API did not create (e.g. written by etl/run_aws.py).
+    storage.records["rws-e1-en"] = {"id": "rws-e1-en", "title": "Catalog"}
+    status, _ = _post({"text": "Hello.", "id": "rws-e1-en"})
+    assert status == 409
+    assert polly.calls == [] and not storage.objects
+    assert storage.records["rws-e1-en"]["title"] == "Catalog"
+
+
+def test_post_without_id_skips_the_existence_lookup(fake_aws, monkeypatch):
+    import re
+
+    def forbidden(rid):
+        raise AssertionError("generated ids must not trigger a lookup")
+
+    monkeypatch.setattr(reference_store, "load_record", forbidden)
+    status, body = _post({"text": "Hello there."})
+    assert status == 201 and re.fullmatch(r"[0-9a-f]{32}", body["id"])
+
+
+def test_post_lookup_failure_fails_closed_with_a_generic_502(fake_aws, monkeypatch):
+    from botocore.exceptions import ClientError
+
+    polly, storage = fake_aws
+
+    def denied(rid):
+        raise ClientError({"Error": {"Code": "AccessDeniedException",
+                                     "Message": "arn:aws:iam::123456789012:role/x"}}, "GetItem")
+
+    monkeypatch.setattr(reference_store, "load_record", denied)
+    status, resp = _post({"text": "Hi.", "id": "new-1"})
+    assert status == 502
+    assert "AccessDenied" not in resp["error"] and "arn:" not in resp["error"]
+    assert polly.calls == [] and not storage.objects and not storage.records
+
+
+@pytest.mark.parametrize("bad", [".", "..", ".hidden", "-x", "_x", "a b", "a/b",
+                                 "a\\b", "\u00e9", "x" * 65])
+def test_post_rejects_unsafe_ids(fake_aws, bad):
+    status, resp = _post({"text": "hi", "id": bad})
+    assert status == 400 and "'id' must match" in resp["error"]
+
+
+def test_post_accepts_inner_dots_dashes_underscores(fake_aws):
+    status, body = _post({"text": "Hi there.", "id": "rws-e1.en_v2"})
+    assert status == 201 and body["id"] == "rws-e1.en_v2"
+
+
+def test_post_title_length_cap(fake_aws):
+    assert _post({"text": "Hi there.", "id": "t200", "title": "a" * 200})[0] == 201
+    status, resp = _post({"text": "Hi there.", "id": "t201", "title": "a" * 201})
+    assert status == 400 and "'title'" in resp["error"]
+
+
+def test_post_valid_pronunciation_override_is_applied(fake_aws):
+    polly, _ = fake_aws
+    status, _ = _post({"text": "Add 1/2 cup.", "id": "pron-ok",
+                       "pronunciation": {"1": {"sub": "one half"}}})
+    assert status == 201
+    assert any('alias="one half"' in c["Text"] for c in polly.calls)
+
+
+@pytest.mark.parametrize("pron", [
+    {"0": 5},                        # spec is not an object
+    {"0": {"phoneme": "x"}},         # phoneme must be {"ph": ...}
+    {"0": {"phoneme": {}}},          # missing "ph"
+    {"0": {"w": 123}},               # non-string value (only fails when SSML is built)
+    {"0": {"nope": "x"}},            # unknown kind
+    {"0": {"sub": "a", "w": "b"}},   # ambiguous kind
+    {"99": {"sub": "x"}},            # index out of range
+    {"abc": {"sub": "x"}},           # index is not a number
+])
+def test_post_malformed_pronunciation_is_a_400_before_any_polly_call(fake_aws, pron):
+    polly, storage = fake_aws
+    status, resp = _post({"text": "Ana smiled.", "id": "pron-bad", "pronunciation": pron})
+    assert status == 400 and "'pronunciation'" in resp["error"]
+    assert polly.calls == [] and not storage.objects and not storage.records

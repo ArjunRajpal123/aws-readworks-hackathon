@@ -50,8 +50,11 @@ export class StorageStack extends cdk.Stack {
       // NOTE: this matches the already-deployed bucket name. S3 names are
       // globally unique; an account-id suffix was considered but the live
       // bucket (holding data) uses the un-suffixed name, so renaming here
-      // would force a destructive bucket REPLACEMENT. Keep as-is.
-      bucketName: resourceName(config, "s3", "media"),
+      // would force a destructive bucket REPLACEMENT. Default stays as-is.
+      // An account whose deployed bucket has a different name (e.g. the
+      // un-suffixed name is owned by another account) sets MEDIA_BUCKET_NAME
+      // to its live bucket name so deploys never replace it.
+      bucketName: config.mediaBucketName ?? resourceName(config, "s3", "media"),
       // Private: all public access blocked. Reads go through CloudFront OAC.
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       publicReadAccess: false,
@@ -61,6 +64,8 @@ export class StorageStack extends cdk.Stack {
       bucketKeyEnabled: true,
       enforceSSL: true,
       versioned: true,
+      // Object Created events drive the cloud ETL (EtlStack: incoming/*.json).
+      eventBridgeEnabled: true,
       removalPolicy,
       autoDeleteObjects: !isProd,
       lifecycleRules: [

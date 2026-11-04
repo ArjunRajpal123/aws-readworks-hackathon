@@ -45,6 +45,25 @@ After generating new audio, restart `npm run dev`: the dev server ignores `publi
 
 `run_local.py` prints the AWS account it's using, uploads the pronunciation lexicons (`--no-lexicon` to skip), keeps going if one passage fails, and prints a summary table. The Stage 2 sample inputs (`inputs/rws-*.json`, `rwf-*`, `rwq-*`) are committed; other inputs and all generated output (`frontend/public/sa/`) are git-ignored.
 
+## Run in the cloud (no local compute)
+
+Upload an input file to the media bucket's `incoming/` prefix and the `etl-run` Lambda processes it (see `infra/cdk/README.md`):
+
+```bash
+aws s3 cp inputs/rws-e2-en.json s3://<media bucket>/incoming/
+```
+
+### Generate audio for every passage in the player
+
+The player's passages and questions live in `frontend/src/data*.js`. The exporter streams them (ids = the player's audio ids) straight into the uploader, which checks them and puts them in S3 `incoming/`. Nothing is written to the repo:
+
+```bash
+node etl/export_player_inputs.mjs | .venv-etl/bin/python etl/upload_incoming.py -          # dry run: checks + cost
+node etl/export_player_inputs.mjs | .venv-etl/bin/python etl/upload_incoming.py - --yes    # upload
+```
+
+`upload_incoming.py` requires the pipeline's token count to equal the player's word count, skips text over 3,000 characters, and skips ids already generated with the same text and voices (`--force` to redo). Re-run both after editing passage text in the frontend.
+
 ## Run against deployed AWS
 
 `run_aws.py` runs the same pipeline but writes to the deployed `StorageStack`: S3 media bucket under `sa/` and the DynamoDB reference table (names come from the stack outputs). It takes the same inputs and options as `run_local.py` (`--profile`, `--track`, `--no-lexicon`, input `pronunciation`) and uploads the lexicons first.
