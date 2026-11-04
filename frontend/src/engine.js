@@ -103,7 +103,7 @@ const lastAtOrBefore=(arr,t)=>{let lo=0,hi=arr.length-1,a=-1;while(lo<=hi){const
 async function loadAudio(mid){if(SA[mid]!==undefined)return;SA[mid]=null;
  try{
   const want=curVoice(),okT=x=>x.qa&&x.qa.status!=='failed';
-  const prod=await fetchProduct(mid,want);if(!prod)return;
+  const prod=await fetchProduct(mid,want,voiceLang());if(!prod)return;
   // The API picks the track for the chosen voice (selectedTrack); local sa/ records are picked here the same way.
   const tr=prod.selectedTrack?prod.tracks.find(x=>x.id===prod.selectedTrack):prod.tracks.find(x=>x.voiceId===want&&okT(x))||prod.tracks.find(x=>x.default&&okT(x))||prod.tracks.find(okT);if(!tr)return;
   const gz=await fetch(prod.urls[tr.id].timing);
