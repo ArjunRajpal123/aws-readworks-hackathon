@@ -5,6 +5,7 @@ import { FULL_LIST } from './data_full.js'
 import { createQuestions } from './questions.js'
 import { createDialogs } from './rate.js'
 import { createTour } from './tour.js'
+import { addPipelineMode } from './pipeline_mode.js'
 import { SPK, MUTE, GLOW, JAR, BADGE, ICON, CARDS, MODES, ACCENTS } from './data.js'
 
 // Imperative player ported from WordStops_v8; drives the markup rendered by App.vue.
@@ -38,30 +39,6 @@ function parse(m){tokens=[];m.paras.forEach((p,pi)=>p.split(/\s+/).forEach(raw=>
  tokens.forEach(tk=>{if(tk.cls.includes('vocab'))tk.key=keyFor(tk.text)});
  stopIdxs=tokens.map((t,i)=>t.stop?i:-1).filter(i=>i>=0)}
 function stopWordIdx(k){const w=CARDS[mode.stops[k].word].word;let best=-1;tokens.forEach((t,i)=>{if(t.key&&CARDS[t.key].word===w&&i<=stopIdxs[k])best=i});return best}
-// ETL product cache + loader. Passages produced by the pipeline (not in MODES) are
-// rendered from the product JSON's contentTokenized HTML instead of inline-markup paras.
-const PROD={};
-async function loadProduct(id){if(PROD[id]!==undefined)return PROD[id];
- try{const prod=await (await fetch(`sa/product/${id}.soundAlong.json`)).json();PROD[id]=prod;return prod}
- catch(e){PROD[id]=null;return null}}
-// Build a minimal mode + tokens from a product record. No Word Stops / vocab cards yet.
-function parseETL(prod){const pStarts=(prod.structure&&prod.structure.paragraphStarts)||[0];
- tokens=[];const n=prod.tokenCount;let pi=0;
- for(let i=0;i<n;i++){while(pi+1<pStarts.length&&i>=pStarts[pi+1])pi++;
-  tokens.push({text:'',cls:[],grp:null,p:pStarts.length?pi:0,stop:false,key:null})}
- stopIdxs=[];
- return {id:prod.id,etl:true,prod,lang:prod.lang==='es'?'es-US':'en-US',title:prod.title,
-  paras:pStarts.length?pStarts:[0],stops:[],details:[],voice:1,
-  sentenceStarts:(prod.structure&&prod.structure.sentenceStarts)||[0]}}
-function renderETL(){const page=$('#page');page.innerHTML='';els=[];
- const wrap=document.createElement('div');wrap.style.display='grid';wrap.style.gap='10px';
- wrap.innerHTML=mode.prod.contentTokenized;
- wrap.querySelectorAll('[data-w]').forEach(s=>{const i=+s.dataset.w;s.classList.add('w');s.dataset.i=i;
-  els[i]=s;if(tokens[i])tokens[i].text=s.textContent});
- page.appendChild(wrap);
- $('#ptitle').textContent=mode.title;page.classList.remove('tapping','stopping');
- $('#details').innerHTML=mode.prod.details||'';
- progress()}
 function render(){const page=$('#page');page.innerHTML='<div id="glow">'+GLOW+'</div>';els=[];
  mode.paras.forEach((_,pi)=>{const wrap=document.createElement('div');wrap.style.display='grid';wrap.style.gap='10px';const p=document.createElement('p');
   tokens.forEach((tk,i)=>{if(tk.p!==pi)return;const s=document.createElement('span');s.className='w '+tk.cls.join(' ');s.textContent=tk.text;s.dataset.i=i;
@@ -267,7 +244,7 @@ function showCard(key,clue){if(isNarrow())setSide(true);const c=CARDS[key];const
  ${c.es.length?`<div class="row"><span class="lab">${t('spanish')}</span>${c.es.map(s=>`<span class="chip">${s}</span>`).join('')}${c.cog?`<span class="chip cog">${t('cogEs')}</span>`:''}</div>`:''}
  ${c.look?`<div class="row"><span class="lab">${t('watch')}</span><span>${c.look}</span></div>`:''}</div>`;$('#hear').onclick=()=>say(c.word)}
 function collect(w){if(!gameOn)return;if(!R.jar.includes(w)){R.jar.push(w);R.justAdded=w}glowMood('happy');renderReward()}
-function renderReward(){const r=$('#reward');if(mode&&mode.etl){$('#rewardWrap').hidden=true;r.innerHTML='';return}$('#rewardWrap').hidden=!gameOn;if(!gameOn){r.innerHTML='';return}$('#rewardTitle').textContent=mode.reward;
+function renderReward(){const r=$('#reward');$('#rewardWrap').hidden=!gameOn;if(!gameOn){r.innerHTML='';return}$('#rewardTitle').textContent=mode.reward;
  if(B()==='k2'){r.innerHTML=`<div class="jar">${JAR(R.jar.length)}<div class="jarwords">${R.jar.length?R.jar.map(w=>`<button class="jarword${w===R.justAdded?' new':''}" type="button" data-w="${w}">${w}</button>`).join(''):'<span class="hint">'+t('jarHint')+'</span>'}</div></div>`;
   r.querySelectorAll('.jarword').forEach(b=>b.onclick=()=>say(b.dataset.w))}
  if(B()==='35'){const all=t('badges');
@@ -280,23 +257,13 @@ function renderReward(){const r=$('#reward');if(mode&&mode.etl){$('#rewardWrap')
   const cb=$('#copyBank');if(cb)cb.onclick=()=>{const txt=R.bank.map(b=>`${b.w}: ${CARDS[Object.keys(CARDS).find(k=>CARDS[k].word===b.w)].def} (${b.ct})`).join('\n');
    navigator.clipboard&&navigator.clipboard.writeText(txt).then(()=>{cb.textContent=t('copied')},()=>{cb.textContent=t('copyFail')})}}}
 function idle(){const b=$('#stopBox');b.className='stopbox idle';
- if(mode&&mode.etl){b.innerHTML=`<p class="hint">${t('etlIdle')}</p>`;$('#cardBody').innerHTML=`<p class="hint">${t('cardIdle')}</p>`;return}
  b.innerHTML=stopsOn?`<p class="hint">${mode.stops.length?t('idle',B(),gameOn,mode.stops.length):t('idleNone')}</p>`:`<p class="hint">${t('stopsOff')}</p>`;
  $('#cardBody').innerHTML=`<p class="hint">${t('cardIdle')}</p>`}
-function load(id){if(!MODES.some(m=>m.id===id)){loadETL(id);return}
- stopAll();mode=MODES.find(m=>m.id===id);document.body.className=document.body.className.replace(/\bb-\w+/g,'').trim()+' b-'+B();setSide(false);document.documentElement.lang=mode.lang==='es-US'?'es':'en';uiLang=mode.lang==='es-US'?'es':'en';syncLang();buildTabs();applyStatic();
+function load(id){stopAll();mode=MODES.find(m=>m.id===id);document.body.className=document.body.className.replace(/\bb-\w+/g,'').trim()+' b-'+B();setSide(false);document.documentElement.lang=mode.lang==='es-US'?'es':'en';uiLang=mode.lang==='es-US'?'es':'en';syncLang();buildTabs();applyStatic();
  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.id===B()));
  $('#stopTitle').textContent=mode.stopTitle;$('#darkBtn').hidden=id!=='912';if(id!=='912'){$('#col').classList.remove('dark');$('#darkBtn').setAttribute('aria-pressed','false')}
  cur=-1;solved=new Set();picking=null;picked.clear();resumeAt=0;freshReward();parse(mode);loadAudio(aid());render();showSource();qs&&qs.render(mode);clearEcho();computeChunks();heard.clear();lastHeard=-1;updateViewTabs();setView('p');fillVoice();idle();if(typeof placeStrip==='function'){sentOn=[];placeStrip(-1)}renderReward();
  document.querySelectorAll('#bands li').forEach(li=>li.classList.toggle('cur',li.dataset.id===B()));try{localStorage.setItem('ws3-mode',id)}catch(e){}}
-async function loadETL(id){stopAll();const prod=await loadProduct(id);
- if(!prod){if(!mode)load('k2');else idle();return}
- mode=parseETL(prod);document.body.className=document.body.className.replace(/\bb-\w+/g,'').trim()+' b-'+B();setSide(false);document.documentElement.lang=prod.lang==='es'?'es':'en';uiLang=prod.lang==='es'?'es':'en';syncLang();buildTabs();applyStatic();
- document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',false));
- $('#stopTitle').textContent=t('wsName');$('#darkBtn').hidden=true;$('#col').classList.remove('dark');$('#darkBtn').setAttribute('aria-pressed','false');
- cur=-1;solved=new Set();picking=null;picked.clear();resumeAt=0;freshReward();
- loadAudio(aid());renderETL();showSource();qs&&qs.render(mode);clearEcho();computeChunks();heard.clear();lastHeard=-1;updateViewTabs();setView('p');fillVoice();idle();if(typeof placeStrip==='function'){sentOn=[];placeStrip(-1)}renderReward();
- document.querySelectorAll('#bands li').forEach(li=>li.classList.remove('cur'));try{localStorage.setItem('ws3-mode',id)}catch(e){}}
 function buildTabs(){$('#tabs').innerHTML='';$('#bands').innerHTML='';
  MODES.filter(m=>!m.band).forEach(m=>{const v=(uiLang==='es'&&MODES.find(x=>x.id===m.id+'es'))||m;
   const b=document.createElement('button');b.type='button';b.className='tab';b.setAttribute('role','tab');b.dataset.id=m.id;b.innerHTML=`${m.tab}<small>${v.sub}</small>`;
@@ -364,7 +331,7 @@ $('#darkBtn').onclick=()=>{const on=$('#col').classList.toggle('dark');$('#darkB
 window.addEventListener('resize',()=>moveGlow(cur));
 try{const a=localStorage.getItem('ws3-acc');if(a!==null&&ACCENTS[+a]){document.documentElement.style.setProperty('--acc',ACCENTS[+a][0]);document.documentElement.style.setProperty('--acc-bg',ACCENTS[+a][1])}}catch(e){}
 let start='k2';try{const s=localStorage.getItem('ws3-mode');if(s&&MODES.some(m=>m.id===s))start=s}catch(e){}
- const q=new URLSearchParams(location.search).get('m');if(q&&MODES.some(m=>m.id===q))start=q;else if(q)start=q
+ const q=new URLSearchParams(location.search).get('m');if(q&&MODES.some(m=>m.id===q))start=q
 // Side panel on narrow screens: the word panel slides in from the right and is easy to open and close.
 let panelFocus=null;
 function setSide(open){const was=document.body.classList.contains('side-open');if(open===was)return;
@@ -391,6 +358,7 @@ $('#voice').onchange=()=>{const L=voiceLang();try{localStorage.setItem('ws-voice
 const tour=createTour({t,isAdmin:()=>document.body.classList.contains('admin'),before:()=>{if(!document.body.classList.contains('admin')){setView('p');setSide(false);stopAll()}}});
 $('#howBtn').onclick=()=>tour.start();
 $('#adminBtn').onclick=()=>setAdmin(!document.body.classList.contains('admin'));
-load(start);
+// ?m=<id> that isn't built in: try a pipeline/API product record (sa/product/<id>.soundAlong.json).
+if(q&&!MODES.some(m=>m.id===q))addPipelineMode(MODES,q).then(m=>load(m?m.id:start));else load(start);
 if(location.hash==='#admin')setAdmin(true);
 }

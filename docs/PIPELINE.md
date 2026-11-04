@@ -50,8 +50,7 @@ Each stage writes to the database/S3 and leaves a `generation` record (run id, m
 - Gate: automated language check, length ratio check, vocab terms present, plus human review (section 6).
 
 ### P3. Audio and word timing
-*Implemented in `etl/` (Stage 2). Current voices and naturalness settings (Danielle + Stephen / Lupe + Pedro, SSML): see [`STAGE2_AUDIO.md`](STAGE2_AUDIO.md).*
-- Amazon Polly **neural**, English `Danielle` (default) + `Stephen`, Spanish `Lupe` (default) + `Pedro` (US Spanish; Mexican voices are an open question). Voice per language comes from config, never per passage.
+- Amazon Polly **neural**, English `Danielle` and `Stephen`, Spanish `Lupe` and `Pedro` (US Spanish; Mexican voices are an open question). One track per voice so students can choose; the voices come from config, never per passage.
 - Async synthesis for text over about 3,000 characters (sync cap is 3,000 billed characters).
 - Request speech marks with the same text, voice and engine as the audio. Offsets are **bytes** (UTF-8), not characters.
 - Map marks to tokens by byte offset; token start = first mark inside it. End = next token's start; last end is estimated.

@@ -167,7 +167,7 @@ td:first-child{font-weight:500}
 </ul>
 <h3 id="p3-audio-and-word-timing">P3. Audio and word timing</h3>
 <ul>
-<li>Amazon Polly <strong>neural</strong>, English <code>Joanna</code>, Spanish <code>Lupe</code> (US Spanish; Mexican voices are an open question). Voice per language comes from config, never per passage.</li>
+<li>Amazon Polly <strong>neural</strong>, English <code>Danielle</code> and <code>Stephen</code>, Spanish <code>Lupe</code> and <code>Pedro</code> (US Spanish; Mexican voices are an open question). One track per voice so students can choose; the voices come from config, never per passage.</li>
 <li>Async synthesis for text over about 3,000 characters (sync cap is 3,000 billed characters).</li>
 <li>Request speech marks with the same text, voice and engine as the audio. Offsets are <strong>bytes</strong> (UTF-8), not characters.</li>
 <li>Map marks to tokens by byte offset; token start = first mark inside it. End = next token's start; last end is estimated.</li>

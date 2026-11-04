@@ -26,6 +26,7 @@ const web = new WebStack(app, `${config.projectName}-web`, {
 });
 
 // Storage layer for the ETL pipeline: DynamoDB reference db + S3 media bucket.
+
 const storage = new StorageStack(app, `${config.projectName}-storage`, {
   env,
   config,

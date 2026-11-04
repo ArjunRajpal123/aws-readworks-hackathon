@@ -16,11 +16,7 @@ npm run build    # output in dist/
 
 Pick a passage from the **Passage** menu under the title: the original demo passages (with Word Stops and word cards), nine full ReadWorks grade-4 passages with their question sets (`rwf-E1` to `rwf-E9`), or the same nine as short sentence sets for testing tricky text (`rw-E1` to `rw-E9`). The tabs change the grade-band look and the language switch changes the whole interface and the passage.
 
-Open a specific one with `?m=`: demo passages `k2`, `35`, `68`, `912` (add `es` for Spanish, for example `912es`); ReadWorks sentence sets `rw-E8-35`, `rw-E3-68es` (passage, band, optional `es`).
-
-## Deployed (EKS)
-
-`Dockerfile` builds the app and serves `dist/` with nginx (`nginx.conf`). `infra/cdk/lib/frontend-stack.ts` runs it on EKS behind an NLB and CloudFront. In the pod, a sidecar syncs `sa/` from the media bucket every 30 s, so passages the cloud ETL generates show up without a redeploy. Open one with `?m=<passage id>`, for example `?m=rws-e1-en`.
+Open a specific one with `?m=`: demo passages `k2`, `35`, `68`, `912` (add `es` for Spanish, for example `912es`); ReadWorks sentence sets `rw-E8-35`, `rw-E3-68es` (passage, band, optional `es`). Any passage the pipeline or the API generated opens by its id, for example `?m=rws-e1-en` (`src/pipeline_mode.js`). The sentence sets play the pipeline's Polly audio for `rws-<passage>-<en|es>` (generate it with `etl/run_local.py`, see `etl/README.md`); the voice picker chooses Danielle/Stephen or Lupe/Pedro.
 
 ## Where things are
 

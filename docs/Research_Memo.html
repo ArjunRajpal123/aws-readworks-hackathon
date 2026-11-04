@@ -1,0 +1,258 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sound Along Research Memo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: slim contents rail beside a single reading column; tables carry the detail. */
+:root{
+  --bg:#fbfcfc; --fg:#1d2730; --muted:#5a6772; --line:#d9e0e4; --panel:#f1f5f6;
+  --accent:#00657f; --accent-soft:#e0f0f4; --code:#e9eff1; --warn:#8a4b00;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171b; --fg:#e4e9ec; --muted:#9aa7b1; --line:#2c373f; --panel:#1a2127;
+  --accent:#5cc7e2; --accent-soft:#16333d; --code:#222c33; --warn:#f0b36b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171b; --fg:#e4e9ec; --muted:#9aa7b1; --line:#2c373f; --panel:#1a2127;
+  --accent:#5cc7e2; --accent-soft:#16333d; --code:#222c33; --warn:#f0b36b; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--sans);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 72px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav{position:sticky;top:24px;align-self:start;display:grid;gap:2px;font-size:14px}
+nav b{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+nav a{color:var(--muted);text-decoration:none;padding:5px 0 5px 12px;border-left:2px solid var(--line)}
+nav a:hover,nav a:focus-visible{color:var(--accent);border-left-color:var(--accent);outline:none}
+main{min-width:0}
+.draft{font:400 12px/1.5 var(--mono);color:var(--warn);margin:0 0 20px;max-width:70ch}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.15;font-weight:600;margin:0 0 12px;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:62ch;margin:0 0 36px}
+h2{font-size:24px;line-height:1.25;font-weight:600;margin:48px 0 12px;padding-top:24px;border-top:1px solid var(--line);scroll-margin-top:16px;text-wrap:balance}
+h3{font-size:18px;line-height:1.3;font-weight:600;margin:32px 0 8px;scroll-margin-top:16px;color:var(--accent)}
+p,li{max-width:74ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+a{color:var(--accent)}
+strong{font-weight:600}
+code{font:400 .88em var(--mono);background:var(--code);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
+.tw{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+th{text-align:left;font:500 12px var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--panel);padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:10px 12px;vertical-align:top;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:500}
+@media (max-width:820px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}nav{position:static;margin-bottom:24px;grid-auto-flow:row}}
+</style>
+<div class="wrap">
+<nav aria-label="Contents"><b>Contents</b>
+<a href="#the-short-version">The short version</a>
+<a href="#what-the-research-says-about-the-baseline-feature">What the research says about the baseline feature</a>
+<a href="#proposed-differentiators-in-the-order-i-would-build-them">Proposed differentiators, in the order I would build them</a>
+<a href="#fitting-into-readworkss-platform-the-constraint">Fitting into ReadWorks's platform (the constraint)</a>
+<a href="#the-four-bands-as-four-teaching-strategies">The four bands as four teaching strategies</a>
+<a href="#what-i-would-not-lead-with">What I would not lead with</a>
+<a href="#how-strong-is-this-evidence">How strong is this evidence?</a>
+<a href="#suggested-order">Suggested order</a>
+<a href="#sources">Sources</a>
+</nav>
+<main>
+<p class="draft">Draft concept for the ReadWorks x AWS hackathon team, Nov 3, 2026. A research-based memo, not a ReadWorks position. AI-generated content may contain errors; check every citation against the original before using it publicly.</p>
+<h1>Making Sound Along different: what the learning research supports</h1>
+<p class="lede">Learning-research suggestions for making the player different, and how they fit inside the ReadWorks platform.</p>
+
+<h2 id="the-short-version">The short version</h2>
+<p><strong>Constraint from the team:</strong> it must not be the same application as the others, and it must still fit into the existing ReadWorks platform. So the differences below live in how the support behaves and what it teaches, inside ReadWorks's own page frame (see "Fitting into ReadWorks's platform").</p>
+<ol>
+<li>If every entry offers "listen, highlight the word, tap for a definition", that is the brief, not a difference. The research says that package helps less than people assume, so the better pitch is <strong>audio as a scaffold that fades</strong>, not audio as a permanent crutch.</li>
+<li>The strongest evidence in the whole literature is for <strong>practice testing and spaced practice</strong>, not for read-aloud highlighting. ReadWorks already ships question sets, so we can build retrieval practice into the player without any AI at runtime.</li>
+<li><strong>Phrase-level reading support</strong> has more direct evidence for reading with expression than word-by-word karaoke highlighting. Few products do it.</li>
+<li><strong>Morphology (word parts) and cognates</strong> are the vocabulary levers with research behind them, and the cognate work fits ReadWorks's Spanish passages.</li>
+<li><strong>Restraint is a design choice with evidence behind it.</strong> Extra digital features can distract, especially for children from disadvantaged backgrounds. A calm interface that helps at the right moment is both different and defensible.</li>
+<li>Our four grade bands should be sold as <strong>four different teaching strategies</strong>, not four skins.</li>
+</ol>
+<h2 id="what-the-research-says-about-the-baseline-feature">What the research says about the baseline feature</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Finding</th>
+<th>Strength and caveats</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reading while listening gave a <strong>small</strong> comprehension benefit overall (g = 0.18, 30 studies, 1,945 learners). The benefit appeared <strong>only when the pace was controlled</strong> by the researcher; self-paced reading showed no reliable effect. Evidence for struggling readers specifically is thin.</td>
+<td>A 2023 systematic review and meta-analysis. I could not confirm the paper's title from the link I found; check it.</td>
+</tr>
+<tr>
+<td>A synthesis of 19 studies of secondary struggling readers found fluency improved when the intervention included <strong>listening to a model read the passage before reading it</strong>.</td>
+<td>A preview design, not simultaneous listening.</td>
+</tr>
+<tr>
+<td>A ReadWorks and Digital Promise study (Grades 1 to 6, 1,857 students) found 92% tried at least one optional support, and students engaged with <strong>more challenging</strong> passages when they used supports such as audio.</td>
+<td>Authors are Digital Promise staff. It measures engagement with harder text, not measured reading gains.</td>
+</tr>
+<tr>
+<td>Digital books that were only digitised (no added features) produced <strong>lower</strong> comprehension than print for young children; enhancements that supported the story did better; an embedded dictionary helped <strong>vocabulary</strong> but had no or negative effect on <strong>comprehension</strong>. Disadvantaged children were more distracted by interactive features.</td>
+<td>A meta-analysis of 39 studies of children aged 1 to 8. Findings are about young children and story books, so applying them to Grade 4 and above is an inference.</td>
+</tr>
+</tbody>
+</table></div>
+<p>What this means: do not claim audio improves comprehension in general. Claim what the evidence supports: audio lets students meet harder text, previewing a fluent model builds fluency, and the benefit depends on how the support is paced.</p>
+<h2 id="proposed-differentiators-in-the-order-i-would-build-them">Proposed differentiators, in the order I would build them</h2>
+<h3 id="1-the-scaffold-dial-listen-follow-echo-your-turn">1. The scaffold dial (listen, follow, echo, your turn)</h3>
+<p><strong>What the student sees.</strong> One control with four steps instead of an audio on/off switch. <em>Listen</em>: full audio with highlight. <em>Follow</em>: the audio reads a phrase while only that phrase is cued. <em>Echo</em>: the audio reads one sentence, then pauses so the student reads it themselves before the next one. <em>Your turn</em>: no audio, tap any word or sentence to hear it. A teacher sets the starting step, and the student can move down as they gain confidence.</p>
+<p><strong>Why.</strong> The comprehension benefit of simultaneous listening is small and depends on pacing (above), while hearing a model before reading is the design with consistent fluency gains. A dial that fades support builds on that. Repeated readings also matter, so replaying a passage at a lower support level is a natural next step.</p>
+<p><strong>Distinct because</strong> competitors with an on/off switch cannot show a path from supported reading to independent reading.</p>
+<p><strong>Size.</strong> Medium. We already have word times, sentence marks and tap-to-replay. Echo and Follow need pause points (sentence ends from the existing marks, phrases from commas).</p>
+<p><strong>Caution.</strong> The dial itself has not been tested as a product feature. Pitch it as grounded in the evidence on previewing and fading, and plan a pilot to measure it.</p>
+<h3 id="2-phrase-level-cueing-instead-of-only-word-by-word-highlighting">2. Phrase-level cueing instead of only word-by-word highlighting</h3>
+<p><strong>What the student sees.</strong> An option to cue the current <em>phrase</em> (a chunk of a sentence) rather than lighting each word, with a thin boundary mark between phrases.</p>
+<p><strong>Why.</strong> In a study of second graders, reading with natural prosody was most strongly helped by repeated readings of <strong>phrase-cued text</strong>. A small single-case study of ten children in grades 1 to 3 also found gains in expression and phrasing. For karaoke-style word highlighting, the one study I found showed benefits on the trained text but <strong>no transfer</strong> to untrained text.</p>
+<p><strong>Distinct because</strong> most read-along tools highlight single words.</p>
+<p><strong>Size.</strong> Small to medium. Phrase boundaries can start from punctuation and sentence marks; better boundaries would need a language-aware step in the pipeline.</p>
+<p><strong>Caution.</strong> The studies are small and I found no large randomised trial. Treat it as a research-informed option and keep word highlighting as the default.</p>
+<h3 id="3-retrieval-practice-built-in-questions-as-low-stakes-quizzes-with-spaced-return">3. Retrieval practice built in: questions as low-stakes quizzes, with spaced return</h3>
+<p><strong>What the student sees.</strong> After reading, a short "check yourself" using the ReadWorks question set (already in the demo). Missed items and vocabulary words come back later ("see it again tomorrow") rather than only at the end of the session. Before revealing an answer, a quick "how sure are you?" with three levels.</p>
+<p><strong>Why.</strong> Practice testing is one of the two techniques rated high utility in a widely cited review of learning techniques, along with distributed practice. A meta-analysis of practice testing reported an average benefit around g = 0.6 (sources I found give 0.61 and 0.70 for different models), with the largest effects when the test came one to six days after the practice. A meta-analysis of classroom studies of distributed over massed practice found d = 0.54. For the confidence step: children in grades 3 to 6 corrected high-confidence errors more readily than low-confidence ones (the hypercorrection effect), but the effect fades over a week.</p>
+<p><strong>Distinct because</strong> it turns audio support into durable learning rather than a one-time listen, and it uses content ReadWorks already owns.</p>
+<p><strong>Size.</strong> Medium. The question player exists. Cross-session spacing needs student accounts, which the sandbox does not have, so in the demo we can show a "tomorrow" view with a simulated clock.</p>
+<p><strong>Caution.</strong> Much of the testing and spacing evidence is laboratory-based or measures recall of facts, not deep comprehension. Do not promise comprehension gains.</p>
+<h3 id="4-a-spanish-bridge-and-word-parts-lab">4. A Spanish bridge and word-parts lab</h3>
+<p><strong>What the student sees.</strong> In a Spanish-English view, cognates are marked in the passage with a short "this looks like" link to the Spanish word. In the word card, a word-parts view shows the root and affixes and a few related words.</p>
+<p><strong>Why.</strong> Cognate instruction is a researched route to English vocabulary for Spanish-speaking learners, and studies note that students often do not notice cognates <strong>without explicit instruction</strong>. For word parts, a meta-analysis of 30 studies found a moderate overall effect of morphological instruction (d = 0.32 as reported), and an earlier analysis of children with literacy difficulties reported a larger effect for struggling readers (about 0.46).</p>
+<p><strong>Distinct because</strong> it uses ReadWorks's paired English and Spanish texts for something no generic read-aloud tool can do.</p>
+<p><strong>Size.</strong> Small for a demo with the data we already have (cognate chips and word parts exist in the cards); medium to scale through the pipeline.</p>
+<p><strong>Caution.</strong> Effect sizes here are secondhand from search summaries. Verify them in the papers before quoting.</p>
+<h3 id="5-calm-help-choose-when-the-help-appears">5. Calm help: choose when the help appears</h3>
+<p><strong>What the student sees.</strong> A setting for <em>help during reading</em> (current behaviour: tap to open the panel) or <em>help after the sentence or passage</em> (taps are collected and shown together afterwards). Animations off by default for students who select calm mode.</p>
+<p><strong>Why.</strong> The digital-book evidence above suggests added features can hurt comprehension and distract some children more than others, while still helping vocabulary. Letting teachers choose the timing of help is a response to that tension.</p>
+<p><strong>Size.</strong> Small. The side panel and queue pattern are already there.</p>
+<p><strong>Caution.</strong> This is a design hypothesis built on an inference from younger children. It is the best candidate to test in a pilot, not a proven benefit.</p>
+<h3 id="6-a-teacher-view-of-where-students-struggled-synthetic-data-in-the-demo">6. A teacher view of where students struggled (synthetic data in the demo)</h3>
+<p><strong>What the teacher sees.</strong> For a passage, the words and sentences students replayed most, and the questions most often missed. It points to where comprehension broke down, which is what formative assessment is for.</p>
+<p><strong>Why.</strong> I did not research this one; the argument is design reasoning. The brief lists analytics as a later phase, so a mock with clearly labelled synthetic data shows the direction without overreaching.</p>
+<p><strong>Size.</strong> Small as a mock. Real data needs accounts and a privacy design.</p>
+<h2 id="fitting-into-readworkss-platform-the-constraint">Fitting into ReadWorks's platform (the constraint)</h2>
+<p><strong>Principle: differentiate the learning layer, not the chrome.</strong> The page frame, colours, type and patterns stay ReadWorks's own, so every addition looks like a feature they built. What makes us different is how the support behaves, not how the page is dressed.</p>
+<p>What their live passage page uses (read from the public site): a teal top bar, a pale title band with Assign and Print buttons, tabs (Passage, StepReads, Vocabulary Activity, Question Set), a grey pill audio player with a separate Speed chip, and a DETAILS and RELATED sidebar. Roboto headings over a Helvetica Neue body, teal <code>#007693</code>, text <code>#344048</code>, 5 px corners.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Their existing element</th>
+<th>What we do inside it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Audio pill and Speed chip</td>
+<td>Keep the pill and its place. Add a <strong>Support</strong> chip beside Speed for the scaffold dial. Highlight in the passage text, with a word or phrase option</td>
+</tr>
+<tr>
+<td>Passage tab text</td>
+<td>Swap <code>content</code> for the tokenised version (<code>contentTokenized</code>) so words can be timed and tapped. No layout change; vocabulary spans keep their markup</td>
+</tr>
+<tr>
+<td>DETAILS sidebar</td>
+<td>Our word panel sits here on desktop and slides in on phones. Their Details list stays as it is</td>
+</tr>
+<tr>
+<td>Vocabulary list and Vocabulary Activity tab</td>
+<td>Our word cards and "come back tomorrow" words feed these, rather than creating a second list</td>
+</tr>
+<tr>
+<td>Question Set tab</td>
+<td>The same ReadWorks questions, with "Hear it" read-aloud, retry, and a confidence check added</td>
+</tr>
+<tr>
+<td>Assign button and flow</td>
+<td>The teacher chooses the starting support step, grade-band look and game features when assigning, as they already do for audio</td>
+</tr>
+<tr>
+<td>Content management</td>
+<td>Separate staff area (the tech brief puts content management on its own server)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>How it plugs in.</strong> Vue 3 components inside their existing front end (the brief names Vue 3), reading the product JSON they already serve plus the audio and timing files in S3. No iframe. Switched on per assignment, and <strong>falls back to today's audio</strong> when a passage has no <code>soundAlong</code> block, so rollout can be gradual.</p>
+<p><strong>A visual signature that is still native: the reading ribbon.</strong> A slim segmented bar under the audio pill, one segment per sentence. It shows where you are, which sentences were replayed, and later which sentences hold the evidence for a question. It reads as part of the audio pill, but it carries learning information. It is the one thing a judge can point at and say "that is theirs".</p>
+<p><strong>Where today's demo departs from their platform, and what I would change.</strong></p>
+<ul>
+<li>The "Sound Along" label in the bar would be the ReadWorks logo in a real integration.</li>
+<li>The Glow firefly (K-2) and the case-file look (3-5) are the least native. I would show them only when the teacher turns <strong>Game features</strong> on, and make the default look the ReadWorks-native one for every band. The 6-8 and 9-12 looks are already close.</li>
+<li>The "Concept mockup" label and the Admin banner are demo-only.</li>
+</ul>
+<p><strong>Three layers of difference without different chrome.</strong> <em>Behaviour</em> (the scaffold dial and phrase cueing), <em>evidence</em> (retrieval practice with spaced return), and <em>inclusion</em> (the Spanish bridge and the whole-platform Spanish). None of them need a redesign of the page.</p>
+<h2 id="the-four-bands-as-four-teaching-strategies">The four bands as four teaching strategies</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Band</th>
+<th>Strategy the interface leads with</th>
+<th>Evidence base</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>K-2</td>
+<td>Hearing the word and seeing it together; picture-based choices; voice-first controls</td>
+<td>Early decoding and vocabulary support (not re-researched here)</td>
+</tr>
+<tr>
+<td>3-5</td>
+<td>Using context clues to work out a word</td>
+<td>A meta-analysis of 21 studies found instruction in deriving word meaning from context had an effect of 0.43 SD (cited in the build pack)</td>
+</tr>
+<tr>
+<td>6-8</td>
+<td>Word parts: roots and affixes</td>
+<td>Morphology meta-analyses above</td>
+</tr>
+<tr>
+<td>9-12</td>
+<td>Annotating and arguing from the text</td>
+<td>Not researched here; pair with evidence-highlighted questions</td>
+</tr>
+</tbody>
+</table></div>
+<p>This is the story that makes the modes look different for a reason, not just a different skin.</p>
+<h2 id="what-i-would-not-lead-with">What I would not lead with</h2>
+<ul>
+<li><strong>Dyslexia fonts.</strong> I found no direct evidence for them. What has evidence is <strong>extra-large letter spacing</strong>: Zorzi and colleagues (2012) reported that it improved reading accuracy and speed in children with dyslexia, with no gain for typical readers. Our "wider spacing" option is the defensible one; keep claims about the "easy-to-read font" modest. Reported sample sizes differ between news stories, so check the paper.</li>
+<li><strong>Speech-recognition reading tutors.</strong> A randomised trial of Project LISTEN met the What Works Clearinghouse standard and showed a significant gain on a total reading composite, but not on oral reading fluency or comprehension alone. Recording children's voices also raises privacy questions. Treat it as a later, optional feature.</li>
+<li><strong>Claiming comprehension gains from audio highlighting.</strong> See the first table.</li>
+</ul>
+<h2 id="how-strong-is-this-evidence">How strong is this evidence?</h2>
+<ul>
+<li>I searched summaries of each literature and read result snippets, not the full papers. Several figures come from secondary summaries (news stories, abstracts, mirrors). They are marked above where I am least sure.</li>
+<li>Not independently checked here: the Fukkink and de Glopper figure (cited in the build pack), multimedia-learning principles, Universal Design for Learning, the evidence for the K-2 and 9-12 strategies, and anything about formative-assessment dashboards.</li>
+<li>Hackathon note: all of this should be described as "research-informed", with the pilot measures named, not as proven outcomes.</li>
+</ul>
+<h2 id="suggested-order">Suggested order</h2>
+<ol>
+<li><strong>Scaffold dial with Follow and Echo</strong> (biggest visible difference, builds on what exists).</li>
+<li><strong>Retrieval practice with confidence check and a "come back tomorrow" view</strong> (strongest evidence, uses ReadWorks questions).</li>
+<li><strong>Spanish bridge and word-parts lab</strong> (fits the paired-text data and the whole-platform Spanish work).</li>
+<li><strong>Calm help setting</strong>, then the <strong>teacher view mock</strong> if time allows.</li>
+<li>Keep the <strong>measured scale run</strong> and the <strong>blind listening test</strong> from the earlier list; they speak to the brief's cost and voice-quality measures.</li>
+</ol>
+<h2 id="sources">Sources</h2>
+<ul>
+<li>Reading while listening meta-analysis (2023, 30 studies): https://commons.und.edu/ehb-fac/75 (first search result; title not shown, confirm it is the paper)</li>
+<li>Fluency interventions for secondary struggling readers: https://meadowscenter.org/library/a-synthesis-of-fluency-interventions-for-secondary-struggling-readers/</li>
+<li>ReadWorks and Digital Promise audio and supports study (Tare, Shell and Jackson, 2020): https://informahealthcare.com/doi/abs/10.1080/15391523.2020.1821412</li>
+<li>Phrase-cued text and prosody: https://digitalcommons.lib.uconn.edu/dissertations/AAI3166001 and https://citedrive.com/en/discovery/pairing-phrasecued-text-with-readers-theatre-effects-on-reading-prosody-and-automaticity</li>
+<li>Digital versus paper books, children (Furenes, Kucirkova and Bus, 2021): https://doi.org/10.3102/0034654321998074 and https://www.aera.net/Newsroom/A-Comparison-of-Childrens-Reading-on-Paper-Versus-Screen-A-Meta-Analysis</li>
+<li>Practice testing meta-analysis (Adesope and colleagues, 2017): https://education.wsu.edu/documents/2018/01/rethinking-use-tests.pdf/</li>
+<li>Review of learning techniques (Dunlosky and colleagues, 2013): https://www.readingrockets.org/resources/resource-library/improving-students-learning-effective-learning-techniques-promising</li>
+<li>Distributed practice: https://pmc.ncbi.nlm.nih.gov/articles/PMC12189222/ (classroom meta-analysis) and https://pubmed.ncbi.nlm.nih.gov/16719566/ (Cepeda and colleagues, 2006)</li>
+<li>Hypercorrection: https://peeref.com/works/59714535 (children, 2011) and https://pubmed.ncbi.nlm.nih.gov/29781391/ (classroom, 2018)</li>
+<li>Morphological interventions: https://apps.asha.org/EvidenceMaps/Articles/ArticleSummary/93cb3843-8a27-4b52-887b-32781be13e92</li>
+<li>Cognates: https://www.cal.org/vias/subproject4/index.html, https://ies.ed.gov/use-work/awards/content-based-vocabulary-instruction-using-cognates-promote-vocabulary-development-and-reading, https://link.springer.com/article/10.1007/s11145-018-9821-1</li>
+<li>Letter spacing and dyslexia (Zorzi and colleagues, 2012): https://ccnl.psy.unipd.it/publications/publications_folder/extra-large-letter-spacing-improves-reading-in-dyslexia/view</li>
+<li>Adjunct questions: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10886187/</li>
+<li>Reading tutor with speech recognition (Project LISTEN randomised trial): https://ies.ed.gov/ncee/WWC/Study/95240</li>
+</ul>
+</main>
+</div>
+</html>
