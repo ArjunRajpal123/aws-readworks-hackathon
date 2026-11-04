@@ -1,0 +1,580 @@
+{
+  "input": "rws-e6-en.json",
+  "objects": {
+    "audio/rws-e6-en/tts-1.input.ssml": {
+      "content": "<speak><amazon:effect name=\"drc\"><prosody rate=\"95%\"><p><s>I left the office without so much as detention!</s></p><p><s>A lot of the time, I just wrote what my editor, the fifth-grade English teacher, assigned me.</s></p><p><s>I was eight years old and a brand-new reporter.</s></p><p><s>On Thursday, October 17th, a different sound hit the playground of Mars Hill Elementary.</s></p></prosody></amazon:effect></speak>",
+      "contentType": "application/ssml+xml",
+      "encoding": null
+    },
+    "audio/rws-e6-en/tts-1.marks.jsonl": {
+      "content": "{\"time\": 0, \"type\": \"sentence\", \"start\": 59, \"end\": 59, \"value\": \"\"}\n{\"time\": 0, \"type\": \"word\", \"start\": 59, \"end\": 60, \"value\": \"I\"}\n{\"time\": 300, \"type\": \"word\", \"start\": 61, \"end\": 65, \"value\": \"left\"}\n{\"time\": 600, \"type\": \"word\", \"start\": 66, \"end\": 69, \"value\": \"the\"}\n{\"time\": 900, \"type\": \"word\", \"start\": 70, \"end\": 76, \"value\": \"office\"}\n{\"time\": 1200, \"type\": \"word\", \"start\": 77, \"end\": 84, \"value\": \"without\"}\n{\"time\": 1500, \"type\": \"word\", \"start\": 85, \"end\": 87, \"value\": \"so\"}\n{\"time\": 1800, \"type\": \"word\", \"start\": 88, \"end\": 92, \"value\": \"much\"}\n{\"time\": 2100, \"type\": \"word\", \"start\": 93, \"end\": 95, \"value\": \"as\"}\n{\"time\": 2400, \"type\": \"word\", \"start\": 96, \"end\": 105, \"value\": \"detention\"}\n{\"time\": 2700, \"type\": \"sentence\", \"start\": 120, \"end\": 120, \"value\": \"\"}\n{\"time\": 2700, \"type\": \"word\", \"start\": 120, \"end\": 121, \"value\": \"A\"}\n{\"time\": 3000, \"type\": \"word\", \"start\": 122, \"end\": 125, \"value\": \"lot\"}\n{\"time\": 3300, \"type\": \"word\", \"start\": 126, \"end\": 128, \"value\": \"of\"}\n{\"time\": 3600, \"type\": \"word\", \"start\": 129, \"end\": 132, \"value\": \"the\"}\n{\"time\": 3900, \"type\": \"word\", \"start\": 133, \"end\": 137, \"value\": \"time\"}\n{\"time\": 4200, \"type\": \"word\", \"start\": 139, \"end\": 140, \"value\": \"I\"}\n{\"time\": 4500, \"type\": \"word\", \"start\": 141, \"end\": 145, \"value\": \"just\"}\n{\"time\": 4800, \"type\": \"word\", \"start\": 146, \"end\": 151, \"value\": \"wrote\"}\n{\"time\": 5100, \"type\": \"word\", \"start\": 152, \"end\": 156, \"value\": \"what\"}\n{\"time\": 5400, \"type\": \"word\", \"start\": 157, \"end\": 159, \"value\": \"my\"}\n{\"time\": 5700, \"type\": \"word\", \"start\": 160, \"end\": 166, \"value\": \"editor\"}\n{\"time\": 6000, \"type\": \"word\", \"start\": 168, \"end\": 171, \"value\": \"the\"}\n{\"time\": 6300, \"type\": \"word\", \"start\": 172, \"end\": 183, \"value\": \"fifth-grade\"}\n{\"time\": 6600, \"type\": \"word\", \"start\": 184, \"end\": 191, \"value\": \"English\"}\n{\"time\": 6900, \"type\": \"word\", \"start\": 192, \"end\": 199, \"value\": \"teacher\"}\n{\"time\": 7200, \"type\": \"word\", \"start\": 201, \"end\": 209, \"value\": \"assigned\"}\n{\"time\": 7500, \"type\": \"word\", \"start\": 210, \"end\": 212, \"value\": \"me\"}\n{\"time\": 7800, \"type\": \"sentence\", \"start\": 227, \"end\": 227, \"value\": \"\"}\n{\"time\": 7800, \"type\": \"word\", \"start\": 227, \"end\": 228, \"value\": \"I\"}\n{\"time\": 8100, \"type\": \"word\", \"start\": 229, \"end\": 232, \"value\": \"was\"}\n{\"time\": 8400, \"type\": \"word\", \"start\": 233, \"end\": 238, \"value\": \"eight\"}\n{\"time\": 8700, \"type\": \"word\", \"start\": 239, \"end\": 244, \"value\": \"years\"}\n{\"time\": 9000, \"type\": \"word\", \"start\": 245, \"end\": 248, \"value\": \"old\"}\n{\"time\": 9300, \"type\": \"word\", \"start\": 249, \"end\": 252, \"value\": \"and\"}\n{\"time\": 9600, \"type\": \"word\", \"start\": 253, \"end\": 254, \"value\": \"a\"}\n{\"time\": 9900, \"type\": \"word\", \"start\": 255, \"end\": 264, \"value\": \"brand-new\"}\n{\"time\": 10200, \"type\": \"word\", \"start\": 265, \"end\": 273, \"value\": \"reporter\"}\n{\"time\": 10500, \"type\": \"sentence\", \"start\": 288, \"end\": 288, \"value\": \"\"}\n{\"time\": 10500, \"type\": \"word\", \"start\": 288, \"end\": 290, \"value\": \"On\"}\n{\"time\": 10800, \"type\": \"word\", \"start\": 291, \"end\": 299, \"value\": \"Thursday\"}\n{\"time\": 11100, \"type\": \"word\", \"start\": 301, \"end\": 308, \"value\": \"October\"}\n{\"time\": 11400, \"type\": \"word\", \"start\": 309, \"end\": 313, \"value\": \"17th\"}\n{\"time\": 11700, \"type\": \"word\", \"start\": 315, \"end\": 316, \"value\": \"a\"}\n{\"time\": 12000, \"type\": \"word\", \"start\": 317, \"end\": 326, \"value\": \"different\"}\n{\"time\": 12300, \"type\": \"word\", \"start\": 327, \"end\": 332, \"value\": \"sound\"}\n{\"time\": 12600, \"type\": \"word\", \"start\": 333, \"end\": 336, \"value\": \"hit\"}\n{\"time\": 12900, \"type\": \"word\", \"start\": 337, \"end\": 340, \"value\": \"the\"}\n{\"time\": 13200, \"type\": \"word\", \"start\": 341, \"end\": 351, \"value\": \"playground\"}\n{\"time\": 13500, \"type\": \"word\", \"start\": 352, \"end\": 354, \"value\": \"of\"}\n{\"time\": 13800, \"type\": \"word\", \"start\": 355, \"end\": 359, \"value\": \"Mars\"}\n{\"time\": 14100, \"type\": \"word\", \"start\": 360, \"end\": 364, \"value\": \"Hill\"}\n{\"time\": 14400, \"type\": \"word\", \"start\": 365, \"end\": 375, \"value\": \"Elementary\"}\n",
+      "contentType": "application/x-ndjson",
+      "encoding": null
+    },
+    "audio/rws-e6-en/tts-1.mp3": {
+      "content": {
+        "bytes": 144000,
+        "sha256": "ca9acd040a30f2b308021a8b54d2ddda67bae56c4aeed6e3d96a12981d37b760"
+      },
+      "contentType": "audio/mpeg",
+      "encoding": null
+    },
+    "audio/rws-e6-en/tts-1.timing.json.gz": {
+      "content": {
+        "durationMs": 24000,
+        "end": [
+          300,
+          600,
+          900,
+          1200,
+          1500,
+          1800,
+          2100,
+          2400,
+          2700,
+          3000,
+          3300,
+          3600,
+          3900,
+          4200,
+          4500,
+          4800,
+          5100,
+          5400,
+          5700,
+          6000,
+          6300,
+          6600,
+          6900,
+          7200,
+          7500,
+          7800,
+          8100,
+          8400,
+          8700,
+          9000,
+          9300,
+          9600,
+          9900,
+          10200,
+          10500,
+          10800,
+          11100,
+          11400,
+          11700,
+          12000,
+          12300,
+          12600,
+          12900,
+          13200,
+          13500,
+          13800,
+          14100,
+          14400,
+          24000
+        ],
+        "n": 49,
+        "start": [
+          0,
+          300,
+          600,
+          900,
+          1200,
+          1500,
+          1800,
+          2100,
+          2400,
+          2700,
+          3000,
+          3300,
+          3600,
+          3900,
+          4200,
+          4500,
+          4800,
+          5100,
+          5400,
+          5700,
+          6000,
+          6300,
+          6600,
+          6900,
+          7200,
+          7500,
+          7800,
+          8100,
+          8400,
+          8700,
+          9000,
+          9300,
+          9600,
+          9900,
+          10200,
+          10500,
+          10800,
+          11100,
+          11400,
+          11700,
+          12000,
+          12300,
+          12600,
+          12900,
+          13200,
+          13500,
+          13800,
+          14100,
+          14400
+        ],
+        "textHash": "sha256:f9ee036368123700d57b622220b45a266401a8fdcaceed1e024dbf02f60b15d3",
+        "trackId": "tts-1",
+        "v": 1
+      },
+      "contentType": "application/json",
+      "encoding": "gzip"
+    },
+    "audio/rws-e6-en/tts-2.input.ssml": {
+      "content": "<speak><amazon:effect name=\"drc\"><prosody rate=\"95%\"><p><s>I left the office without so much as detention!</s></p><p><s>A lot of the time, I just wrote what my editor, the fifth-grade English teacher, assigned me.</s></p><p><s>I was eight years old and a brand-new reporter.</s></p><p><s>On Thursday, October 17th, a different sound hit the playground of Mars Hill Elementary.</s></p></prosody></amazon:effect></speak>",
+      "contentType": "application/ssml+xml",
+      "encoding": null
+    },
+    "audio/rws-e6-en/tts-2.marks.jsonl": {
+      "content": "{\"time\": 0, \"type\": \"sentence\", \"start\": 59, \"end\": 59, \"value\": \"\"}\n{\"time\": 0, \"type\": \"word\", \"start\": 59, \"end\": 60, \"value\": \"I\"}\n{\"time\": 300, \"type\": \"word\", \"start\": 61, \"end\": 65, \"value\": \"left\"}\n{\"time\": 600, \"type\": \"word\", \"start\": 66, \"end\": 69, \"value\": \"the\"}\n{\"time\": 900, \"type\": \"word\", \"start\": 70, \"end\": 76, \"value\": \"office\"}\n{\"time\": 1200, \"type\": \"word\", \"start\": 77, \"end\": 84, \"value\": \"without\"}\n{\"time\": 1500, \"type\": \"word\", \"start\": 85, \"end\": 87, \"value\": \"so\"}\n{\"time\": 1800, \"type\": \"word\", \"start\": 88, \"end\": 92, \"value\": \"much\"}\n{\"time\": 2100, \"type\": \"word\", \"start\": 93, \"end\": 95, \"value\": \"as\"}\n{\"time\": 2400, \"type\": \"word\", \"start\": 96, \"end\": 105, \"value\": \"detention\"}\n{\"time\": 2700, \"type\": \"sentence\", \"start\": 120, \"end\": 120, \"value\": \"\"}\n{\"time\": 2700, \"type\": \"word\", \"start\": 120, \"end\": 121, \"value\": \"A\"}\n{\"time\": 3000, \"type\": \"word\", \"start\": 122, \"end\": 125, \"value\": \"lot\"}\n{\"time\": 3300, \"type\": \"word\", \"start\": 126, \"end\": 128, \"value\": \"of\"}\n{\"time\": 3600, \"type\": \"word\", \"start\": 129, \"end\": 132, \"value\": \"the\"}\n{\"time\": 3900, \"type\": \"word\", \"start\": 133, \"end\": 137, \"value\": \"time\"}\n{\"time\": 4200, \"type\": \"word\", \"start\": 139, \"end\": 140, \"value\": \"I\"}\n{\"time\": 4500, \"type\": \"word\", \"start\": 141, \"end\": 145, \"value\": \"just\"}\n{\"time\": 4800, \"type\": \"word\", \"start\": 146, \"end\": 151, \"value\": \"wrote\"}\n{\"time\": 5100, \"type\": \"word\", \"start\": 152, \"end\": 156, \"value\": \"what\"}\n{\"time\": 5400, \"type\": \"word\", \"start\": 157, \"end\": 159, \"value\": \"my\"}\n{\"time\": 5700, \"type\": \"word\", \"start\": 160, \"end\": 166, \"value\": \"editor\"}\n{\"time\": 6000, \"type\": \"word\", \"start\": 168, \"end\": 171, \"value\": \"the\"}\n{\"time\": 6300, \"type\": \"word\", \"start\": 172, \"end\": 183, \"value\": \"fifth-grade\"}\n{\"time\": 6600, \"type\": \"word\", \"start\": 184, \"end\": 191, \"value\": \"English\"}\n{\"time\": 6900, \"type\": \"word\", \"start\": 192, \"end\": 199, \"value\": \"teacher\"}\n{\"time\": 7200, \"type\": \"word\", \"start\": 201, \"end\": 209, \"value\": \"assigned\"}\n{\"time\": 7500, \"type\": \"word\", \"start\": 210, \"end\": 212, \"value\": \"me\"}\n{\"time\": 7800, \"type\": \"sentence\", \"start\": 227, \"end\": 227, \"value\": \"\"}\n{\"time\": 7800, \"type\": \"word\", \"start\": 227, \"end\": 228, \"value\": \"I\"}\n{\"time\": 8100, \"type\": \"word\", \"start\": 229, \"end\": 232, \"value\": \"was\"}\n{\"time\": 8400, \"type\": \"word\", \"start\": 233, \"end\": 238, \"value\": \"eight\"}\n{\"time\": 8700, \"type\": \"word\", \"start\": 239, \"end\": 244, \"value\": \"years\"}\n{\"time\": 9000, \"type\": \"word\", \"start\": 245, \"end\": 248, \"value\": \"old\"}\n{\"time\": 9300, \"type\": \"word\", \"start\": 249, \"end\": 252, \"value\": \"and\"}\n{\"time\": 9600, \"type\": \"word\", \"start\": 253, \"end\": 254, \"value\": \"a\"}\n{\"time\": 9900, \"type\": \"word\", \"start\": 255, \"end\": 264, \"value\": \"brand-new\"}\n{\"time\": 10200, \"type\": \"word\", \"start\": 265, \"end\": 273, \"value\": \"reporter\"}\n{\"time\": 10500, \"type\": \"sentence\", \"start\": 288, \"end\": 288, \"value\": \"\"}\n{\"time\": 10500, \"type\": \"word\", \"start\": 288, \"end\": 290, \"value\": \"On\"}\n{\"time\": 10800, \"type\": \"word\", \"start\": 291, \"end\": 299, \"value\": \"Thursday\"}\n{\"time\": 11100, \"type\": \"word\", \"start\": 301, \"end\": 308, \"value\": \"October\"}\n{\"time\": 11400, \"type\": \"word\", \"start\": 309, \"end\": 313, \"value\": \"17th\"}\n{\"time\": 11700, \"type\": \"word\", \"start\": 315, \"end\": 316, \"value\": \"a\"}\n{\"time\": 12000, \"type\": \"word\", \"start\": 317, \"end\": 326, \"value\": \"different\"}\n{\"time\": 12300, \"type\": \"word\", \"start\": 327, \"end\": 332, \"value\": \"sound\"}\n{\"time\": 12600, \"type\": \"word\", \"start\": 333, \"end\": 336, \"value\": \"hit\"}\n{\"time\": 12900, \"type\": \"word\", \"start\": 337, \"end\": 340, \"value\": \"the\"}\n{\"time\": 13200, \"type\": \"word\", \"start\": 341, \"end\": 351, \"value\": \"playground\"}\n{\"time\": 13500, \"type\": \"word\", \"start\": 352, \"end\": 354, \"value\": \"of\"}\n{\"time\": 13800, \"type\": \"word\", \"start\": 355, \"end\": 359, \"value\": \"Mars\"}\n{\"time\": 14100, \"type\": \"word\", \"start\": 360, \"end\": 364, \"value\": \"Hill\"}\n{\"time\": 14400, \"type\": \"word\", \"start\": 365, \"end\": 375, \"value\": \"Elementary\"}\n",
+      "contentType": "application/x-ndjson",
+      "encoding": null
+    },
+    "audio/rws-e6-en/tts-2.mp3": {
+      "content": {
+        "bytes": 144000,
+        "sha256": "ca9acd040a30f2b308021a8b54d2ddda67bae56c4aeed6e3d96a12981d37b760"
+      },
+      "contentType": "audio/mpeg",
+      "encoding": null
+    },
+    "audio/rws-e6-en/tts-2.timing.json.gz": {
+      "content": {
+        "durationMs": 24000,
+        "end": [
+          300,
+          600,
+          900,
+          1200,
+          1500,
+          1800,
+          2100,
+          2400,
+          2700,
+          3000,
+          3300,
+          3600,
+          3900,
+          4200,
+          4500,
+          4800,
+          5100,
+          5400,
+          5700,
+          6000,
+          6300,
+          6600,
+          6900,
+          7200,
+          7500,
+          7800,
+          8100,
+          8400,
+          8700,
+          9000,
+          9300,
+          9600,
+          9900,
+          10200,
+          10500,
+          10800,
+          11100,
+          11400,
+          11700,
+          12000,
+          12300,
+          12600,
+          12900,
+          13200,
+          13500,
+          13800,
+          14100,
+          14400,
+          24000
+        ],
+        "n": 49,
+        "start": [
+          0,
+          300,
+          600,
+          900,
+          1200,
+          1500,
+          1800,
+          2100,
+          2400,
+          2700,
+          3000,
+          3300,
+          3600,
+          3900,
+          4200,
+          4500,
+          4800,
+          5100,
+          5400,
+          5700,
+          6000,
+          6300,
+          6600,
+          6900,
+          7200,
+          7500,
+          7800,
+          8100,
+          8400,
+          8700,
+          9000,
+          9300,
+          9600,
+          9900,
+          10200,
+          10500,
+          10800,
+          11100,
+          11400,
+          11700,
+          12000,
+          12300,
+          12600,
+          12900,
+          13200,
+          13500,
+          13800,
+          14100,
+          14400
+        ],
+        "textHash": "sha256:f9ee036368123700d57b622220b45a266401a8fdcaceed1e024dbf02f60b15d3",
+        "trackId": "tts-2",
+        "v": 1
+      },
+      "contentType": "application/json",
+      "encoding": "gzip"
+    },
+    "product/rws-e6-en.soundAlong.json": {
+      "content": {
+        "contentTokenized": "<p><span data-w=\"0\">I</span> <span data-w=\"1\">left</span> <span data-w=\"2\">the</span> <span data-w=\"3\">office</span> <span data-w=\"4\">without</span> <span data-w=\"5\">so</span> <span data-w=\"6\">much</span> <span data-w=\"7\">as</span> <span data-w=\"8\">detention!</span></p><p><span data-w=\"9\">A</span> <span data-w=\"10\">lot</span> <span data-w=\"11\">of</span> <span data-w=\"12\">the</span> <span data-w=\"13\">time,</span> <span data-w=\"14\">I</span> <span data-w=\"15\">just</span> <span data-w=\"16\">wrote</span> <span data-w=\"17\">what</span> <span data-w=\"18\">my</span> <span data-w=\"19\">editor,</span> <span data-w=\"20\">the</span> <span data-w=\"21\">fifth-grade</span> <span data-w=\"22\">English</span> <span data-w=\"23\">teacher,</span> <span data-w=\"24\">assigned</span> <span data-w=\"25\">me.</span></p><p><span data-w=\"26\">I</span> <span data-w=\"27\">was</span> <span data-w=\"28\">eight</span> <span data-w=\"29\">years</span> <span data-w=\"30\">old</span> <span data-w=\"31\">and</span> <span data-w=\"32\">a</span> <span data-w=\"33\">brand-new</span> <span data-w=\"34\">reporter.</span></p><p><span data-w=\"35\">On</span> <span data-w=\"36\">Thursday,</span> <span data-w=\"37\">October</span> <span data-w=\"38\">17th,</span> <span data-w=\"39\">a</span> <span data-w=\"40\">different</span> <span data-w=\"41\">sound</span> <span data-w=\"42\">hit</span> <span data-w=\"43\">the</span> <span data-w=\"44\">playground</span> <span data-w=\"45\">of</span> <span data-w=\"46\">Mars</span> <span data-w=\"47\">Hill</span> <span data-w=\"48\">Elementary.</span></p>",
+        "generation": {
+          "billedChars": 1100,
+          "configVersion": "en-US/neural/Danielle/ssml/lex-1/r95%/drc1/pb0",
+          "estCostUsd": 0.0176,
+          "inputHash": "sha256:f9ee036368123700d57b622220b45a266401a8fdcaceed1e024dbf02f60b15d3",
+          "pipelineVersion": "sa-pipeline-0.3.1",
+          "runAt": "<masked>"
+        },
+        "id": "rws-e6-en",
+        "lang": "en",
+        "schemaVersion": 3,
+        "structure": {
+          "paragraphStarts": [
+            0,
+            9,
+            26,
+            35
+          ],
+          "sentenceStarts": [
+            0,
+            9,
+            26,
+            35
+          ]
+        },
+        "textHash": "sha256:f9ee036368123700d57b622220b45a266401a8fdcaceed1e024dbf02f60b15d3",
+        "title": "Breaking (E6, en)",
+        "tokenCount": 49,
+        "tokenizerVersion": "sa-tok-en-1.0",
+        "tracks": [
+          {
+            "audioKey": "audio/rws-e6-en/tts-1.mp3",
+            "configVersion": "en-US/neural/Danielle/ssml/lex-1/r95%/drc1/pb0",
+            "default": true,
+            "engine": "neural",
+            "granularity": "word",
+            "id": "tts-1",
+            "kind": "tts",
+            "lexicon": "saEnUS",
+            "qa": {
+              "billedChars": 550,
+              "durationMs": 24000,
+              "estCostUsd": 0.0088,
+              "lowConfidence": [],
+              "marks": 49,
+              "mergedSentenceBreaks": [],
+              "pollySentences": 4,
+              "sentences": 4,
+              "ssmlSentences": 4,
+              "status": "passed",
+              "tokens": 49
+            },
+            "settings": {
+              "drc": true,
+              "lexiconMode": "polly",
+              "paragraphBreakMs": 0,
+              "pronunciationOverrides": 0,
+              "rate": "95%",
+              "sampleRate": "24000",
+              "textType": "ssml"
+            },
+            "timingKey": "audio/rws-e6-en/tts-1.timing.json.gz",
+            "timingSource": "polly-speech-marks",
+            "voiceGender": "female",
+            "voiceId": "Danielle"
+          },
+          {
+            "audioKey": "audio/rws-e6-en/tts-2.mp3",
+            "configVersion": "en-US/neural/Stephen/ssml/lex-1/r95%/drc1/pb0",
+            "default": false,
+            "engine": "neural",
+            "granularity": "word",
+            "id": "tts-2",
+            "kind": "tts",
+            "lexicon": "saEnUS",
+            "qa": {
+              "billedChars": 550,
+              "durationMs": 24000,
+              "estCostUsd": 0.0088,
+              "lowConfidence": [],
+              "marks": 49,
+              "mergedSentenceBreaks": [],
+              "pollySentences": 4,
+              "sentences": 4,
+              "ssmlSentences": 4,
+              "status": "passed",
+              "tokens": 49
+            },
+            "settings": {
+              "drc": true,
+              "lexiconMode": "polly",
+              "paragraphBreakMs": 0,
+              "pronunciationOverrides": 0,
+              "rate": "95%",
+              "sampleRate": "24000",
+              "textType": "ssml"
+            },
+            "timingKey": "audio/rws-e6-en/tts-2.timing.json.gz",
+            "timingSource": "polly-speech-marks",
+            "voiceGender": "male",
+            "voiceId": "Stephen"
+          }
+        ]
+      },
+      "contentType": "application/json",
+      "encoding": null
+    }
+  },
+  "pollyRequests": [
+    {
+      "Engine": "neural",
+      "LanguageCode": "en-US",
+      "LexiconNames": [
+        "saEnUS"
+      ],
+      "OutputFormat": "mp3",
+      "SampleRate": "24000",
+      "TextType": "ssml",
+      "VoiceId": "Danielle"
+    },
+    {
+      "Engine": "neural",
+      "LanguageCode": "en-US",
+      "LexiconNames": [
+        "saEnUS"
+      ],
+      "OutputFormat": "json",
+      "SpeechMarkTypes": [
+        "word",
+        "sentence"
+      ],
+      "TextType": "ssml",
+      "VoiceId": "Danielle"
+    },
+    {
+      "Engine": "neural",
+      "LanguageCode": "en-US",
+      "LexiconNames": [
+        "saEnUS"
+      ],
+      "OutputFormat": "mp3",
+      "SampleRate": "24000",
+      "TextType": "ssml",
+      "VoiceId": "Stephen"
+    },
+    {
+      "Engine": "neural",
+      "LanguageCode": "en-US",
+      "LexiconNames": [
+        "saEnUS"
+      ],
+      "OutputFormat": "json",
+      "SpeechMarkTypes": [
+        "word",
+        "sentence"
+      ],
+      "TextType": "ssml",
+      "VoiceId": "Stephen"
+    }
+  ],
+  "record": {
+    "contentTokenized": "<p><span data-w=\"0\">I</span> <span data-w=\"1\">left</span> <span data-w=\"2\">the</span> <span data-w=\"3\">office</span> <span data-w=\"4\">without</span> <span data-w=\"5\">so</span> <span data-w=\"6\">much</span> <span data-w=\"7\">as</span> <span data-w=\"8\">detention!</span></p><p><span data-w=\"9\">A</span> <span data-w=\"10\">lot</span> <span data-w=\"11\">of</span> <span data-w=\"12\">the</span> <span data-w=\"13\">time,</span> <span data-w=\"14\">I</span> <span data-w=\"15\">just</span> <span data-w=\"16\">wrote</span> <span data-w=\"17\">what</span> <span data-w=\"18\">my</span> <span data-w=\"19\">editor,</span> <span data-w=\"20\">the</span> <span data-w=\"21\">fifth-grade</span> <span data-w=\"22\">English</span> <span data-w=\"23\">teacher,</span> <span data-w=\"24\">assigned</span> <span data-w=\"25\">me.</span></p><p><span data-w=\"26\">I</span> <span data-w=\"27\">was</span> <span data-w=\"28\">eight</span> <span data-w=\"29\">years</span> <span data-w=\"30\">old</span> <span data-w=\"31\">and</span> <span data-w=\"32\">a</span> <span data-w=\"33\">brand-new</span> <span data-w=\"34\">reporter.</span></p><p><span data-w=\"35\">On</span> <span data-w=\"36\">Thursday,</span> <span data-w=\"37\">October</span> <span data-w=\"38\">17th,</span> <span data-w=\"39\">a</span> <span data-w=\"40\">different</span> <span data-w=\"41\">sound</span> <span data-w=\"42\">hit</span> <span data-w=\"43\">the</span> <span data-w=\"44\">playground</span> <span data-w=\"45\">of</span> <span data-w=\"46\">Mars</span> <span data-w=\"47\">Hill</span> <span data-w=\"48\">Elementary.</span></p>",
+    "generation": {
+      "billedChars": 1100,
+      "configVersion": "en-US/neural/Danielle/ssml/lex-1/r95%/drc1/pb0",
+      "estCostUsd": 0.0176,
+      "inputHash": "sha256:f9ee036368123700d57b622220b45a266401a8fdcaceed1e024dbf02f60b15d3",
+      "pipelineVersion": "sa-pipeline-0.3.1",
+      "runAt": "<masked>"
+    },
+    "id": "rws-e6-en",
+    "lang": "en",
+    "schemaVersion": 3,
+    "structure": {
+      "paragraphStarts": [
+        0,
+        9,
+        26,
+        35
+      ],
+      "sentenceStarts": [
+        0,
+        9,
+        26,
+        35
+      ]
+    },
+    "textHash": "sha256:f9ee036368123700d57b622220b45a266401a8fdcaceed1e024dbf02f60b15d3",
+    "title": "Breaking (E6, en)",
+    "tokenCount": 49,
+    "tokenizerVersion": "sa-tok-en-1.0",
+    "tracks": [
+      {
+        "audioKey": "audio/rws-e6-en/tts-1.mp3",
+        "configVersion": "en-US/neural/Danielle/ssml/lex-1/r95%/drc1/pb0",
+        "default": true,
+        "engine": "neural",
+        "granularity": "word",
+        "id": "tts-1",
+        "kind": "tts",
+        "lexicon": "saEnUS",
+        "qa": {
+          "billedChars": 550,
+          "durationMs": 24000,
+          "estCostUsd": 0.0088,
+          "lowConfidence": [],
+          "marks": 49,
+          "mergedSentenceBreaks": [],
+          "pollySentences": 4,
+          "sentences": 4,
+          "ssmlSentences": 4,
+          "status": "passed",
+          "tokens": 49
+        },
+        "settings": {
+          "drc": true,
+          "lexiconMode": "polly",
+          "paragraphBreakMs": 0,
+          "pronunciationOverrides": 0,
+          "rate": "95%",
+          "sampleRate": "24000",
+          "textType": "ssml"
+        },
+        "timingKey": "audio/rws-e6-en/tts-1.timing.json.gz",
+        "timingSource": "polly-speech-marks",
+        "voiceGender": "female",
+        "voiceId": "Danielle"
+      },
+      {
+        "audioKey": "audio/rws-e6-en/tts-2.mp3",
+        "configVersion": "en-US/neural/Stephen/ssml/lex-1/r95%/drc1/pb0",
+        "default": false,
+        "engine": "neural",
+        "granularity": "word",
+        "id": "tts-2",
+        "kind": "tts",
+        "lexicon": "saEnUS",
+        "qa": {
+          "billedChars": 550,
+          "durationMs": 24000,
+          "estCostUsd": 0.0088,
+          "lowConfidence": [],
+          "marks": 49,
+          "mergedSentenceBreaks": [],
+          "pollySentences": 4,
+          "sentences": 4,
+          "ssmlSentences": 4,
+          "status": "passed",
+          "tokens": 49
+        },
+        "settings": {
+          "drc": true,
+          "lexiconMode": "polly",
+          "paragraphBreakMs": 0,
+          "pronunciationOverrides": 0,
+          "rate": "95%",
+          "sampleRate": "24000",
+          "textType": "ssml"
+        },
+        "timingKey": "audio/rws-e6-en/tts-2.timing.json.gz",
+        "timingSource": "polly-speech-marks",
+        "voiceGender": "male",
+        "voiceId": "Stephen"
+      }
+    ]
+  },
+  "summary": {
+    "audioKey": "audio/rws-e6-en/tts-1.mp3",
+    "billedChars": 1100,
+    "durationMs": 24000,
+    "estCostUsd": 0.0176,
+    "id": "rws-e6-en",
+    "lowConfidence": 0,
+    "pollySentences": 4,
+    "qa": "passed",
+    "sentences": 4,
+    "ssmlSentences": 4,
+    "timingKey": "audio/rws-e6-en/tts-1.timing.json.gz",
+    "tokenCount": 49,
+    "tracks": [
+      {
+        "audioKey": "audio/rws-e6-en/tts-1.mp3",
+        "billedChars": 550,
+        "durationMs": 24000,
+        "estCostUsd": 0.0088,
+        "lowConfidence": 0,
+        "pollySentences": 4,
+        "qa": "passed",
+        "ssmlSentences": 4,
+        "timingKey": "audio/rws-e6-en/tts-1.timing.json.gz",
+        "track": "tts-1",
+        "voiceGender": "female",
+        "voiceId": "Danielle"
+      },
+      {
+        "audioKey": "audio/rws-e6-en/tts-2.mp3",
+        "billedChars": 550,
+        "durationMs": 24000,
+        "estCostUsd": 0.0088,
+        "lowConfidence": 0,
+        "pollySentences": 4,
+        "qa": "passed",
+        "ssmlSentences": 4,
+        "timingKey": "audio/rws-e6-en/tts-2.timing.json.gz",
+        "track": "tts-2",
+        "voiceGender": "male",
+        "voiceId": "Stephen"
+      }
+    ],
+    "voiceId": "Danielle"
+  }
+}

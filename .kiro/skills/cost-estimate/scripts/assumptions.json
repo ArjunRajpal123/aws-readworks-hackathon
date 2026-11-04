@@ -1,0 +1,137 @@
+{
+  "_comment": "Usage drivers for the Sound Along cost model. Every number here is an input to scripts/estimate_cost.py; edit and re-run. 'src' notes where a value comes from: a repo file, a measured sample, or ASSUMPTION (a guess to confirm with the team).",
+  "catalog": {
+    "passages": 6893,
+    "chars": 20000000,
+    "computerized_share": 0.64,
+    "spanish_extra_chars": 0,
+    "src": "docs/SoundAlong-Kiro.md Context + Constraints (6,893 passages, ~20M chars, 64% computerized / 36% human audio). spanish_extra_chars: ASSUMPTION, set >0 if ES versions are generated on top of the 20M."
+  },
+  "media": {
+    "mp3_bytes_per_char": 347.5,
+    "audio_ms_per_char": 57.9,
+    "timing_bytes_per_char": 0.84,
+    "product_json_bytes_per_char": 9.17,
+    "src": "Measured from frontend/public/sa e1p1 sample: 354 chars -> 123,020 B MP3, 20,495 ms, 297 B timing.gz, 3,247 B product JSON."
+  },
+  "polly": {
+    "current": {
+      "engine": "neural",
+      "voices_per_lang": 2,
+      "calls_per_track": 2,
+      "src": "etl/voices.json (neural, 2 tracks per lang) + etl/audio.py (MP3 call + speech-marks call, both billed)"
+    },
+    "target": {
+      "engine": "generative",
+      "voices_per_lang": 1,
+      "calls_per_track": 1,
+      "src": "docs/SoundAlong-Kiro.md US-3 (generative, one voice per language); timing from WhisperX, so no speech-marks call"
+    }
+  },
+  "churn": {
+    "monthly_regen_share": 0.02,
+    "src": "ASSUMPTION: share of the catalog edited and regenerated per month after backfill (textHash skip means unchanged passages cost nothing)."
+  },
+  "traffic": {
+    "weekly_plays": 1818026,
+    "mp3_fraction_downloaded": 1.0,
+    "app_bytes_per_play": 50000,
+    "cf_requests_per_play": 5,
+    "s3_gets_per_play_current": 2,
+    "api_get_lambda_ms": 150,
+    "src": "weekly_plays: docs/BB-vision-document (1,818,026 presses of play per week, 888,147 weekly audio students). Current deploy: CloudFront does not cache index.html or sa/ (CACHING_DISABLED), so every play also passes through the NLB. Others ASSUMPTION: full MP3 downloaded per play, ~50 KB uncached app assets, 5 CDN requests (JSON, timing, MP3 ranges, app)."
+  },
+  "api_current": {
+    "post_requests_month": 0,
+    "post_avg_chars": 1000,
+    "post_lambda_ms": 4000,
+    "src": "ASSUMPTION: ad-hoc POST /api/v1/text-to-speech usage. Default track only = 2 Polly calls per request (lambda/text_to_speech_post/handler.py)."
+  },
+  "lambda_target": {
+    "_per_passage": "memory MB and duration ms for each pipeline Lambda, per passage",
+    "tokenizer": [
+      512,
+      1000
+    ],
+    "qa": [
+      256,
+      500
+    ],
+    "write": [
+      512,
+      1000
+    ],
+    "word_stops": [
+      512,
+      8000
+    ],
+    "backfill_consumer": [
+      256,
+      500
+    ],
+    "src": "ASSUMPTION: architecture table in docs/SoundAlong-Kiro.md; durations not measured yet."
+  },
+  "stepfunctions": {
+    "transitions_per_passage": 15,
+    "src": "ASSUMPTION: Standard workflow; tokenize, synth start, wait/poll loop, align, QA, stops, write, plus retries."
+  },
+  "fargate": {
+    "vcpu": 4,
+    "memory_gb": 8,
+    "realtime_factor": 1.0,
+    "overhead_s": 60,
+    "src": "ASSUMPTION: WhisperX on CPU Fargate at ~1x audio length plus 60 s task start + model load. Phase 0 spike (task 0.4) should measure this."
+  },
+  "bedrock": {
+    "word_stops_per_passage": 4,
+    "input_tokens_per_call": 2000,
+    "output_tokens_per_call": 300,
+    "src": "ASSUMPTION: ~4 tagged vocab per passage (etl/inputs/e1.vocab.json has 4); model not chosen yet, priced as Claude Haiku 4.5 (see prices.json)."
+  },
+  "ec2": {
+    "instance": "t3.small",
+    "ebs_gb": 20,
+    "hours": 730,
+    "src": "docs/SoundAlong-Kiro.md Components: 'EC2 (small), Node 18 + Express 4' content API."
+  },
+  "observability": {
+    "log_bytes_per_invocation": 1500,
+    "log_retention_months_current": 12,
+    "log_retention_months_target": 1,
+    "alarms": 10,
+    "dashboards": 1,
+    "src": "current CDK sets no log retention (never expire); 12 = storage after one year. Target assumes 30-day retention. Alarm/dashboard counts ASSUMPTION."
+  },
+  "security": {
+    "secrets": 1,
+    "kms_keys": 1,
+    "kms_requests_month": 50000,
+    "guardduty_usd_month": 10,
+    "src": "storage-stack.ts (1 CMK). Secrets Manager / GuardDuty from Security baseline in docs/SoundAlong-Kiro.md. GuardDuty is a flat ASSUMPTION; its price depends on CloudTrail/S3 event volume."
+  },
+  "analytics": {
+    "events_per_play": 20,
+    "bytes_per_event": 300,
+    "athena_tb_scanned_month": 0.05,
+    "src": "Phase 4 task 4.5 (Firehose -> S3 -> Athena). Event counts ASSUMPTION."
+  },
+  "cicd": {
+    "builds_per_month": 60,
+    "build_minutes": 6,
+    "pipeline_action_minutes_per_run": 10,
+    "src": "docs/pipeline-setup.md (CodePipeline V2 + CodeBuild). Build counts ASSUMPTION."
+  },
+  "eks_current": {
+    "hours": 730,
+    "nodes": 1,
+    "node_disk_gb": 20,
+    "public_ipv4": 3,
+    "pods": 2,
+    "src": "infra/cdk/lib/frontend-stack.ts: EKS 1.35, 1x t3.medium managed node (20 GB), 1 NAT gateway, internet-facing NLB in 2 AZs (NAT EIP + 2 NLB IPs), 2 pods each syncing sa/ from S3 through the NAT."
+  },
+  "etl_lambda_current": {
+    "mem_mb": 1024,
+    "ms_per_passage": 5000,
+    "src": "lambda-readworks-bb-dev-etl-run REPORT lines: ~2.5 s billed for ~400-char passages (2 tracks). 5 s assumed for the ~2,900-char average."
+  }
+}
