@@ -15,6 +15,8 @@ Produces exactly what the player (frontend/src/engine.js, loadAudio) reads:
 
 The player ignores the timing file unless tracks[0].qa.status == 'passed' and
 timing.textHash == product.textHash, so both are written consistently.
+Otherwise qa.status is 'fallback_sentence' and granularity is 'sentence'.
+The full contract (S3 layout, DynamoDB item, API) is docs/baseref.txt.
 """
 
 from __future__ import annotations
@@ -32,7 +34,8 @@ from ssml import build_ssml, load_inline_lexicon, parse_overrides
 from tokenizer import tokenize
 from voices import tracks_for
 
-PIPELINE_VERSION = "sa-pipeline-0.3.0"
+# 0.3.1: qa.status fallback is "fallback_sentence" (schema v3); API runs this pipeline.
+PIPELINE_VERSION = "sa-pipeline-0.3.1"
 # Polly Neural list price per 1M characters; speech marks are billed separately
 # at the same rate, so billed_chars already counts both requests.
 NEURAL_USD_PER_MCHAR = 16.0
@@ -48,6 +51,21 @@ class PassageInput:
     text: str
     # Optional per-word pronunciation fixes: {"<tokenIndex>": {"w": "amazon:VB"}}.
     pronunciation: dict | None = None
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "PassageInput":
+        """Build from an input JSON / API body: {id, lang, title, text, pronunciation?}.
+
+        Shared by run_local.py, run_aws.py and the API Lambda so every entry
+        point reads passages the same way.
+        """
+        return cls(
+            id=data["id"],
+            lang=data.get("lang", "en"),
+            title=data.get("title", data["id"]),
+            text=data["text"],
+            pronunciation=data.get("pronunciation"),
+        )
 
 
 class Storage(Protocol):

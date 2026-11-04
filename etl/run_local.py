@@ -73,14 +73,7 @@ def main(argv=None):
 
     results, failed = [], []
     for path in _expand(args.input):
-        data = json.loads(Path(path).read_text(encoding="utf-8"))
-        passage = PassageInput(
-            id=data["id"],
-            lang=data.get("lang", "en"),
-            title=data.get("title", data["id"]),
-            text=data["text"],
-            pronunciation=data.get("pronunciation"),
-        )
+        passage = PassageInput.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
         try:
             results.append(run(passage, polly, storage, track_ids=args.tracks))
         except Exception as exc:  # noqa: BLE001 - keep going; report at the end

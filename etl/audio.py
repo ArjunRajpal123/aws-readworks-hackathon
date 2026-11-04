@@ -23,12 +23,15 @@ from typing import List, Optional
 from tokenizer import Token
 from voices import VoiceConfig, load_voices
 
-# Voice per language now comes from voices.json (Stage 2 config): Ruth (en) /
-# Lupe (es), Neural. Same shape as before for existing callers.
+# Default voice per language now comes from voices.json (Stage 2 config):
+# Danielle (en) / Lupe (es), Neural. Same shape as before for existing callers.
 VOICE_BY_LANG = {
     lang: {"voiceId": v.voice_id, "engine": v.engine}
     for lang, v in load_voices().items()
 }
+
+QA_PASSED = "passed"
+QA_FALLBACK = "fallback_sentence"
 
 # Polly synchronous synthesize_speech caps at 3000 billed characters.
 SYNC_CHAR_CAP = 3000
@@ -43,7 +46,7 @@ class Timing:
     engine: str
     duration_ms: int
     # QA: every token mapped, times non-decreasing, last start < duration.
-    qa_status: str  # "passed" | "sentence"
+    qa_status: str  # "passed" | "fallback_sentence" (schema v3)
     low_conf: List[int]  # token indices with no direct mark (interpolated)
 
 
@@ -173,9 +176,13 @@ def _qa(
     n_tokens: int,
     low_conf: List[int],
 ) -> str:
-    """Word-level QA. Falls back to 'sentence' on failure (never blocks)."""
+    """Word-level QA. Falls back to sentence highlighting on failure (never blocks).
+
+    Values follow schema v3: "passed" | "fallback_sentence". The player only
+    uses word timing when the status is "passed".
+    """
     if not start_ms:
-        return "sentence"
+        return QA_FALLBACK
     non_decreasing = all(
         start_ms[i] <= start_ms[i + 1] for i in range(len(start_ms) - 1)
     )
@@ -183,8 +190,8 @@ def _qa(
     # Too many tokens without a direct mark => not trustworthy at word level.
     coverage_ok = len(low_conf) <= max(1, n_tokens // 10)
     if non_decreasing and last_within and coverage_ok:
-        return "passed"
-    return "sentence"
+        return QA_PASSED
+    return QA_FALLBACK
 
 
 def synthesize(polly_client, text: str, voice_id: str, engine: str):
