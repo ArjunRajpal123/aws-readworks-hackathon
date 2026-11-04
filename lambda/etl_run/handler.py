@@ -8,7 +8,8 @@ On success the pipeline writes sa/product/<id>.soundAlong.json, every voice
 track's MP3 + timing under sa/audio/<id>/, and the DynamoDB record, exactly
 like etl/run_aws.py. The input is then moved to processed/<file>.
 
-Bad input (not JSON, missing fields, over the size cap) is moved to
+Bad input (not JSON, missing fields, or text the pipeline refuses, e.g. one
+sentence longer than Polly's per-request cap) is moved to
 failed/<file> with an .error.json next to it, and is not retried.
 Anything else (Polly throttling, S3/DynamoDB errors) is raised, so
 EventBridge's async Lambda retries run and, after that, the event lands in
@@ -28,11 +29,6 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 INCOMING = "incoming/"
-# Longer than Polly's 3,000-char synchronous cap: the pipeline (0.4.0) splits
-# long text into parts and joins them. The bound keeps one run well inside the
-# 5-minute timeout (20,000 chars is about 8 parts x 2 voices x 2 calls); the
-# longest ReadWorks passage in the UI is about 7,900 chars.
-MAX_TEXT_CHARS = 20000
 
 
 class BadInput(ValueError):
@@ -49,9 +45,6 @@ def _parse(raw: bytes) -> PassageInput:
         raise BadInput("expected an object with string 'id' and non-empty 'text'")
     if (data.get("lang") or "en")[:2].lower() not in ("en", "es"):
         raise BadInput(f"unsupported lang {data.get('lang')!r}")
-    if len(data["text"]) > MAX_TEXT_CHARS:
-        raise BadInput(f"text is {len(data['text'])} chars; the cloud ETL "
-                       f"accepts up to {MAX_TEXT_CHARS}")
     return PassageInput.from_dict(data)
 
 
@@ -61,6 +54,15 @@ def _move(bucket: str, key: str, dest_prefix: str) -> str:
     s3.copy_object(Bucket=bucket, Key=dest, CopySource={"Bucket": bucket, "Key": key})
     s3.delete_object(Bucket=bucket, Key=key)
     return dest
+
+
+def _reject(bucket: str, key: str, exc: Exception) -> dict:
+    dest = _move(bucket, key, "failed/")
+    s3_client().put_object(Bucket=bucket, Key=dest[:-5] + ".error.json",
+                           Body=json.dumps({"source": key, "error": str(exc)}).encode(),
+                           ContentType="application/json")
+    log.warning("rejected %s: %s", key, exc)
+    return {"status": "rejected", "key": key, "error": str(exc)}
 
 
 def handler(event, _context):
@@ -81,15 +83,14 @@ def handler(event, _context):
     try:
         passage = _parse(raw)
     except BadInput as exc:
-        dest = _move(bucket, key, "failed/")
-        s3.put_object(Bucket=bucket, Key=dest[:-5] + ".error.json",
-                      Body=json.dumps({"source": key, "error": str(exc)}).encode(),
-                      ContentType="application/json")
-        log.warning("rejected %s: %s", key, exc)
-        return {"status": "rejected", "key": key, "error": str(exc)}
+        return _reject(bucket, key, exc)
 
     pipeline_runtime.ensure_lexicons_once()
-    result = run(passage, pipeline_runtime.polly(), pipeline_runtime.storage())
+    try:
+        # Text over Polly's sync cap is split into parts by the pipeline.
+        result = run(passage, pipeline_runtime.polly(), pipeline_runtime.storage())
+    except ValueError as exc:  # the pipeline refused the input; retrying won't help
+        return _reject(bucket, key, exc)
     dest = _move(bucket, key, "processed/")
     summary = {"status": "done", "id": passage.id, "input": dest,
                "tracks": [t["track"] for t in result["tracks"]],
