@@ -107,6 +107,7 @@ export function createQuestions({ t, stopPassage, voiceOn, voice }) {
     const done = Object.keys(answered).length
     const ok = Object.values(answered).filter(Boolean).length
     el.textContent = mc ? t('qScore', done, mc, ok) : ''
+    window.dispatchEvent(new CustomEvent('sa-quiz', { detail: { done, mc, ok } }))
   }
 
   sec.addEventListener('click', e => {

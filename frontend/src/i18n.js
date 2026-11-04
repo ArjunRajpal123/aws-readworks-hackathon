@@ -4,6 +4,8 @@ import { AD } from './admin_i18n.js'
 import { QI } from './q_i18n.js'
 import { AS } from './assist_i18n.js'
 import { TR } from './tour_i18n.js'
+import { V3 } from './v3_i18n.js'
+import { V4 } from './v4_i18n.js'
 
 export const I18N = {
   en: {
@@ -45,7 +47,7 @@ export const I18N = {
   cardIdle: 'Tap any underlined word to open its card. Tap any other word to hear the passage from there.',
   stopsBtn: on => `Word Stops: ${on ? 'On' : 'Off'}`, gameBtn: on => `Game features: ${on ? 'On' : 'Off'}`,
   gameTitle: 'Optional add-on: glow jar, badges, streaks, word bank', voiceOn: 'Voice on', voiceOff: 'Voice off',
-  foot1: `Passage text, grade, Lexile, vocabulary, questions and sample answers come from ReadWorks' public passage data. Illustrations are original drawings. Spanish text is a machine-translated draft that has not been reviewed.`,
+  foot1: `Passage text, grade, Lexile, vocabulary, questions and sample answers come from ReadWorks' public passage data. Photos are openly licensed and credited under each picture; the drawings are original. Spanish text is a machine-translated draft that has not been reviewed.`,
   foot2: `<strong>Why guess first.</strong> A meta-analysis of 21 studies found instruction in working out word meaning from context had a 0.43 SD effect, and direct clue instruction did best (<a href="https://pedagogischestudien.nl/article/download/14910/16362" target="_blank" rel="noopener">Fukkink &amp; de Glopper, 1998</a>).`,
   foot3: `<strong>Sources:</strong>
     <a href="https://www.readworks.org/article/Lets-Meet-a-Park-Caretaker/2b781dab-4521-40d2-a9b6-ad5f2bb0ba98" target="_blank" rel="noopener">Let's Meet a Park Caretaker</a> ·
@@ -95,7 +97,7 @@ export const I18N = {
   cardIdle: 'Toca cualquier palabra subrayada para abrir su tarjeta. Toca cualquier otra palabra para oír el texto desde ahí.',
   stopsBtn: on => `Paradas de palabras: ${on ? 'Sí' : 'No'}`, gameBtn: on => `Funciones de juego: ${on ? 'Sí' : 'No'}`,
   gameTitle: 'Extra opcional: frasco de luz, insignias, rachas, banco de palabras', voiceOn: 'Voz activada', voiceOff: 'Voz desactivada',
-  foot1: `El texto, el grado, el Lexile, el vocabulario, las preguntas y las respuestas de ejemplo vienen de los datos públicos de ReadWorks. Las ilustraciones son dibujos originales. El texto en español es un borrador de traducción automática que no ha sido revisado.`,
+  foot1: `El texto, el grado, el Lexile, el vocabulario, las preguntas y las respuestas de ejemplo vienen de los datos públicos de ReadWorks. Las fotos tienen licencia abierta y se acreditan debajo de cada imagen; los dibujos son originales. El texto en español es un borrador de traducción automática que no ha sido revisado.`,
   foot2: `<strong>Por qué adivinar primero.</strong> Un metaanálisis de 21 estudios halló que enseñar a deducir el significado de una palabra por el contexto tuvo un efecto de 0,43 DE, y la instrucción directa sobre pistas fue la que mejor funcionó (<a href="https://pedagogischestudien.nl/article/download/14910/16362" target="_blank" rel="noopener">Fukkink y de Glopper, 1998</a>).`,
   foot3: `<strong>Fuentes:</strong>
     <a href="https://www.readworks.org/article/Lets-Meet-a-Park-Caretaker/2b781dab-4521-40d2-a9b6-ad5f2bb0ba98" target="_blank" rel="noopener">Let's Meet a Park Caretaker</a> ·
@@ -104,5 +106,5 @@ export const I18N = {
   },
 }
 
-Object.assign(I18N.en, AD.en, QI.en, AS.en, TR.en)
-Object.assign(I18N.es, AD.es, QI.es, AS.es, TR.es)
+Object.assign(I18N.en, AD.en, QI.en, AS.en, TR.en, V3.en, V4.en)
+Object.assign(I18N.es, AD.es, QI.es, AS.es, TR.es, V3.es, V4.es)

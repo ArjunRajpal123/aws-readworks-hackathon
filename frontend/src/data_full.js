@@ -24,4 +24,4 @@ export function addFull(MODES) {
     }
   }
 }
-export const FULL_LIST = Object.entries(QFULL).map(([id, it]) => ({ id, title: it.title }))
+export const FULL_LIST = Object.entries(QFULL).map(([id, it]) => ({ id, title: it.title, grade: it.grade, lexile: it.lexile }))

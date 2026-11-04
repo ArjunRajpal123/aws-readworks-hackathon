@@ -82,7 +82,7 @@ export function addSpanish(CARDS, MODES) {
           choices: [{ t: 'Que se puede ver o notar', ok: true }, { t: 'Lejano y escondido' }, { t: 'Viejo y en ruinas' }],
           right: 'Sí. La lista de cosas que ahora pueden ver es la pista.', wrong: 'Fíjate en lo que viene justo después: ¿qué pueden ver ahora?', clue: 'Pista de ejemplo (lo que aparece a la vista)',
           notes: [{ p: 0, k: 'Pista de ejemplo', html: 'Después de la palabra, Austen enumera lo que aparece a la vista: <b>jardín, casa, seto</b>. “Todo anunciaba que habían llegado.”' }] },
-        { word: 'regocijarse', type: 'write', q: 'Con tus propias palabras, ¿qué están haciendo? ¿Qué del texto te hace pensarlo?', clue: 'Pista de inferencia (entre oraciones)',
+        { word: 'regocijarse', type: 'choice', q: 'El grupo llega entre gestos de cabeza y sonrisas. ¿Qué significa regocijarse?', choices: [{ t: 'Sentir y mostrar gran alegría', ok: true }, { t: 'Sentirse preocupado y cansado' }, { t: 'Pedir permiso en voz baja' }], right: 'Sí. Antes hay gestos de cabeza y sonrisas, y después la más viva alegría. Juntos apuntan a la felicidad.', wrong: 'Mira los gestos de cabeza y las sonrisas. ¿Suenan a preocupación?', clue: 'Pista de inferencia (entre oraciones)',
           notes: [{ p: 0, k: 'Pista de inferencia', html: 'Ninguna oración lo define. Antes: <b>gestos de cabeza y sonrisas</b>. Después: <b>la más viva alegría</b>. Júntalos.' }] },
         { word: 'alterar', type: 'choice', q: 'Su cortesía era “la misma de siempre”. ¿Qué significa alterado?',
           choices: [{ t: 'Cambiado', ok: true }, { t: 'Mejorado mucho' }, { t: 'Notado por otros' }],
