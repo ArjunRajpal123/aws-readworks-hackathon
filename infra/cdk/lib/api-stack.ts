@@ -19,16 +19,37 @@ export interface ApiStackProps extends cdk.StackProps {
 }
 
 // ../../lambda relative to this file (infra/cdk/lib/api-stack.ts -> lambda/)
-const LAMBDA_ROOT = path.join(__dirname, "..", "..", "..", "lambda");
+const REPO_ROOT = path.join(__dirname, "..", "..", "..");
+const LAMBDA_ROOT = path.join(REPO_ROOT, "lambda");
 const COMMON_DIR = path.join(LAMBDA_ROOT, "common");
+const ETL_DIR = path.join(REPO_ROOT, "etl");
+
+/**
+ * The Sound Along pipeline modules from etl/ that the API runs. They use
+ * flat imports (`from tokenizer import ...`) and voices.py resolves
+ * voices.json / lexicons/ relative to itself, so they are copied to the
+ * bundle root unchanged. CLI runners, review/audition tools, inputs and
+ * tests are not shipped.
+ */
+const ETL_RUNTIME_FILES = [
+  "audio.py",
+  "mp3duration.py",
+  "pipeline.py",
+  "ssml.py",
+  "storage.py",
+  "tokenizer.py",
+  "voices.py",
+  "voices.json",
+  "lexicons",
+];
 
 /**
  * Each function's asset bundle is the function's own directory plus a copy
- * of the shared `lambda/common` package, laid out as siblings exactly like
- * local dev (see lambda/scripts/invoke_local.py) so `from common.x import y`
- * resolves the same way at runtime. No Docker required: boto3/botocore ship
- * with the Lambda Python runtime already, so this is a plain file copy, not
- * a pip install.
+ * of the shared `lambda/common` package and the etl/ pipeline modules, laid
+ * out like local dev (see lambda/scripts/invoke_local.py) so `from common.x
+ * import y` and `from pipeline import run` resolve the same way at runtime.
+ * No Docker required: the pipeline only needs boto3/botocore, which ship
+ * with the Lambda Python runtime, so this is a plain file copy.
  */
 function functionCode(functionDir: string): lambda.Code {
   return lambda.Code.fromAsset(functionDir, {
@@ -46,6 +67,12 @@ function functionCode(functionDir: string): lambda.Code {
             recursive: true,
             filter: skipPycache,
           });
+          for (const name of ETL_RUNTIME_FILES) {
+            fs.cpSync(path.join(ETL_DIR, name), path.join(outputDir, name), {
+              recursive: true,
+              filter: skipPycache,
+            });
+          }
           return true;
         },
       },
@@ -57,10 +84,11 @@ function functionCode(functionDir: string): lambda.Code {
  * API stack: the two text-to-speech Lambda functions (source in /lambda)
  * behind an API Gateway HTTP API at /api/v1/text-to-speech.
  *
- * Storage is the shared StorageStack: blobs go in the media bucket under a
- * `tts/` prefix (kept separate from the main passage pipeline's eventual key
- * layout), and the per-request record (id, text/audio paths, word timing)
- * goes in the reference table alongside passage metadata.
+ * POST runs the same Sound Along pipeline as the ETL (etl/pipeline.py), so
+ * it writes the same layout to the shared StorageStack: files under `sa/`
+ * in the media bucket (product JSON, per-track MP3 + gzipped timing) and the
+ * product record in the reference table, keyed by passage id. See
+ * docs/baseref.txt for the contract.
  */
 export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
@@ -70,18 +98,16 @@ export class ApiStack extends cdk.Stack {
 
     // Names match what lambda/common/s3_store.py and
     // lambda/common/reference_store.py read.
+    // Voices, engine and SSML settings come from etl/voices.json (bundled),
+    // not from env vars.
     const ttsEnv = {
       TTS_MEDIA_BUCKET: mediaBucket.bucketName,
-      TTS_TEXT_S3_KEY_PREFIX: "tts/texts",
-      TTS_AUDIO_S3_KEY_PREFIX: "tts/audio",
       TTS_REFERENCE_TABLE: referenceTable.tableName,
+      TTS_S3_KEY_PREFIX: "sa/",
       TTS_URL_TTL_SECONDS: "3600",
-      TTS_DEFAULT_VOICE_ID: "Joanna",
-      TTS_DEFAULT_ENGINE: "neural",
-      TTS_DEFAULT_LANGUAGE_CODE: "en-US",
     };
 
-    const makeFunction = (id: string, dirName: string, nameSuffix: string) =>
+    const makeFunction = (id: string, dirName: string, nameSuffix: string, memorySize: number) =>
       new lambda.Function(this, id, {
         functionName: resourceName(config, "lambda", nameSuffix),
         // Lambda's newest Python runtime is 3.13 (no 3.14 yet).
@@ -90,11 +116,12 @@ export class ApiStack extends cdk.Stack {
         code: functionCode(path.join(LAMBDA_ROOT, dirName)),
         environment: ttsEnv,
         timeout: cdk.Duration.seconds(25), // HTTP API integration hard-caps at 29s
-        memorySize: 512,
+        memorySize,
       });
 
-    const postFn = makeFunction("TextToSpeechPostFn", "text_to_speech_post", "tts-post");
-    const getFn = makeFunction("TextToSpeechGetFn", "text_to_speech_get", "tts-get");
+    // POST tokenizes, builds SSML and gzips timing: more memory = more CPU.
+    const postFn = makeFunction("TextToSpeechPostFn", "text_to_speech_post", "tts-post", 1024);
+    const getFn = makeFunction("TextToSpeechGetFn", "text_to_speech_get", "tts-get", 256);
 
     // grantReadWrite/grantRead also grant the needed KMS actions on the
     // bucket's and table's customer-managed keys.
@@ -103,12 +130,24 @@ export class ApiStack extends cdk.Stack {
     referenceTable.grantWriteData(postFn);
     referenceTable.grantReadData(getFn);
 
-    // Polly's SynthesizeSpeech has no resource-level permissions, only "*".
-    const pollyPolicy = new iam.PolicyStatement({
-      actions: ["polly:SynthesizeSpeech"],
-      resources: ["*"],
-    });
-    postFn.addToRolePolicy(pollyPolicy);
+    // SynthesizeSpeech has no resource-level permissions, only "*".
+    postFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["polly:SynthesizeSpeech"],
+        resources: ["*"],
+      })
+    );
+    // The pipeline uploads its pronunciation lexicons (saEnUS, saEsUS) once
+    // per container, since every track sends LexiconNames. Scoped to the
+    // pipeline's lexicons only.
+    postFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["polly:PutLexicon", "polly:GetLexicon"],
+        resources: [
+          `arn:${cdk.Aws.PARTITION}:polly:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:lexicon/sa*`,
+        ],
+      })
+    );
 
     const httpApi = new apigwv2.HttpApi(this, "TtsHttpApi", {
       apiName: resourceName(config, "apigateway", "tts"),

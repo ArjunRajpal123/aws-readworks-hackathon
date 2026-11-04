@@ -1,12 +1,24 @@
-"""Reads/writes a text-to-speech record in the shared DynamoDB reference
+"""Reads Sound Along product records from the shared DynamoDB reference
 table (infra/cdk's StorageStack), partition key `id`.
+
+Records are written by the pipeline (etl/storage.py AwsStorage.put_record),
+so the item is the product record: {id, lang, title, textHash,
+contentTokenized, structure, tracks[], generation, ...}.
 """
+
 import os
 from decimal import Decimal
 
 import boto3
 
-_table = boto3.resource("dynamodb").Table(os.environ.get("TTS_REFERENCE_TABLE"))
+_table = None
+
+
+def _get_table():
+    global _table
+    if _table is None:
+        _table = boto3.resource("dynamodb").Table(os.environ.get("TTS_REFERENCE_TABLE"))
+    return _table
 
 
 def _from_dynamo(value):
@@ -21,11 +33,7 @@ def _from_dynamo(value):
     return value
 
 
-def save_record(record):
-    _table.put_item(Item=record)
-
-
 def load_record(record_id):
-    response = _table.get_item(Key={"id": record_id})
+    response = _get_table().get_item(Key={"id": record_id})
     item = response.get("Item")
     return _from_dynamo(item) if item is not None else None
