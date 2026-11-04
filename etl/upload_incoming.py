@@ -5,7 +5,6 @@ Inputs are JSON files, or `-` to read one JSON object per line from stdin
   - tokenizes it with the pipeline's tokenizer and, if the file has
     `_playerTokens` (from export_player_inputs.mjs), requires the same count,
     so word timing lines up with the words the player shows;
-  - skips text over the synchronous Polly cap (3,000 spoken characters);
   - skips ids whose current product record already has the same textHash and
     every configured voice (re-running would only re-bill Polly), unless --force.
 
@@ -29,7 +28,6 @@ sys.path.insert(0, HERE)
 from tokenizer import tokenize  # noqa: E402
 from voices import tracks_for  # noqa: E402
 
-MAX_TEXT_CHARS = 3000
 CALLS_PER_TRACK = 2  # MP3 + speech marks
 NEURAL_USD_PER_MCHAR = 16.0
 
@@ -86,9 +84,6 @@ def main(argv=None) -> int:
         want = data.get("_playerTokens")
         if want is not None and tk.token_count != want:
             skipped.append((pid, f"token mismatch: pipeline {tk.token_count}, player {want}"))
-            continue
-        if len(data["text"]) > MAX_TEXT_CHARS:
-            skipped.append((pid, f"{len(data['text'])} chars > {MAX_TEXT_CHARS} (needs async Polly)"))
             continue
         voices = {v.voice_id for v in tracks_for(lang)}
         rec = None if args.force else current_record(s3, bucket, pid)
