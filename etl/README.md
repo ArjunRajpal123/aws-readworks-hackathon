@@ -4,10 +4,11 @@
 
 ```
 sa/product/<id>.soundAlong.json          product record (contentTokenized, structure, tracks[0], generation)
-sa/audio/<id>/tts-1.mp3                  Polly Neural audio
-sa/audio/<id>/tts-1.timing.json.gz       {v, trackId, start[], end[], n, durationMs, textHash}
-sa/audio/<id>/tts-1.marks.jsonl          Polly's raw word/sentence marks (review only)
-sa/audio/<id>/tts-1.input.ssml           exact input sent to Polly (review only)
+sa/audio/<id>/tts-1.mp3                  default voice (female: Danielle / Lupe)
+sa/audio/<id>/tts-2.mp3                  second voice (male: Stephen / Pedro)
+sa/audio/<id>/tts-N.timing.json.gz       {v, trackId, start[], end[], n, durationMs, textHash}
+sa/audio/<id>/tts-N.marks.jsonl          Polly's raw word/sentence marks (review only)
+sa/audio/<id>/tts-N.input.ssml           exact input sent to Polly (review only)
 ```
 
 Stage 2 (audio) details and settings: [`docs/STAGE2_AUDIO.md`](../docs/STAGE2_AUDIO.md).
@@ -35,6 +36,8 @@ uv run python run_local.py "inputs/rws-*.json" --profile <your-profile>
 #    b) or in the team player:
 cd ../frontend && npm install && npm run dev     # then http://127.0.0.1:5173/?m=rws-e9-en
 ```
+
+Use `--track tts-1` to generate only the default voice (half the cost). To compare voices, run `audition.py inputs/rws-e9-en.json --voices Danielle,Stephen,Ruth --profile <your-profile>` and open `frontend/public/sa/audition/audition.html`.
 
 `run_local.py` prints the AWS account it's using, uploads the pronunciation lexicons (`--no-lexicon` to skip), keeps going if one passage fails, and prints a summary table. The Stage 2 sample inputs (`inputs/rws-*.json`) are committed; other inputs and all generated output (`frontend/public/sa/`) are git-ignored.
 

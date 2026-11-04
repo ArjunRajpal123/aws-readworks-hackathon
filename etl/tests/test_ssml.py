@@ -128,8 +128,8 @@ def test_repo_lexicon_files_are_valid_pls():
 
 
 def test_config_version_reflects_naturalness_settings():
-    assert EN.voice_id == "Ruth"
-    assert EN.config_version == "en-US/neural/Ruth/ssml/lex-1/r95%/drc1/pb0"
+    assert EN.voice_id == "Danielle"
+    assert EN.config_version == "en-US/neural/Danielle/ssml/lex-1/r95%/drc1/pb0"
     assert replace(EN, rate="90%").config_version != EN.config_version
     assert load_voices()["es"].voice_id == "Lupe"
 

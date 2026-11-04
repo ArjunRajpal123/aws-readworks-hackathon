@@ -13,7 +13,7 @@ import pytest
 
 import pipeline
 from pipeline import PassageInput, run
-from voices import load_voices
+from voices import load_voice_tracks, load_voices
 
 from fakes import FakePolly, FakeStorage
 
@@ -31,7 +31,8 @@ def test_english_natural_voice_end_to_end():
     result, product, timing, storage, polly = _run(p)
 
     tr = product["tracks"][0]
-    assert tr["voiceId"] == "Ruth" and tr["engine"] == "neural"
+    assert tr["voiceId"] == "Danielle" and tr["engine"] == "neural"
+    assert tr["id"] == "tts-1" and tr["default"] is True and tr["voiceGender"] == "female"
     assert tr["qa"]["status"] == "passed" and tr["granularity"] == "word"
     assert tr["qa"]["marks"] == product["tokenCount"] == timing["n"]
     # Tokenizer splits after "Mr." (4 sentences); Polly hears 3 real ones.
@@ -49,7 +50,7 @@ def test_english_natural_voice_end_to_end():
     assert timing["end"][-1] == timing["durationMs"]
 
     # Both Polly calls: identical SSML input, natural-voice settings, lexicon.
-    a, m = polly.calls
+    a, m = polly.calls[:2]  # default track (tts-1) first
     assert a["Text"] == m["Text"] and a["TextType"] == "ssml"
     assert a["Text"].startswith('<speak><amazon:effect name="drc"><prosody rate="95%"><p><s>')
     assert a["LexiconNames"] == ["saEnUS"] and a["SampleRate"] == "24000"
@@ -59,7 +60,7 @@ def test_english_natural_voice_end_to_end():
     assert "audio/t-en/tts-1.marks.jsonl" in storage.objects
     assert storage.objects["audio/t-en/tts-1.input.ssml"][0].decode() == a["Text"]
     assert result["billedChars"] == product["generation"]["billedChars"] > 0
-    assert storage.records["t-en"]["tracks"][0]["voiceId"] == "Ruth"
+    assert storage.records["t-en"]["tracks"][0]["voiceId"] == "Danielle"
 
 
 def test_spanish_inverted_marks_and_accents_map_to_tokens():
@@ -68,6 +69,7 @@ def test_spanish_inverted_marks_and_accents_map_to_tokens():
     _, product, timing, _, polly = _run(p)
     tr = product["tracks"][0]
     assert tr["voiceId"] == "Lupe" and polly.calls[0]["LanguageCode"] == "es-US"
+    assert [x["voiceId"] for x in product["tracks"]] == ["Lupe", "Pedro"]
     assert tr["qa"]["status"] == "passed" and tr["qa"]["lowConfidence"] == []
     assert timing["start"][:2] == [0, 300]  # "¡Detente" got its own mark
 
@@ -91,7 +93,7 @@ def test_pronunciation_override_reaches_polly():
 
 def test_plain_text_switch_restores_original_request(monkeypatch):
     plain = replace(load_voices()["en"], ssml=False)
-    monkeypatch.setattr(pipeline, "voice_for", lambda lang: plain)
+    monkeypatch.setattr(pipeline, "tracks_for", lambda lang: [plain])
     p = PassageInput(id="t-plain", lang="en", title="T", text="Hello there, friend.")
     _, product, _, storage, polly = _run(p)
     assert polly.calls[0]["TextType"] == "text"
@@ -104,3 +106,45 @@ def test_over_sync_cap_still_refused():
     p = PassageInput(id="t-long", lang="en", title="T", text="word " * 700)
     with pytest.raises(ValueError, match="sync cap"):
         run(p, FakePolly(), FakeStorage())
+
+
+def test_two_voice_tracks_female_default_then_male():
+    p = PassageInput(id="t-two", lang="en", title="T", text="Hello there, friend. Bye now.")
+    result, product, timing, storage, polly = _run(p)
+    t1, t2 = product["tracks"]
+    assert (t1["id"], t1["voiceId"], t1["voiceGender"], t1["default"]) == ("tts-1", "Danielle", "female", True)
+    assert (t2["id"], t2["voiceId"], t2["voiceGender"], t2["default"]) == ("tts-2", "Stephen", "male", False)
+    assert [c["VoiceId"] for c in polly.calls] == ["Danielle", "Danielle", "Stephen", "Stephen"]
+    for tr in (t1, t2):
+        assert tr["qa"]["status"] == "passed"
+        assert tr["audioKey"] == f"audio/t-two/{tr['id']}.mp3" and tr["audioKey"] in storage.objects
+        tm = json.loads(gzip.decompress(storage.objects[tr["timingKey"]][0]))
+        assert tm["trackId"] == tr["id"] and tm["textHash"] == product["textHash"]
+    # The player plays tracks[0]: still the female default.
+    assert timing["trackId"] == "tts-1"
+    assert result["voiceId"] == "Danielle" and [s["track"] for s in result["tracks"]] == ["tts-1", "tts-2"]
+    assert result["billedChars"] == t1["qa"]["billedChars"] + t2["qa"]["billedChars"]
+    # Product record is written after every track's files.
+    keys = list(storage.objects)
+    assert keys[-1] == "product/t-two.soundAlong.json"
+
+
+def test_track_filter_keeps_default_only():
+    p = PassageInput(id="t-one", lang="es", title="T", text="Hola, amigo.")
+    polly = FakePolly()
+    result = run(p, polly, FakeStorage(), track_ids=[])
+    assert [s["track"] for s in result["tracks"]] == ["tts-1"]
+    assert {c["VoiceId"] for c in polly.calls} == {"Lupe"}
+
+
+def test_voices_config_validation(tmp_path):
+    bad = tmp_path / "v.json"
+    bad.write_text(json.dumps({"voices": {"en": {"languageCode": "en-US", "engine": "neural",
+        "tracks": [{"id": "tts-1", "voiceId": "A"}, {"id": "tts-2", "voiceId": "B"}]}}}), encoding="utf-8")
+    with pytest.raises(ValueError, match="exactly one default"):
+        load_voice_tracks(bad)
+    v1 = tmp_path / "v1.json"
+    v1.write_text(json.dumps({"voices": {"en": {"languageCode": "en-US", "engine": "neural",
+        "voiceId": "Joanna"}}}), encoding="utf-8")
+    (only,) = load_voice_tracks(v1)["en"]
+    assert (only.voice_id, only.track_id, only.default) == ("Joanna", "tts-1", True)

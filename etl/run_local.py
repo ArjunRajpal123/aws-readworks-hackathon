@@ -49,6 +49,9 @@ def main(argv=None):
     ap.add_argument("--no-lexicon", action="store_true",
                     help="skip uploading the pronunciation lexicons to Polly")
     ap.add_argument("--no-review", action="store_true", help="skip building review.html")
+    ap.add_argument("--track", action="append", dest="tracks", metavar="ID",
+                    help="only generate these extra tracks (repeatable, e.g. --track tts-2); "
+                         "the default track is always generated. Default: all tracks in voices.json")
     args = ap.parse_args(argv)
 
     session = boto3.Session(profile_name=args.profile, region_name=args.region)
@@ -79,17 +82,20 @@ def main(argv=None):
             pronunciation=data.get("pronunciation"),
         )
         try:
-            results.append(run(passage, polly, storage))
+            results.append(run(passage, polly, storage, track_ids=args.tracks))
         except Exception as exc:  # noqa: BLE001 - keep going; report at the end
             failed.append((passage.id, f"{exc.__class__.__name__}: {exc}"))
             print(f"FAILED {passage.id}: {exc}", file=sys.stderr)
 
     if results:
-        print(f"\n{'id':<14}{'voice':<7}{'qa':<10}{'words':>6}{'est.':>6}{'sent P/S':>10}{'secs':>7}{'cost $':>9}")
+        print(f"\n{'id':<14}{'track':<7}{'voice':<10}{'qa':<10}{'words':>6}{'est.':>6}"
+              f"{'sent P/S':>10}{'secs':>7}{'cost $':>9}")
         for r in results:
-            print(f"{r['id']:<14}{r['voiceId']:<7}{r['qa']:<10}{r['tokenCount']:>6}{r['lowConfidence']:>6}"
-                  f"{str(r['pollySentences']) + '/' + str(r['ssmlSentences']):>10}"
-                  f"{r['durationMs'] / 1000:>7.1f}{r['estCostUsd']:>9.4f}")
+            for t in r["tracks"]:
+                print(f"{r['id']:<14}{t['track']:<7}{t['voiceId']:<10}{t['qa']:<10}{r['tokenCount']:>6}"
+                      f"{t['lowConfidence']:>6}"
+                      f"{str(t['pollySentences']) + '/' + str(t['ssmlSentences']):>10}"
+                      f"{t['durationMs'] / 1000:>7.1f}{t['estCostUsd']:>9.4f}")
         print(f"Total estimated Polly cost: ${sum(r['estCostUsd'] for r in results):.4f}")
     print(f"\nWrote output under: {args.sa_dir}")
     if results and not args.no_review:

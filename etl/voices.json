@@ -1,11 +1,14 @@
 {
-  "_comment": "Stage 2 (P3) voice + naturalness settings, one entry per language. Never chosen per passage. Polly Neural cannot do emphasis, pitch, breaths or whispering; these are the levers it does respond to. See docs/STAGE2_AUDIO.md. Set \"ssml\": false to fall back to the original plain-text request.",
-  "v": 1,
+  "_comment": "Stage 2 (P3) voices + naturalness settings per language. Each language gets one audio track per entry in `tracks`; the `default` track is tracks[0] in the product record, which is what the player plays. Polly Neural cannot do emphasis, pitch, breaths or whispering; the settings below are the levers it does respond to. See docs/STAGE2_AUDIO.md. Set \"ssml\": false to fall back to the original plain-text request.",
+  "v": 2,
   "voices": {
     "en": {
       "languageCode": "en-US",
       "engine": "neural",
-      "voiceId": "Ruth",
+      "tracks": [
+        {"id": "tts-1", "voiceId": "Danielle", "gender": "female", "default": true},
+        {"id": "tts-2", "voiceId": "Stephen", "gender": "male"}
+      ],
       "ssml": true,
       "rate": "95%",
       "drc": true,
@@ -19,7 +22,10 @@
     "es": {
       "languageCode": "es-US",
       "engine": "neural",
-      "voiceId": "Lupe",
+      "tracks": [
+        {"id": "tts-1", "voiceId": "Lupe", "gender": "female", "default": true},
+        {"id": "tts-2", "voiceId": "Pedro", "gender": "male"}
+      ],
       "ssml": true,
       "rate": "95%",
       "drc": true,

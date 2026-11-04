@@ -4,7 +4,14 @@
 
 ## Decisions
 - **Engine:** Amazon Polly **Neural** with word speech marks for timing. Generative stays a future option: generative voices return no speech marks, so they'd need forced alignment.
-- **Voices:** **Ruth** (en-US) and **Lupe** (es-US), both women's voices. There's one voice per language and none chosen per passage. Letting people choose a voice is a future release.
+- **Voices (chosen by ear from an audition of every adult Neural voice):**
+
+  | Language | `tts-1` (default) | `tts-2` |
+  |---|---|---|
+  | English (en-US) | **Danielle** (female) | **Stephen** (male) |
+  | Spanish (es-US) | **Lupe** (female) | **Pedro** (male) |
+
+  Every passage gets both tracks. `tracks[0]` is the default woman's voice, which the player plays today; the man's track is ready for a future voice choice in the player, with no need to regenerate. All four voices also exist as Polly Generative voices, which keeps that upgrade open. Voices are never chosen per passage.
 - **Make Neural sound as human as it can.** Neural has no emphasis, pitch control, breaths or whispering. It does respond to structure, punctuation, pauses, pace and pronunciation, so every passage is sent as SSML.
 
 ## What Polly receives (`etl/ssml.py`, settings in `etl/voices.json`)
@@ -37,8 +44,9 @@
 - **Why mark counts can differ from token counts** (`PIPELINE.md` §7): Polly sometimes gives one mark to two words. Lupe gave "el patio" a single mark, so "patio" gets an interpolated time and is listed in `qa.lowConfidence`.
 
 ## Additions to the product record (all additive; the player is unchanged)
-- `tracks[0]`: `configVersion`, `settings` (textType, rate, drc, paragraphBreakMs, sampleRate, lexiconMode, pronunciationOverrides), and in `qa`: `sentences`, `pollySentences`, `ssmlSentences`, `mergedSentenceBreaks`. `qa.marks` is now the real word-mark count.
-- `generation`: `configVersion`, `billedChars`, `estCostUsd` (Neural $16 per 1M characters; speech marks billed separately at the same rate).
+- `tracks[]` now has one entry per voice (`tts-1`, `tts-2`), each with its own `audioKey`, `timingKey` and QA, plus `default` and `voiceGender`. Files: `audio/<id>/tts-1.mp3`, `audio/<id>/tts-2.mp3`, and so on.
+- Each track: `configVersion`, `settings` (textType, rate, drc, paragraphBreakMs, sampleRate, lexiconMode, pronunciationOverrides), and in `qa`: `sentences`, `pollySentences`, `ssmlSentences`, `mergedSentenceBreaks`. `qa.marks` is now the real word-mark count.
+- `generation`: `configVersion`, `billedChars`, `estCostUsd` (Neural $16 per 1M characters; speech marks billed separately at the same rate). With two voices, that's about $0.18 per average passage, or about $1,280 for the 20M-character catalog.
 - Timing file: adds `v`, `trackId`, `durationMs` (team schema v3 `timingFile`).
 
 ## First run (Nov 3, 2026, sandbox)
@@ -48,7 +56,9 @@ Sample set: `docs/RW_Sentences.xlsx` -> `etl/inputs/rws-*.json` (the Spanish she
 - 1 word estimated (the "el patio" case).
 - About $0.20 in total.
 
-The Vue player loaded them as "Amazon Polly neural (Ruth)" with live highlighting.
+The Vue player loaded them as "Amazon Polly neural (Ruth)" with live highlighting. That run used one voice (Ruth). Since then, the audition picked Danielle, Stephen, Lupe and Pedro, and each passage gets two tracks.
+
+**Voice audition:** `etl/audition.py` reads one passage with any list of voices, using the same SSML settings, and writes `frontend/public/sa/audition/audition.html` for side-by-side listening.
 
 ## Next (Stage 2 roadmap)
 1. **Evals:** contract and tie-out checks, Amazon Transcribe word-accuracy and timing agreement, a blind Neural vs. Standard listening pack, and ReadWorks traceability.

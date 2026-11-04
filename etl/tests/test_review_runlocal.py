@@ -22,6 +22,7 @@ def test_review_page_has_player_checks_and_ssml(tmp_path):
     assert "&lt;speak&gt;" in page  # exact SSML shown, escaped
     assert '<span data-w="0">One</span>' in page
     assert 'href="../?m=t-rev"' in page
+    assert 'src="audio/t-rev/tts-2.mp3"' in page and "Stephen (male)" in page
 
 
 def test_review_flags_a_broken_timing_file(tmp_path):
