@@ -16,11 +16,15 @@ function localUrls(prod) {
 
 // Fetches a Sound Along product record by passage id, normalized so
 // prod.urls[trackId] = {audio, timing} always points to a fetchable URL.
+// voiceId (optional) asks the API to pick that voice's track (or the default):
+// the record then has selectedTrack, and urls only for that track. Local sa/
+// files have every track, so the caller picks.
 // Returns null on a missing id, a non-2xx response, or a network error.
-export async function fetchProduct(id) {
+export async function fetchProduct(id, voiceId) {
   try {
     if (API) {
-      const r = await fetch(`${API}?id=${encodeURIComponent(id)}`)
+      const voice = voiceId ? `&voiceId=${encodeURIComponent(voiceId)}` : ''
+      const r = await fetch(`${API}?id=${encodeURIComponent(id)}${voice}`)
       if (!r.ok) return null
       return await r.json()
     }
