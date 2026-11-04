@@ -15,6 +15,18 @@ export interface AppConfig {
   readonly region: string;
   /** Account id for the deploy, resolved from the CLI environment. */
   readonly account?: string;
+  /**
+   * Optional explicit media bucket name (env MEDIA_BUCKET_NAME). S3 names are
+   * global, so an account whose deployed bucket differs from the default
+   * resourceName() (e.g. an account-id-suffixed one) sets this to keep the
+   * live bucket instead of triggering a destructive replacement.
+   */
+  readonly mediaBucketName?: string;
+  /**
+   * Optional IAM role ARN (env EKS_ADMIN_ROLE_ARN) granted cluster-admin on
+   * the frontend EKS cluster, so that role can run kubectl.
+   */
+  readonly eksAdminRoleArn?: string;
 }
 
 function optional(name: string, fallback: string): string {
@@ -79,5 +91,7 @@ export function loadConfig(): AppConfig {
     environment: optional("ENVIRONMENT", "dev"),
     region: optional("AWS_REGION", optional("CDK_DEFAULT_REGION", "us-west-2")),
     account: process.env.CDK_DEFAULT_ACCOUNT,
+    mediaBucketName: process.env.MEDIA_BUCKET_NAME?.trim() || undefined,
+    eksAdminRoleArn: process.env.EKS_ADMIN_ROLE_ARN?.trim() || undefined,
   };
 }

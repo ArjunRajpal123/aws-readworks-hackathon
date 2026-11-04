@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+*.log
+# docs and container files don't change the built app
+README.md
+Dockerfile
+.dockerignore

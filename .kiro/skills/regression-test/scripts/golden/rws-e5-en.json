@@ -1,0 +1,584 @@
+{
+  "input": "rws-e5-en.json",
+  "objects": {
+    "audio/rws-e5-en/tts-1.input.ssml": {
+      "content": "<speak><amazon:effect name=\"drc\"><prosody rate=\"95%\"><p><s>Tectonic plates rest on a layer of hot magma.</s></p><p><s>Scientists have figured out that this plate grows on its eastern side, but it is destroyed when it goes under the plates on its western side.</s></p><p><s>This supercontinent formed about 300 million years ago and was basically one giant piece of land.</s></p></prosody></amazon:effect></speak>",
+      "contentType": "application/ssml+xml",
+      "encoding": null
+    },
+    "audio/rws-e5-en/tts-1.marks.jsonl": {
+      "content": "{\"time\": 0, \"type\": \"sentence\", \"start\": 59, \"end\": 59, \"value\": \"\"}\n{\"time\": 0, \"type\": \"word\", \"start\": 59, \"end\": 67, \"value\": \"Tectonic\"}\n{\"time\": 300, \"type\": \"word\", \"start\": 68, \"end\": 74, \"value\": \"plates\"}\n{\"time\": 600, \"type\": \"word\", \"start\": 75, \"end\": 79, \"value\": \"rest\"}\n{\"time\": 900, \"type\": \"word\", \"start\": 80, \"end\": 82, \"value\": \"on\"}\n{\"time\": 1200, \"type\": \"word\", \"start\": 83, \"end\": 84, \"value\": \"a\"}\n{\"time\": 1500, \"type\": \"word\", \"start\": 85, \"end\": 90, \"value\": \"layer\"}\n{\"time\": 1800, \"type\": \"word\", \"start\": 91, \"end\": 93, \"value\": \"of\"}\n{\"time\": 2100, \"type\": \"word\", \"start\": 94, \"end\": 97, \"value\": \"hot\"}\n{\"time\": 2400, \"type\": \"word\", \"start\": 98, \"end\": 103, \"value\": \"magma\"}\n{\"time\": 2700, \"type\": \"sentence\", \"start\": 118, \"end\": 118, \"value\": \"\"}\n{\"time\": 2700, \"type\": \"word\", \"start\": 118, \"end\": 128, \"value\": \"Scientists\"}\n{\"time\": 3000, \"type\": \"word\", \"start\": 129, \"end\": 133, \"value\": \"have\"}\n{\"time\": 3300, \"type\": \"word\", \"start\": 134, \"end\": 141, \"value\": \"figured\"}\n{\"time\": 3600, \"type\": \"word\", \"start\": 142, \"end\": 145, \"value\": \"out\"}\n{\"time\": 3900, \"type\": \"word\", \"start\": 146, \"end\": 150, \"value\": \"that\"}\n{\"time\": 4200, \"type\": \"word\", \"start\": 151, \"end\": 155, \"value\": \"this\"}\n{\"time\": 4500, \"type\": \"word\", \"start\": 156, \"end\": 161, \"value\": \"plate\"}\n{\"time\": 4800, \"type\": \"word\", \"start\": 162, \"end\": 167, \"value\": \"grows\"}\n{\"time\": 5100, \"type\": \"word\", \"start\": 168, \"end\": 170, \"value\": \"on\"}\n{\"time\": 5400, \"type\": \"word\", \"start\": 171, \"end\": 174, \"value\": \"its\"}\n{\"time\": 5700, \"type\": \"word\", \"start\": 175, \"end\": 182, \"value\": \"eastern\"}\n{\"time\": 6000, \"type\": \"word\", \"start\": 183, \"end\": 187, \"value\": \"side\"}\n{\"time\": 6300, \"type\": \"word\", \"start\": 189, \"end\": 192, \"value\": \"but\"}\n{\"time\": 6600, \"type\": \"word\", \"start\": 193, \"end\": 195, \"value\": \"it\"}\n{\"time\": 6900, \"type\": \"word\", \"start\": 196, \"end\": 198, \"value\": \"is\"}\n{\"time\": 7200, \"type\": \"word\", \"start\": 199, \"end\": 208, \"value\": \"destroyed\"}\n{\"time\": 7500, \"type\": \"word\", \"start\": 209, \"end\": 213, \"value\": \"when\"}\n{\"time\": 7800, \"type\": \"word\", \"start\": 214, \"end\": 216, \"value\": \"it\"}\n{\"time\": 8100, \"type\": \"word\", \"start\": 217, \"end\": 221, \"value\": \"goes\"}\n{\"time\": 8400, \"type\": \"word\", \"start\": 222, \"end\": 227, \"value\": \"under\"}\n{\"time\": 8700, \"type\": \"word\", \"start\": 228, \"end\": 231, \"value\": \"the\"}\n{\"time\": 9000, \"type\": \"word\", \"start\": 232, \"end\": 238, \"value\": \"plates\"}\n{\"time\": 9300, \"type\": \"word\", \"start\": 239, \"end\": 241, \"value\": \"on\"}\n{\"time\": 9600, \"type\": \"word\", \"start\": 242, \"end\": 245, \"value\": \"its\"}\n{\"time\": 9900, \"type\": \"word\", \"start\": 246, \"end\": 253, \"value\": \"western\"}\n{\"time\": 10200, \"type\": \"word\", \"start\": 254, \"end\": 258, \"value\": \"side\"}\n{\"time\": 10500, \"type\": \"sentence\", \"start\": 273, \"end\": 273, \"value\": \"\"}\n{\"time\": 10500, \"type\": \"word\", \"start\": 273, \"end\": 277, \"value\": \"This\"}\n{\"time\": 10800, \"type\": \"word\", \"start\": 278, \"end\": 292, \"value\": \"supercontinent\"}\n{\"time\": 11100, \"type\": \"word\", \"start\": 293, \"end\": 299, \"value\": \"formed\"}\n{\"time\": 11400, \"type\": \"word\", \"start\": 300, \"end\": 305, \"value\": \"about\"}\n{\"time\": 11700, \"type\": \"word\", \"start\": 306, \"end\": 309, \"value\": \"300\"}\n{\"time\": 12000, \"type\": \"word\", \"start\": 310, \"end\": 317, \"value\": \"million\"}\n{\"time\": 12300, \"type\": \"word\", \"start\": 318, \"end\": 323, \"value\": \"years\"}\n{\"time\": 12600, \"type\": \"word\", \"start\": 324, \"end\": 327, \"value\": \"ago\"}\n{\"time\": 12900, \"type\": \"word\", \"start\": 328, \"end\": 331, \"value\": \"and\"}\n{\"time\": 13200, \"type\": \"word\", \"start\": 332, \"end\": 335, \"value\": \"was\"}\n{\"time\": 13500, \"type\": \"word\", \"start\": 336, \"end\": 345, \"value\": \"basically\"}\n{\"time\": 13800, \"type\": \"word\", \"start\": 346, \"end\": 349, \"value\": \"one\"}\n{\"time\": 14100, \"type\": \"word\", \"start\": 350, \"end\": 355, \"value\": \"giant\"}\n{\"time\": 14400, \"type\": \"word\", \"start\": 356, \"end\": 361, \"value\": \"piece\"}\n{\"time\": 14700, \"type\": \"word\", \"start\": 362, \"end\": 364, \"value\": \"of\"}\n{\"time\": 15000, \"type\": \"word\", \"start\": 365, \"end\": 369, \"value\": \"land\"}\n",
+      "contentType": "application/x-ndjson",
+      "encoding": null
+    },
+    "audio/rws-e5-en/tts-1.mp3": {
+      "content": {
+        "bytes": 144000,
+        "sha256": "ca9acd040a30f2b308021a8b54d2ddda67bae56c4aeed6e3d96a12981d37b760"
+      },
+      "contentType": "audio/mpeg",
+      "encoding": null
+    },
+    "audio/rws-e5-en/tts-1.timing.json.gz": {
+      "content": {
+        "durationMs": 24000,
+        "end": [
+          300,
+          600,
+          900,
+          1200,
+          1500,
+          1800,
+          2100,
+          2400,
+          2700,
+          3000,
+          3300,
+          3600,
+          3900,
+          4200,
+          4500,
+          4800,
+          5100,
+          5400,
+          5700,
+          6000,
+          6300,
+          6600,
+          6900,
+          7200,
+          7500,
+          7800,
+          8100,
+          8400,
+          8700,
+          9000,
+          9300,
+          9600,
+          9900,
+          10200,
+          10500,
+          10800,
+          11100,
+          11400,
+          11700,
+          12000,
+          12300,
+          12600,
+          12900,
+          13200,
+          13500,
+          13800,
+          14100,
+          14400,
+          14700,
+          15000,
+          24000
+        ],
+        "n": 51,
+        "start": [
+          0,
+          300,
+          600,
+          900,
+          1200,
+          1500,
+          1800,
+          2100,
+          2400,
+          2700,
+          3000,
+          3300,
+          3600,
+          3900,
+          4200,
+          4500,
+          4800,
+          5100,
+          5400,
+          5700,
+          6000,
+          6300,
+          6600,
+          6900,
+          7200,
+          7500,
+          7800,
+          8100,
+          8400,
+          8700,
+          9000,
+          9300,
+          9600,
+          9900,
+          10200,
+          10500,
+          10800,
+          11100,
+          11400,
+          11700,
+          12000,
+          12300,
+          12600,
+          12900,
+          13200,
+          13500,
+          13800,
+          14100,
+          14400,
+          14700,
+          15000
+        ],
+        "textHash": "sha256:8f2f65a6b9b85c19a50ccec1bf408726086a52f0171a85a0636b2a79df5d282f",
+        "trackId": "tts-1",
+        "v": 1
+      },
+      "contentType": "application/json",
+      "encoding": "gzip"
+    },
+    "audio/rws-e5-en/tts-2.input.ssml": {
+      "content": "<speak><amazon:effect name=\"drc\"><prosody rate=\"95%\"><p><s>Tectonic plates rest on a layer of hot magma.</s></p><p><s>Scientists have figured out that this plate grows on its eastern side, but it is destroyed when it goes under the plates on its western side.</s></p><p><s>This supercontinent formed about 300 million years ago and was basically one giant piece of land.</s></p></prosody></amazon:effect></speak>",
+      "contentType": "application/ssml+xml",
+      "encoding": null
+    },
+    "audio/rws-e5-en/tts-2.marks.jsonl": {
+      "content": "{\"time\": 0, \"type\": \"sentence\", \"start\": 59, \"end\": 59, \"value\": \"\"}\n{\"time\": 0, \"type\": \"word\", \"start\": 59, \"end\": 67, \"value\": \"Tectonic\"}\n{\"time\": 300, \"type\": \"word\", \"start\": 68, \"end\": 74, \"value\": \"plates\"}\n{\"time\": 600, \"type\": \"word\", \"start\": 75, \"end\": 79, \"value\": \"rest\"}\n{\"time\": 900, \"type\": \"word\", \"start\": 80, \"end\": 82, \"value\": \"on\"}\n{\"time\": 1200, \"type\": \"word\", \"start\": 83, \"end\": 84, \"value\": \"a\"}\n{\"time\": 1500, \"type\": \"word\", \"start\": 85, \"end\": 90, \"value\": \"layer\"}\n{\"time\": 1800, \"type\": \"word\", \"start\": 91, \"end\": 93, \"value\": \"of\"}\n{\"time\": 2100, \"type\": \"word\", \"start\": 94, \"end\": 97, \"value\": \"hot\"}\n{\"time\": 2400, \"type\": \"word\", \"start\": 98, \"end\": 103, \"value\": \"magma\"}\n{\"time\": 2700, \"type\": \"sentence\", \"start\": 118, \"end\": 118, \"value\": \"\"}\n{\"time\": 2700, \"type\": \"word\", \"start\": 118, \"end\": 128, \"value\": \"Scientists\"}\n{\"time\": 3000, \"type\": \"word\", \"start\": 129, \"end\": 133, \"value\": \"have\"}\n{\"time\": 3300, \"type\": \"word\", \"start\": 134, \"end\": 141, \"value\": \"figured\"}\n{\"time\": 3600, \"type\": \"word\", \"start\": 142, \"end\": 145, \"value\": \"out\"}\n{\"time\": 3900, \"type\": \"word\", \"start\": 146, \"end\": 150, \"value\": \"that\"}\n{\"time\": 4200, \"type\": \"word\", \"start\": 151, \"end\": 155, \"value\": \"this\"}\n{\"time\": 4500, \"type\": \"word\", \"start\": 156, \"end\": 161, \"value\": \"plate\"}\n{\"time\": 4800, \"type\": \"word\", \"start\": 162, \"end\": 167, \"value\": \"grows\"}\n{\"time\": 5100, \"type\": \"word\", \"start\": 168, \"end\": 170, \"value\": \"on\"}\n{\"time\": 5400, \"type\": \"word\", \"start\": 171, \"end\": 174, \"value\": \"its\"}\n{\"time\": 5700, \"type\": \"word\", \"start\": 175, \"end\": 182, \"value\": \"eastern\"}\n{\"time\": 6000, \"type\": \"word\", \"start\": 183, \"end\": 187, \"value\": \"side\"}\n{\"time\": 6300, \"type\": \"word\", \"start\": 189, \"end\": 192, \"value\": \"but\"}\n{\"time\": 6600, \"type\": \"word\", \"start\": 193, \"end\": 195, \"value\": \"it\"}\n{\"time\": 6900, \"type\": \"word\", \"start\": 196, \"end\": 198, \"value\": \"is\"}\n{\"time\": 7200, \"type\": \"word\", \"start\": 199, \"end\": 208, \"value\": \"destroyed\"}\n{\"time\": 7500, \"type\": \"word\", \"start\": 209, \"end\": 213, \"value\": \"when\"}\n{\"time\": 7800, \"type\": \"word\", \"start\": 214, \"end\": 216, \"value\": \"it\"}\n{\"time\": 8100, \"type\": \"word\", \"start\": 217, \"end\": 221, \"value\": \"goes\"}\n{\"time\": 8400, \"type\": \"word\", \"start\": 222, \"end\": 227, \"value\": \"under\"}\n{\"time\": 8700, \"type\": \"word\", \"start\": 228, \"end\": 231, \"value\": \"the\"}\n{\"time\": 9000, \"type\": \"word\", \"start\": 232, \"end\": 238, \"value\": \"plates\"}\n{\"time\": 9300, \"type\": \"word\", \"start\": 239, \"end\": 241, \"value\": \"on\"}\n{\"time\": 9600, \"type\": \"word\", \"start\": 242, \"end\": 245, \"value\": \"its\"}\n{\"time\": 9900, \"type\": \"word\", \"start\": 246, \"end\": 253, \"value\": \"western\"}\n{\"time\": 10200, \"type\": \"word\", \"start\": 254, \"end\": 258, \"value\": \"side\"}\n{\"time\": 10500, \"type\": \"sentence\", \"start\": 273, \"end\": 273, \"value\": \"\"}\n{\"time\": 10500, \"type\": \"word\", \"start\": 273, \"end\": 277, \"value\": \"This\"}\n{\"time\": 10800, \"type\": \"word\", \"start\": 278, \"end\": 292, \"value\": \"supercontinent\"}\n{\"time\": 11100, \"type\": \"word\", \"start\": 293, \"end\": 299, \"value\": \"formed\"}\n{\"time\": 11400, \"type\": \"word\", \"start\": 300, \"end\": 305, \"value\": \"about\"}\n{\"time\": 11700, \"type\": \"word\", \"start\": 306, \"end\": 309, \"value\": \"300\"}\n{\"time\": 12000, \"type\": \"word\", \"start\": 310, \"end\": 317, \"value\": \"million\"}\n{\"time\": 12300, \"type\": \"word\", \"start\": 318, \"end\": 323, \"value\": \"years\"}\n{\"time\": 12600, \"type\": \"word\", \"start\": 324, \"end\": 327, \"value\": \"ago\"}\n{\"time\": 12900, \"type\": \"word\", \"start\": 328, \"end\": 331, \"value\": \"and\"}\n{\"time\": 13200, \"type\": \"word\", \"start\": 332, \"end\": 335, \"value\": \"was\"}\n{\"time\": 13500, \"type\": \"word\", \"start\": 336, \"end\": 345, \"value\": \"basically\"}\n{\"time\": 13800, \"type\": \"word\", \"start\": 346, \"end\": 349, \"value\": \"one\"}\n{\"time\": 14100, \"type\": \"word\", \"start\": 350, \"end\": 355, \"value\": \"giant\"}\n{\"time\": 14400, \"type\": \"word\", \"start\": 356, \"end\": 361, \"value\": \"piece\"}\n{\"time\": 14700, \"type\": \"word\", \"start\": 362, \"end\": 364, \"value\": \"of\"}\n{\"time\": 15000, \"type\": \"word\", \"start\": 365, \"end\": 369, \"value\": \"land\"}\n",
+      "contentType": "application/x-ndjson",
+      "encoding": null
+    },
+    "audio/rws-e5-en/tts-2.mp3": {
+      "content": {
+        "bytes": 144000,
+        "sha256": "ca9acd040a30f2b308021a8b54d2ddda67bae56c4aeed6e3d96a12981d37b760"
+      },
+      "contentType": "audio/mpeg",
+      "encoding": null
+    },
+    "audio/rws-e5-en/tts-2.timing.json.gz": {
+      "content": {
+        "durationMs": 24000,
+        "end": [
+          300,
+          600,
+          900,
+          1200,
+          1500,
+          1800,
+          2100,
+          2400,
+          2700,
+          3000,
+          3300,
+          3600,
+          3900,
+          4200,
+          4500,
+          4800,
+          5100,
+          5400,
+          5700,
+          6000,
+          6300,
+          6600,
+          6900,
+          7200,
+          7500,
+          7800,
+          8100,
+          8400,
+          8700,
+          9000,
+          9300,
+          9600,
+          9900,
+          10200,
+          10500,
+          10800,
+          11100,
+          11400,
+          11700,
+          12000,
+          12300,
+          12600,
+          12900,
+          13200,
+          13500,
+          13800,
+          14100,
+          14400,
+          14700,
+          15000,
+          24000
+        ],
+        "n": 51,
+        "start": [
+          0,
+          300,
+          600,
+          900,
+          1200,
+          1500,
+          1800,
+          2100,
+          2400,
+          2700,
+          3000,
+          3300,
+          3600,
+          3900,
+          4200,
+          4500,
+          4800,
+          5100,
+          5400,
+          5700,
+          6000,
+          6300,
+          6600,
+          6900,
+          7200,
+          7500,
+          7800,
+          8100,
+          8400,
+          8700,
+          9000,
+          9300,
+          9600,
+          9900,
+          10200,
+          10500,
+          10800,
+          11100,
+          11400,
+          11700,
+          12000,
+          12300,
+          12600,
+          12900,
+          13200,
+          13500,
+          13800,
+          14100,
+          14400,
+          14700,
+          15000
+        ],
+        "textHash": "sha256:8f2f65a6b9b85c19a50ccec1bf408726086a52f0171a85a0636b2a79df5d282f",
+        "trackId": "tts-2",
+        "v": 1
+      },
+      "contentType": "application/json",
+      "encoding": "gzip"
+    },
+    "product/rws-e5-en.soundAlong.json": {
+      "content": {
+        "contentTokenized": "<p><span data-w=\"0\">Tectonic</span> <span data-w=\"1\">plates</span> <span data-w=\"2\">rest</span> <span data-w=\"3\">on</span> <span data-w=\"4\">a</span> <span data-w=\"5\">layer</span> <span data-w=\"6\">of</span> <span data-w=\"7\">hot</span> <span data-w=\"8\">magma.</span></p><p><span data-w=\"9\">Scientists</span> <span data-w=\"10\">have</span> <span data-w=\"11\">figured</span> <span data-w=\"12\">out</span> <span data-w=\"13\">that</span> <span data-w=\"14\">this</span> <span data-w=\"15\">plate</span> <span data-w=\"16\">grows</span> <span data-w=\"17\">on</span> <span data-w=\"18\">its</span> <span data-w=\"19\">eastern</span> <span data-w=\"20\">side,</span> <span data-w=\"21\">but</span> <span data-w=\"22\">it</span> <span data-w=\"23\">is</span> <span data-w=\"24\">destroyed</span> <span data-w=\"25\">when</span> <span data-w=\"26\">it</span> <span data-w=\"27\">goes</span> <span data-w=\"28\">under</span> <span data-w=\"29\">the</span> <span data-w=\"30\">plates</span> <span data-w=\"31\">on</span> <span data-w=\"32\">its</span> <span data-w=\"33\">western</span> <span data-w=\"34\">side.</span></p><p><span data-w=\"35\">This</span> <span data-w=\"36\">supercontinent</span> <span data-w=\"37\">formed</span> <span data-w=\"38\">about</span> <span data-w=\"39\">300</span> <span data-w=\"40\">million</span> <span data-w=\"41\">years</span> <span data-w=\"42\">ago</span> <span data-w=\"43\">and</span> <span data-w=\"44\">was</span> <span data-w=\"45\">basically</span> <span data-w=\"46\">one</span> <span data-w=\"47\">giant</span> <span data-w=\"48\">piece</span> <span data-w=\"49\">of</span> <span data-w=\"50\">land.</span></p>",
+        "generation": {
+          "billedChars": 1132,
+          "configVersion": "en-US/neural/Danielle/ssml/lex-1/r95%/drc1/pb0",
+          "estCostUsd": 0.01811,
+          "inputHash": "sha256:8f2f65a6b9b85c19a50ccec1bf408726086a52f0171a85a0636b2a79df5d282f",
+          "pipelineVersion": "sa-pipeline-0.3.1",
+          "runAt": "<masked>"
+        },
+        "id": "rws-e5-en",
+        "lang": "en",
+        "schemaVersion": 3,
+        "structure": {
+          "paragraphStarts": [
+            0,
+            9,
+            35
+          ],
+          "sentenceStarts": [
+            0,
+            9,
+            35
+          ]
+        },
+        "textHash": "sha256:8f2f65a6b9b85c19a50ccec1bf408726086a52f0171a85a0636b2a79df5d282f",
+        "title": "Slow and Steady (E5, en)",
+        "tokenCount": 51,
+        "tokenizerVersion": "sa-tok-en-1.0",
+        "tracks": [
+          {
+            "audioKey": "audio/rws-e5-en/tts-1.mp3",
+            "configVersion": "en-US/neural/Danielle/ssml/lex-1/r95%/drc1/pb0",
+            "default": true,
+            "engine": "neural",
+            "granularity": "word",
+            "id": "tts-1",
+            "kind": "tts",
+            "lexicon": "saEnUS",
+            "qa": {
+              "billedChars": 566,
+              "durationMs": 24000,
+              "estCostUsd": 0.00906,
+              "lowConfidence": [],
+              "marks": 51,
+              "mergedSentenceBreaks": [],
+              "pollySentences": 3,
+              "sentences": 3,
+              "ssmlSentences": 3,
+              "status": "passed",
+              "tokens": 51
+            },
+            "settings": {
+              "drc": true,
+              "lexiconMode": "polly",
+              "paragraphBreakMs": 0,
+              "pronunciationOverrides": 0,
+              "rate": "95%",
+              "sampleRate": "24000",
+              "textType": "ssml"
+            },
+            "timingKey": "audio/rws-e5-en/tts-1.timing.json.gz",
+            "timingSource": "polly-speech-marks",
+            "voiceGender": "female",
+            "voiceId": "Danielle"
+          },
+          {
+            "audioKey": "audio/rws-e5-en/tts-2.mp3",
+            "configVersion": "en-US/neural/Stephen/ssml/lex-1/r95%/drc1/pb0",
+            "default": false,
+            "engine": "neural",
+            "granularity": "word",
+            "id": "tts-2",
+            "kind": "tts",
+            "lexicon": "saEnUS",
+            "qa": {
+              "billedChars": 566,
+              "durationMs": 24000,
+              "estCostUsd": 0.00906,
+              "lowConfidence": [],
+              "marks": 51,
+              "mergedSentenceBreaks": [],
+              "pollySentences": 3,
+              "sentences": 3,
+              "ssmlSentences": 3,
+              "status": "passed",
+              "tokens": 51
+            },
+            "settings": {
+              "drc": true,
+              "lexiconMode": "polly",
+              "paragraphBreakMs": 0,
+              "pronunciationOverrides": 0,
+              "rate": "95%",
+              "sampleRate": "24000",
+              "textType": "ssml"
+            },
+            "timingKey": "audio/rws-e5-en/tts-2.timing.json.gz",
+            "timingSource": "polly-speech-marks",
+            "voiceGender": "male",
+            "voiceId": "Stephen"
+          }
+        ]
+      },
+      "contentType": "application/json",
+      "encoding": null
+    }
+  },
+  "pollyRequests": [
+    {
+      "Engine": "neural",
+      "LanguageCode": "en-US",
+      "LexiconNames": [
+        "saEnUS"
+      ],
+      "OutputFormat": "mp3",
+      "SampleRate": "24000",
+      "TextType": "ssml",
+      "VoiceId": "Danielle"
+    },
+    {
+      "Engine": "neural",
+      "LanguageCode": "en-US",
+      "LexiconNames": [
+        "saEnUS"
+      ],
+      "OutputFormat": "json",
+      "SpeechMarkTypes": [
+        "word",
+        "sentence"
+      ],
+      "TextType": "ssml",
+      "VoiceId": "Danielle"
+    },
+    {
+      "Engine": "neural",
+      "LanguageCode": "en-US",
+      "LexiconNames": [
+        "saEnUS"
+      ],
+      "OutputFormat": "mp3",
+      "SampleRate": "24000",
+      "TextType": "ssml",
+      "VoiceId": "Stephen"
+    },
+    {
+      "Engine": "neural",
+      "LanguageCode": "en-US",
+      "LexiconNames": [
+        "saEnUS"
+      ],
+      "OutputFormat": "json",
+      "SpeechMarkTypes": [
+        "word",
+        "sentence"
+      ],
+      "TextType": "ssml",
+      "VoiceId": "Stephen"
+    }
+  ],
+  "record": {
+    "contentTokenized": "<p><span data-w=\"0\">Tectonic</span> <span data-w=\"1\">plates</span> <span data-w=\"2\">rest</span> <span data-w=\"3\">on</span> <span data-w=\"4\">a</span> <span data-w=\"5\">layer</span> <span data-w=\"6\">of</span> <span data-w=\"7\">hot</span> <span data-w=\"8\">magma.</span></p><p><span data-w=\"9\">Scientists</span> <span data-w=\"10\">have</span> <span data-w=\"11\">figured</span> <span data-w=\"12\">out</span> <span data-w=\"13\">that</span> <span data-w=\"14\">this</span> <span data-w=\"15\">plate</span> <span data-w=\"16\">grows</span> <span data-w=\"17\">on</span> <span data-w=\"18\">its</span> <span data-w=\"19\">eastern</span> <span data-w=\"20\">side,</span> <span data-w=\"21\">but</span> <span data-w=\"22\">it</span> <span data-w=\"23\">is</span> <span data-w=\"24\">destroyed</span> <span data-w=\"25\">when</span> <span data-w=\"26\">it</span> <span data-w=\"27\">goes</span> <span data-w=\"28\">under</span> <span data-w=\"29\">the</span> <span data-w=\"30\">plates</span> <span data-w=\"31\">on</span> <span data-w=\"32\">its</span> <span data-w=\"33\">western</span> <span data-w=\"34\">side.</span></p><p><span data-w=\"35\">This</span> <span data-w=\"36\">supercontinent</span> <span data-w=\"37\">formed</span> <span data-w=\"38\">about</span> <span data-w=\"39\">300</span> <span data-w=\"40\">million</span> <span data-w=\"41\">years</span> <span data-w=\"42\">ago</span> <span data-w=\"43\">and</span> <span data-w=\"44\">was</span> <span data-w=\"45\">basically</span> <span data-w=\"46\">one</span> <span data-w=\"47\">giant</span> <span data-w=\"48\">piece</span> <span data-w=\"49\">of</span> <span data-w=\"50\">land.</span></p>",
+    "generation": {
+      "billedChars": 1132,
+      "configVersion": "en-US/neural/Danielle/ssml/lex-1/r95%/drc1/pb0",
+      "estCostUsd": 0.01811,
+      "inputHash": "sha256:8f2f65a6b9b85c19a50ccec1bf408726086a52f0171a85a0636b2a79df5d282f",
+      "pipelineVersion": "sa-pipeline-0.3.1",
+      "runAt": "<masked>"
+    },
+    "id": "rws-e5-en",
+    "lang": "en",
+    "schemaVersion": 3,
+    "structure": {
+      "paragraphStarts": [
+        0,
+        9,
+        35
+      ],
+      "sentenceStarts": [
+        0,
+        9,
+        35
+      ]
+    },
+    "textHash": "sha256:8f2f65a6b9b85c19a50ccec1bf408726086a52f0171a85a0636b2a79df5d282f",
+    "title": "Slow and Steady (E5, en)",
+    "tokenCount": 51,
+    "tokenizerVersion": "sa-tok-en-1.0",
+    "tracks": [
+      {
+        "audioKey": "audio/rws-e5-en/tts-1.mp3",
+        "configVersion": "en-US/neural/Danielle/ssml/lex-1/r95%/drc1/pb0",
+        "default": true,
+        "engine": "neural",
+        "granularity": "word",
+        "id": "tts-1",
+        "kind": "tts",
+        "lexicon": "saEnUS",
+        "qa": {
+          "billedChars": 566,
+          "durationMs": 24000,
+          "estCostUsd": 0.00906,
+          "lowConfidence": [],
+          "marks": 51,
+          "mergedSentenceBreaks": [],
+          "pollySentences": 3,
+          "sentences": 3,
+          "ssmlSentences": 3,
+          "status": "passed",
+          "tokens": 51
+        },
+        "settings": {
+          "drc": true,
+          "lexiconMode": "polly",
+          "paragraphBreakMs": 0,
+          "pronunciationOverrides": 0,
+          "rate": "95%",
+          "sampleRate": "24000",
+          "textType": "ssml"
+        },
+        "timingKey": "audio/rws-e5-en/tts-1.timing.json.gz",
+        "timingSource": "polly-speech-marks",
+        "voiceGender": "female",
+        "voiceId": "Danielle"
+      },
+      {
+        "audioKey": "audio/rws-e5-en/tts-2.mp3",
+        "configVersion": "en-US/neural/Stephen/ssml/lex-1/r95%/drc1/pb0",
+        "default": false,
+        "engine": "neural",
+        "granularity": "word",
+        "id": "tts-2",
+        "kind": "tts",
+        "lexicon": "saEnUS",
+        "qa": {
+          "billedChars": 566,
+          "durationMs": 24000,
+          "estCostUsd": 0.00906,
+          "lowConfidence": [],
+          "marks": 51,
+          "mergedSentenceBreaks": [],
+          "pollySentences": 3,
+          "sentences": 3,
+          "ssmlSentences": 3,
+          "status": "passed",
+          "tokens": 51
+        },
+        "settings": {
+          "drc": true,
+          "lexiconMode": "polly",
+          "paragraphBreakMs": 0,
+          "pronunciationOverrides": 0,
+          "rate": "95%",
+          "sampleRate": "24000",
+          "textType": "ssml"
+        },
+        "timingKey": "audio/rws-e5-en/tts-2.timing.json.gz",
+        "timingSource": "polly-speech-marks",
+        "voiceGender": "male",
+        "voiceId": "Stephen"
+      }
+    ]
+  },
+  "summary": {
+    "audioKey": "audio/rws-e5-en/tts-1.mp3",
+    "billedChars": 1132,
+    "durationMs": 24000,
+    "estCostUsd": 0.01811,
+    "id": "rws-e5-en",
+    "lowConfidence": 0,
+    "pollySentences": 3,
+    "qa": "passed",
+    "sentences": 3,
+    "ssmlSentences": 3,
+    "timingKey": "audio/rws-e5-en/tts-1.timing.json.gz",
+    "tokenCount": 51,
+    "tracks": [
+      {
+        "audioKey": "audio/rws-e5-en/tts-1.mp3",
+        "billedChars": 566,
+        "durationMs": 24000,
+        "estCostUsd": 0.00906,
+        "lowConfidence": 0,
+        "pollySentences": 3,
+        "qa": "passed",
+        "ssmlSentences": 3,
+        "timingKey": "audio/rws-e5-en/tts-1.timing.json.gz",
+        "track": "tts-1",
+        "voiceGender": "female",
+        "voiceId": "Danielle"
+      },
+      {
+        "audioKey": "audio/rws-e5-en/tts-2.mp3",
+        "billedChars": 566,
+        "durationMs": 24000,
+        "estCostUsd": 0.00906,
+        "lowConfidence": 0,
+        "pollySentences": 3,
+        "qa": "passed",
+        "ssmlSentences": 3,
+        "timingKey": "audio/rws-e5-en/tts-2.timing.json.gz",
+        "track": "tts-2",
+        "voiceGender": "male",
+        "voiceId": "Stephen"
+      }
+    ],
+    "voiceId": "Danielle"
+  }
+}

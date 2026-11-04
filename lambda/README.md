@@ -18,6 +18,8 @@ There is one synthesis implementation in the repo: the ETL pipeline in `etl/`. T
 
 The full data contract (S3 layout, product record, timing file, API) is [`docs/baseref.txt`](../docs/baseref.txt).
 
+`etl_run/` is the cloud ETL (not behind the API). An EventBridge rule fires it for every `incoming/*.json` uploaded to the media bucket. It runs the same `pipeline.run()` for every voice track, then moves the input to `processed/` (or to `failed/` with an `.error.json` for bad input). Unlike POST, it regenerates an existing id. See `infra/cdk/lib/etl-stack.ts`.
+
 ## Storage
 
 Shared infra (`infra/cdk`'s `StorageStack`), not anything this endpoint provisions itself:
@@ -55,8 +57,8 @@ The record stores only stable S3 keys (`audioKey`, `timingKey`), never a presign
 | --- | --- | --- |
 | `text` | yes | Non-empty, at most 3000 characters (Polly synchronous cap) |
 | `languageCode` | no | `en-US` (default) or `es-US`; `lang: "en"` also accepted |
-| `id` | no | `[A-Za-z0-9._-]{1,64}`, default random hex. An existing id is regenerated |
-| `title` | no | Default: `id` |
+| `id` | no | Starts with a letter or digit, then `[A-Za-z0-9._-]`, max 64 chars; default random hex. An id that already exists is rejected with **409** and nothing is written (use `etl/run_aws.py` to regenerate a passage) |
+| `title` | no | At most 200 characters. Default: `id` |
 | `voiceId` | no | A configured voice for the language (e.g. `Stephen`). Adds that track to the default one |
 | `allVoices` | no | `true` generates every configured track |
 | `pronunciation` | no | Per-token overrides, same format as ETL inputs, e.g. `{"3": {"w": "amazon:VB"}}` |
