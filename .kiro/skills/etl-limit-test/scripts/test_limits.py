@@ -15,6 +15,7 @@ Run:  .venv-etl/bin/python -m pytest .kiro/skills/etl-limit-test/scripts -q
 from __future__ import annotations
 
 import json
+import re
 import time
 
 import pytest
@@ -62,13 +63,24 @@ def test_size_at_or_under_cap_is_synthesized(lang, n):
     assert "product/lim.soundAlong.json" in storage.objects
 
 
+def _assert_every_call_under_caps(polly):
+    for c in polly.calls:
+        assert len(c["Text"]) <= SSML_CAP
+        assert len(" ".join(re.sub(r"<[^>]*>", " ", c["Text"]).split())) <= CAP
+
+
 @pytest.mark.parametrize("lang", ["en", "es"])
 @pytest.mark.parametrize("n", [CAP + 1, CAP * 2])
-def test_size_over_cap_is_rejected_before_any_polly_call(lang, n):
-    polly, storage = ScalingPolly(), FakeStorage()
-    with pytest.raises(ValueError, match="sync cap"):
-        run(_passage(spoken_text(n, lang), lang), polly, storage)
-    assert polly.calls == [] and storage.objects == {} and storage.records == {}
+def test_size_over_cap_is_synthesized_in_parts(lang, n):
+    # pipeline 0.4.0: text over the sync cap is split at sentence/paragraph
+    # boundaries, each part under the caps, and the parts are joined.
+    result, polly, storage = _run(spoken_text(n, lang), lang)
+    parts = result["tracks"][0]["parts"]
+    assert parts >= 2 and result["qa"] == "passed"
+    assert len(polly.calls) == CALLS_PER_TRACK * parts * len(tracks_for(lang))
+    _assert_every_call_under_caps(polly)
+    product = json.loads(storage.objects["product/lim.soundAlong.json"][0])
+    assert all(t["qa"]["tokens"] == product["tokenCount"] for t in product["tracks"])
 
 
 def test_size_cap_counts_characters_not_bytes():
@@ -92,11 +104,19 @@ def test_size_billed_chars_match_spoken_chars():
 def test_size_short_sentences_hit_the_ssml_cap_below_3000_spoken_chars():
     # Each <s>...</s> adds 7 characters of tags, so passages made of very
     # short sentences exceed the 6000 total-char cap well before 3000 spoken.
+    # They are now split into parts instead of refused.
     text = "Hi. " * 600  # ~2400 spoken chars
-    polly = ScalingPolly()
-    with pytest.raises(ValueError):
-        run(_passage(text), polly, FakeStorage())
-    assert polly.calls == []
+    result, polly, _ = _run(text, track_ids=[])
+    assert result["tracks"][0]["parts"] >= 2 and result["qa"] == "passed"
+    _assert_every_call_under_caps(polly)
+
+
+def test_size_one_sentence_over_the_part_cap_is_refused_before_polly():
+    # No sentence or paragraph boundary to split at: still a ValueError, no calls.
+    polly, storage = ScalingPolly(), FakeStorage()
+    with pytest.raises(ValueError, match="part cap"):
+        run(_passage("word " * 700), polly, storage)
+    assert polly.calls == [] and storage.objects == {} and storage.records == {}
 
 
 def test_size_xml_escaping_counts_toward_the_ssml_cap():
@@ -106,15 +126,20 @@ def test_size_xml_escaping_counts_toward_the_ssml_cap():
         run(_passage(text), ScalingPolly(), FakeStorage())
 
 
-def test_size_find_largest_passing_input():
-    """Binary search the largest plain-sentence input the pipeline accepts."""
+def test_size_find_largest_one_call_input():
+    """Binary search the largest plain-sentence input that still takes one Polly call per request."""
+    voice = tracks_for("en")[0]
+
+    def one_part(n):
+        p = _passage(spoken_text(n))
+        return len(pipeline.plan_parts(p, pipeline.tokenize(p.text, lang="en"), voice)) == 1
+
     lo, hi = 1, CAP * 2
     while lo < hi:
         mid = (lo + hi + 1) // 2
-        try:
-            _run(spoken_text(mid), "en", track_ids=[])
+        if one_part(mid):
             lo = mid
-        except ValueError:
+        else:
             hi = mid - 1
     assert lo == CAP
 
@@ -261,10 +286,15 @@ def test_api_text_at_cap_is_201_and_over_cap_is_400(api, lang):
     assert polly.calls == []
 
 
-def test_api_ssml_cap_rejection_is_400_not_500(api):
-    _, post = api
+def test_api_text_over_the_ssml_cap_is_synthesized_in_parts(api):
+    # Under the API's 3000-char text limit but over 6000 chars of SSML: the
+    # pipeline splits it (0.4.0) instead of returning 400.
+    use, post = api
+    polly, _ = use(polly=ScalingPolly(), storage=FakeStorage())
     status, body = post({"text": "Hi. " * 600})
-    assert status == 400 and "sync cap" in body["error"]
+    assert status == 201 and body["tracks"][0]["qa"]["status"] == "passed"
+    assert body["tracks"][0]["settings"]["parts"] >= 2
+    _assert_every_call_under_caps(polly)
 
 
 def test_api_polly_throttle_is_502_and_writes_nothing(api):
