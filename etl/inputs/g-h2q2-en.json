@@ -1,0 +1,10 @@
+{
+  "id": "g-h2q2-en",
+  "lang": "en",
+  "title": "How Vaccines Train the Immune System: H2q2",
+  "text": "How do some newer vaccines work, according to the passage?\n\nA. They deliver fully active viruses\n\nB. They supply antibodies from another person\n\nC. They add extra memory cells to the blood\n\nD. They carry instructions that let cells make a single harmless protein",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-H2"
+  }
+}

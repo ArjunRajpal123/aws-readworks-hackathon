@@ -1,0 +1,10 @@
+{
+  "id": "g-m2-en",
+  "lang": "en",
+  "title": "The Last Page of the Library",
+  "text": "Mara had reluctantly agreed to help box up the books at the Alder Street Library. The town council had voted to close it at the end of the month, and the shelves had to be emptied by Saturday. The work was tedious: lift a book, check its spine, write a number on a list, lay it in a carton, and then reach for the next one. After three hours her arms ached, and the only sound was the squeal of the tape gun echoing off the high ceiling.\n\nMara remembered when the building had been crowded. Her grandmother used to bring her every Thursday, and the reading room had hummed with whispers. But over the years, visitors had dwindled to a handful of retirees and a few students who needed the free internet. Now the paint was peeling, and the back rooms felt abandoned already.\n\nNear closing time she reached the last shelf and found a battered atlas, so old that its cover had faded to the color of tea. She pondered whether to box it or simply leave it where it was. Then, out of habit, she opened the back cover to check the due-date slip. Dozens of dates were stamped there, and the newest one was from yesterday. Below it, in blue pen, someone had written: \"Please don't let them forget this place. Eli, age 9.\"\n\nMara sat down on the floor for a long moment. Then she pushed the carton aside, pulled out her phone, ignored the dust on her sleeves, and began to type an email to the council. The rest of the boxes could wait one more day, because the people of Alder Street deserved to hear what a nine-year-old had already understood.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode g-M2"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "g-k3q1-en",
+  "lang": "en",
+  "title": "Ana and the Lost Kitten: K3q1",
+  "text": "Where does the sound come from?\n\nA. Under the porch\n\nB. Inside a box\n\nC. Up in a tree\n\nD. Behind a door",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-K3"
+  }
+}

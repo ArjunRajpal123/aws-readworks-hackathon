@@ -1,0 +1,10 @@
+{
+  "id": "g-m3q3-en",
+  "lang": "en",
+  "title": "Why the Moon Has Phases: M3q3",
+  "text": "What do we see during the new moon?\n\nA. Almost nothing, because the lit half faces away from us\n\nB. A full circle of light\n\nC. A thin crescent\n\nD. Half of the Moon bright",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-M3"
+  }
+}

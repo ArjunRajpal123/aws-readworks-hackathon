@@ -1,14 +1,10 @@
 {
   "id": "rwq-e7q9-en",
   "lang": "en",
-  "title": "Save the World (E7q9, en)",
+  "title": "Save the World: E7q9",
   "text": "Explain whether a person can go green in more than one way.\n\nSupport your answer using examples from the text.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E7",
-    "readworksUuid": "40fa3460-ebba-456a-a59a-10d7bdc09b65",
-    "abridged": true,
-    "question": "E7q9",
-    "readworksQid": 24272
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E7-k2"
   }
 }

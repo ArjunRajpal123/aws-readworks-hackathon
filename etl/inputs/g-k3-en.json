@@ -1,0 +1,10 @@
+{
+  "id": "g-k3-en",
+  "lang": "en",
+  "title": "Ana and the Lost Kitten",
+  "text": "Ana hears a small sound. Mew, mew. It comes from under the porch. Ana gets down on her knees. A tiny gray kitten looks out at her. It is scared. Its fur is wet from the rain.\n\n\"Do not be afraid,\" says Ana, in a soft voice. She holds out her hand. The kitten steps closer. Ana picks it up. It is so light!\n\nAna wraps the kitten in her scarf. She looks for a collar, but there is none. \"I will search for your home,\" she says. Ana walks down the street and asks each neighbor. At last, a boy at the corner shouts, \"That is my kitten!\" He hugs it close. Ana smiles. The kitten is safe now.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode g-K3"
+  }
+}

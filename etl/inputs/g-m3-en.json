@@ -1,0 +1,10 @@
+{
+  "id": "g-m3-en",
+  "lang": "en",
+  "title": "Why the Moon Has Phases",
+  "text": "Every night the Moon seems to change shape, growing from a thin sliver to a bright circle and then shrinking away again. Some people think Earth's shadow causes this, but that is a common myth, because Earth's shadow only reaches the Moon during a lunar eclipse. The Moon does not shine on its own. It reflects sunlight, much as a mirror bounces back light from a lamp. At any moment, the Sun illuminates half of the Moon, just as it lights half of Earth.\n\nThe changing shapes come from the Moon's orbit. The Moon travels around Earth, and as it moves, we see its lit half from different angles. When the Moon sits roughly between Earth and the Sun, its lit half faces away from us, and we see almost nothing. This is the new moon. A few days later, we see a thin crescent, the sunlit edge just coming into view, low in the sky after sunset.\n\nAs the Moon continues along its path, more of the lit half turns toward us. We pass through the first quarter, when half of the face we see is bright, and then reach the full moon, when Earth is roughly between the Moon and the Sun and we see the whole lit side shining brightly all night. After that, the light shrinks again until the new moon returns. This cycle takes about twenty-nine and a half days, which is close to the length of a calendar month.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode g-M3"
+  }
+}

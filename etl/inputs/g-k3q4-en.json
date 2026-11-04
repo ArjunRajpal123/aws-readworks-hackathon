@@ -1,0 +1,10 @@
+{
+  "id": "g-k3q4-en",
+  "lang": "en",
+  "title": "Ana and the Lost Kitten: K3q4",
+  "text": "How does Ana feel at the end of the story?\n\nA. Sad\n\nB. Angry\n\nC. Bored\n\nD. Happy",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-K3"
+  }
+}

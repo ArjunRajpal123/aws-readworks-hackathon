@@ -1,0 +1,10 @@
+{
+  "id": "g-k2q2-en",
+  "lang": "en",
+  "title": "Why Leaves Change Color: K2q2",
+  "text": "What happens to the green stuff in autumn?\n\nA. The tree stops making it\n\nB. The tree makes more of it\n\nC. It turns into water\n\nD. It falls off first",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-K2"
+  }
+}

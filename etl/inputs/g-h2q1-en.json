@@ -1,0 +1,10 @@
+{
+  "id": "g-h2q1-en",
+  "lang": "en",
+  "title": "How Vaccines Train the Immune System: H2q1",
+  "text": "What is a pathogen?\n\nA. A cell that makes antibodies\n\nB. A virus, bacterium, or other microorganism that causes disease\n\nC. A protein that the body makes after a vaccine\n\nD. A type of memory cell",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-H2"
+  }
+}

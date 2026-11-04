@@ -29,7 +29,8 @@ sys.path.insert(0, HERE)
 from tokenizer import tokenize  # noqa: E402
 from voices import tracks_for  # noqa: E402
 
-MAX_TEXT_CHARS = 3000
+# Same bound as lambda/etl_run: long text is synthesized in parts (pipeline 0.4.0).
+MAX_TEXT_CHARS = 20000
 CALLS_PER_TRACK = 2  # MP3 + speech marks
 NEURAL_USD_PER_MCHAR = 16.0
 
@@ -88,7 +89,7 @@ def main(argv=None) -> int:
             skipped.append((pid, f"token mismatch: pipeline {tk.token_count}, player {want}"))
             continue
         if len(data["text"]) > MAX_TEXT_CHARS:
-            skipped.append((pid, f"{len(data['text'])} chars > {MAX_TEXT_CHARS} (needs async Polly)"))
+            skipped.append((pid, f"{len(data['text'])} chars > {MAX_TEXT_CHARS} (over the cloud ETL limit)"))
             continue
         voices = {v.voice_id for v in tracks_for(lang)}
         rec = None if args.force else current_record(s3, bucket, pid)

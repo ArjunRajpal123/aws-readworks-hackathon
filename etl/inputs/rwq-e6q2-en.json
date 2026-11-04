@@ -1,14 +1,10 @@
 {
   "id": "rwq-e6q2-en",
   "lang": "en",
-  "title": "Breaking (E6q2, en)",
+  "title": "Breaking: E6q2",
   "text": "A key moment in the story is when Oliver is sent to the principal’s office for writing articles during class. What is the result of this?\n\nA. Oliver keeps writing articles in class instead of paying attention.\n\nB. Oliver gets detention for not paying attention in class.\n\nC. Oliver gives up on writing and becoming a journalist.\n\nD. The principal tells Oliver to join the school newspaper.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E6",
-    "readworksUuid": "3632d2cb-d424-4c87-96e6-f851b4b9e185",
-    "abridged": true,
-    "question": "E6q2",
-    "readworksQid": 9432
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E6-k2"
   }
 }

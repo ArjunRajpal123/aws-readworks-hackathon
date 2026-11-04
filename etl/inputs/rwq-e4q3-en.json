@@ -1,14 +1,10 @@
 {
   "id": "rwq-e4q3-en",
   "lang": "en",
-  "title": "Experiments (E4q3, en)",
+  "title": "Experiments: E4q3",
   "text": "Mashing his food up into the smallest ball possible does not make Joey’s plate weigh less.\n\nWhat evidence from the passage supports this statement?\n\nA. Joey tells other people from his table that they should help him clean the sinks because he helps eat their food.\n\nB. Joey combines the food on his lunch plate into a single dish: chocolate corn-cake-flavored spaghetti and green-bean meatballs.\n\nC. Joey’s experiments almost always taste horrible, but there is one person at his table who sometimes likes them.\n\nD. Joey’s plate weighs one and ¾ pounds, while the plates of everyone else at his table weigh ½ pound or less.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E4",
-    "readworksUuid": "7c0ac02b-78d6-44ba-b843-df81b31938e1",
-    "abridged": true,
-    "question": "E4q3",
-    "readworksQid": 10436
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E4-k2"
   }
 }

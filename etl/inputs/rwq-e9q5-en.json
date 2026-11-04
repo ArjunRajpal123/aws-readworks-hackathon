@@ -1,14 +1,10 @@
 {
   "id": "rwq-e9q5-en",
   "lang": "en",
-  "title": "Lizzie Escapes (E9q5, en)",
+  "title": "Lizzie Escapes: E9q5",
   "text": "What is a theme of this story?\n\nA. People who do not have anything in common can still be friends.\n\nB. Something you expect to be bad can turn out to be good.\n\nC. Parents should not make their children do anything their children do not want to do.\n\nD. It is more important for children to spend time playing outside than reading.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E9",
-    "readworksUuid": "6b5dc923-b7a2-475b-8a26-6dde0ef73e50",
-    "abridged": true,
-    "question": "E9q5",
-    "readworksQid": 11914
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E9-k2"
   }
 }

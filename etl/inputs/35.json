@@ -1,0 +1,10 @@
+{
+  "id": "35",
+  "lang": "en",
+  "title": "A Very Messy Tea Party",
+  "text": "Lots of English people love tea. They have loved it ever since it was first brought to England from China. In the 1700s, they took their love of tea with them to their colonies in North America.\n\nAt that time, there was an English company called the East India Company. This company brought tea from India to England. Getting it there cost a lot of money. Taxes made this cost even higher. A tax is money that people have to pay the government. The English government made a deal with the East India Company in the early 1700s.\n\nThe people in the colonies of North America didn’t like paying so much for tea, though. They decided to buy other tea instead. They bought it from Dutch people who sneaked it into the colonies. This tea was just as good as English tea. It was also cheaper. So what if buying it was against the law? The colonists didn't care. They still got a cup of tea and had money left over.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode 35"
+  }
+}

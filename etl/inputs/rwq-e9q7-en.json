@@ -1,14 +1,10 @@
 {
   "id": "rwq-e9q7-en",
   "lang": "en",
-  "title": "Lizzie Escapes (E9q7, en)",
+  "title": "Lizzie Escapes: E9q7",
   "text": "Choose the answer that best completes the sentence below.\n\nLizzie goes back to summer camp _______ she does not want to.\n\nA. although\n\nB. before\n\nC. so\n\nD. as a result",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E9",
-    "readworksUuid": "6b5dc923-b7a2-475b-8a26-6dde0ef73e50",
-    "abridged": true,
-    "question": "E9q7",
-    "readworksQid": 11918
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E9-k2"
   }
 }

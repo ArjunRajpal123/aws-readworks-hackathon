@@ -1,0 +1,10 @@
+{
+  "id": "g-k3q2-en",
+  "lang": "en",
+  "title": "Ana and the Lost Kitten: K3q2",
+  "text": "What does Ana use to wrap the kitten?\n\nA. A towel\n\nB. Her scarf\n\nC. A blanket\n\nD. Her coat",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-K3"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "g-h3q2-en",
+  "lang": "en",
+  "title": "The Weight of an Unsent Letter: H3q2",
+  "text": "Which best describes Daniel's mixed feelings about his brother?\n\nA. He wanted forgiveness but did not want to be the one to ask for it\n\nB. He felt pure anger and wanted revenge\n\nC. He had forgotten about the argument\n\nD. He was sure Tomas would never forgive him",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-H3"
+  }
+}

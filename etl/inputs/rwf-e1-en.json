@@ -1,12 +1,10 @@
 {
   "id": "rwf-e1-en",
   "lang": "en",
-  "title": "The Most Important Question (E1, full, en)",
+  "title": "The Most Important Question",
   "text": "In a jungle there was a large cool pond where many animals came to drink. Tall animals like giraffes, and small animals like meerkats all came to this pond and drank from the water together. Each species had its own section at the pond: the zebras did not drink by the cranes, and the elephants did not drink by the monkeys. It was a very peaceful place.\n\nOne day a hippopotamus came to the pond and bent to drink some water right where the giraffes usually drank. None of the other animals had ever seen him before. They were frightened. He was really big and did not seem to care about the rules of the pond.\n\n“We should tell him to go away!” a meerkat whispered to a monkey. The monkey nodded. They were both much smaller than the hippopotamus, and they were very nervous about getting eaten by him.\n\nYou see, since none of the animals had ever seen a hippopotamus, they did not know what it liked to eat. It was very important that all of the animals in the jungle knew what the others’ preferred foods were, so that they could protect themselves. The zebras knew to stay away from the lions who preyed on them, and the mice knew to stay hidden under the trees, away from the large birds who swooped down to eat them. All of the animals in the jungle grew up learning about the food chain. This food chain was a part of life. The animals who were eaten provided important nutrients for the animals that ate them, like proteins and fat that helped the eaters to grow. How do you think lions become so big and strong?\n\nA giraffe came up to where the meerkat and monkey stood by the pond and leaned its long head down to talk to them. “Do you think he eats plants?” the giraffe asked worriedly.\n\nGiraffes only eat plants, and because the hippopotamus was so close to the ground, the giraffe was afraid he would eat all the plants before they could grow tall enough for the giraffes to eat.\n\nA zebra skipped up to the group, still in a huddle. “You have nothing to worry about, Meerkat and Monkey!” he said. “It looks like the new guy likes plants. Sorry, Giraffe.”\n\nThe four animals looked over to the hippopotamus, now about a third of the way into the pond, chomping on some very green leaves with a content and happy expression on his face.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E1",
-    "readworksUuid": "1bc604a7-d7af-4631-a220-b4ec77a3bb73",
-    "abridged": true
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode rwf-E1-k2"
   }
 }

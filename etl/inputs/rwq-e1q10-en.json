@@ -1,14 +1,10 @@
 {
   "id": "rwq-e1q10-en",
   "lang": "en",
-  "title": "The Most Important Question (E1q10, en)",
+  "title": "The Most Important Question: E1q10",
   "text": "Are the giraffe and the hippopotamus located on the same place in the food chain? Explain your answer using information from the story.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E1",
-    "readworksUuid": "1bc604a7-d7af-4631-a220-b4ec77a3bb73",
-    "abridged": true,
-    "question": "E1q10",
-    "readworksQid": 10272
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E1-k2"
   }
 }

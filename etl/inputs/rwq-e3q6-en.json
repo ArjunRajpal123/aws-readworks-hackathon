@@ -1,14 +1,10 @@
 {
   "id": "rwq-e3q6-en",
   "lang": "en",
-  "title": "Immigration (E3q6, en)",
+  "title": "Immigration: E3q6",
   "text": "Read the following sentences from the text.\n\n“A few years later, other laws limiting immigration were passed. One required adult immigrants to have literacy skills in a language. Another limited the number of immigrants from countries outside the Western Hemisphere. These laws caused immigration to decrease for certain groups.”\n\nAs used in this excerpt, what does the word “decrease” most closely mean?\n\nA. become smaller or less\n\nB. change for the better\n\nC. get easier\n\nD. draw attention",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E3",
-    "readworksUuid": "7e973877-3a60-47b3-afc4-8b4a7a2f5289",
-    "abridged": true,
-    "question": "E3q6",
-    "readworksQid": 245800
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E3-k2"
   }
 }

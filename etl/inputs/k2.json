@@ -1,0 +1,10 @@
+{
+  "id": "k2",
+  "lang": "en",
+  "title": "Let's Meet a Park Caretaker",
+  "text": "Lots of people live in big cities. Cities are full of people, cars, and noise. That can feel a little stressful sometimes. So where can people in cities go when they want to find some peace and quiet? They can go to a park!\n\nA city park is a fun place to relax, play, and enjoy nature. In Atlanta, Georgia, there's a big park called Piedmont Park. Over six million people visit it every year! Many people go to look at the beautiful trees and flowers. Others go to run or do yoga. Lots of people go to play sports.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode k2"
+  }
+}

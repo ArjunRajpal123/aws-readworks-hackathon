@@ -1,0 +1,10 @@
+{
+  "id": "g-k2q1-en",
+  "lang": "en",
+  "title": "Why Leaves Change Color: K2q1",
+  "text": "When do many leaves change color?\n\nA. In spring\n\nB. In summer\n\nC. In autumn\n\nD. Never",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-K2"
+  }
+}

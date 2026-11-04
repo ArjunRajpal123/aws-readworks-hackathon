@@ -28,7 +28,11 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 INCOMING = "incoming/"
-MAX_TEXT_CHARS = 3000  # Polly synchronous SynthesizeSpeech cap (spoken characters)
+# Longer than Polly's 3,000-char synchronous cap: the pipeline (0.4.0) splits
+# long text into parts and joins them. The bound keeps one run well inside the
+# 5-minute timeout (20,000 chars is about 8 parts x 2 voices x 2 calls); the
+# longest ReadWorks passage in the UI is about 7,900 chars.
+MAX_TEXT_CHARS = 20000
 
 
 class BadInput(ValueError):
@@ -46,8 +50,8 @@ def _parse(raw: bytes) -> PassageInput:
     if (data.get("lang") or "en")[:2].lower() not in ("en", "es"):
         raise BadInput(f"unsupported lang {data.get('lang')!r}")
     if len(data["text"]) > MAX_TEXT_CHARS:
-        raise BadInput(f"text is {len(data['text'])} chars; the synchronous Polly path "
-                       f"supports {MAX_TEXT_CHARS}")
+        raise BadInput(f"text is {len(data['text'])} chars; the cloud ETL "
+                       f"accepts up to {MAX_TEXT_CHARS}")
     return PassageInput.from_dict(data)
 
 

@@ -1,0 +1,10 @@
+{
+  "id": "g-k1-en",
+  "lang": "en",
+  "title": "The Red Wagon",
+  "text": "Sam has a red wagon. It is old, but Sam loves it. One day, Sam sees a big box in the yard. The box is heavy. Sam cannot lift it.\n\n\"I can help,\" says Dad. Sam puts the box in the wagon. Then Sam starts to pull. The wheels squeak, squeak, squeak. Sam pulls the box all the way to the porch. \"Good job!\" says Dad. Sam feels so proud. The red wagon did the hard work too.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode g-K1"
+  }
+}

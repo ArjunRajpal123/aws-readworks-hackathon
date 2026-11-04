@@ -1,0 +1,10 @@
+{
+  "id": "g-k1q3-en",
+  "lang": "en",
+  "title": "The Red Wagon: K1q3",
+  "text": "Where does Sam take the box?\n\nA. To the porch\n\nB. To the school\n\nC. To the park\n\nD. To the barn",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-K1"
+  }
+}

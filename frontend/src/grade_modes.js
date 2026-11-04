@@ -42,12 +42,14 @@ export function addGrade(MODES, CARDS) {
     const questions = it.questions.map((q, i) => ({
       id: `${it.id}q${i + 1}`, qid: `${it.id}q${i + 1}`, type: 0, abridged: false, nq: 1,
       paras: [q.q, ...q.options.map((o, k) => `${'ABCD'[k]}. ${o}`)], correct: q.correct,
+      audio: `g-${it.id.toLowerCase()}q${i + 1}-en`, // pipeline product for this question
     }))
     const words = it.paras.join(' ').split(/\s+/).length
     for (const es of [false, true]) {
       const base = MODES.find(m => m.id === it.band + (es ? 'es' : ''))
       MODES.push({
         id: `g-${it.id}${es ? '-es' : ''}`, band: it.band, gen: it.id, lang: es ? 'es-US' : 'en-US',
+        audio: `g-${it.id.toLowerCase()}-en`, // pipeline product; the story text is English in both UI languages
         tab: base.tab, sub: base.sub, voice: base.voice, reward: base.reward, stopTitle: base.stopTitle, how: base.how,
         title: it.title,
         details: es

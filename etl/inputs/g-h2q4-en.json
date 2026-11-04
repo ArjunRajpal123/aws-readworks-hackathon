@@ -1,0 +1,10 @@
+{
+  "id": "g-h2q4-en",
+  "lang": "en",
+  "title": "How Vaccines Train the Immune System: H2q4",
+  "text": "Why does widespread vaccination help protect infants?\n\nA. Infants receive stronger doses\n\nB. Infants produce more antibodies than adults\n\nC. When most people are immune, the disease spreads poorly, so vulnerable people are exposed less\n\nD. Infants are naturally immune",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-H2"
+  }
+}

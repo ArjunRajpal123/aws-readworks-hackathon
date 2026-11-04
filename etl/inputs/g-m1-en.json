@@ -1,0 +1,10 @@
+{
+  "id": "g-m1-en",
+  "lang": "en",
+  "title": "How Bees Find Flowers",
+  "text": "A honey bee has a tiny brain, yet it can find a patch of flowers far from its hive and then fly home again. Worker bees forage for nectar, the sugary liquid that flowers make, and for pollen, which feeds the young bees in the hive. To do this job well, they must navigate over a large landscape full of trees, buildings, and fields.\n\nFlowers help bees in the search. Many flowers have bright colors, and bees can see colors that people cannot, including ultraviolet light. Some petals have patterns that work like landing strips, pointing toward the nectar. Scent matters too. A bee's antennae can pick up faint smells from far away, and a bee quickly learns which scent goes with a good meal.\n\nOnce a bee finds a rich patch, it must communicate the news. Back at the hive, it performs a waggle dance. The angle of the dance, compared with straight up, shows the direction of the flowers relative to the sun. The length of the waggle tells how far away they are. Other foragers watch, follow the dance, and fly out to the same spot.\n\nAs bees move from bloom to bloom, pollen sticks to their fuzzy bodies. When a bee lands on the next flower, some of that pollen rubs off and helps pollinate the plant. In this way, the bee's search for food also helps fruits and seeds form.",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode g-M1"
+  }
+}

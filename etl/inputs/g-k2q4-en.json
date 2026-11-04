@@ -1,0 +1,10 @@
+{
+  "id": "g-k2q4-en",
+  "lang": "en",
+  "title": "Why Leaves Change Color: K2q4",
+  "text": "Why can we see yellow and orange in autumn?\n\nA. Rain paints the leaves\n\nB. The tree makes new colors from soil\n\nC. The leaves grow new ones each day\n\nD. The green fades and shows colors that were hidden",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-K2"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "g-m3q4-en",
+  "lang": "en",
+  "title": "Why the Moon Has Phases: M3q4",
+  "text": "What can you infer about the phases of the Moon?\n\nA. They stop for a few months each year\n\nB. They happen at random times\n\nC. They repeat in a regular pattern about every twenty-nine and a half days\n\nD. They happen only in winter",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-M3"
+  }
+}

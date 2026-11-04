@@ -1,14 +1,10 @@
 {
   "id": "rwq-e5q3-en",
   "lang": "en",
-  "title": "Slow and Steady (E5q3, en)",
+  "title": "Slow and Steady: E5q3",
   "text": "The Atlantic Ocean and Pacific Ocean are different sizes than they used to be. What evidence from the passage supports this conclusion?\n\nA. Each year the Atlantic Ocean gets larger and the Pacific Ocean gets smaller.\n\nB. The supercontinent Pangaea on Earth was formed about 300 million years ago.\n\nC. The Mid-Atlantic ridge is a plate boundary that is a part of the Atlantic Ocean.\n\nD. Scientists see that South America and Africa have similar rock layers and patterns.",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E5",
-    "readworksUuid": "4012bc7e-1e10-4df1-a285-99856d4148b5",
-    "abridged": true,
-    "question": "E5q3",
-    "readworksQid": 11684
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E5-k2"
   }
 }

@@ -1,0 +1,10 @@
+{
+  "id": "g-h1q4-en",
+  "lang": "en",
+  "title": "How the Printing Press Changed the World: H1q4",
+  "text": "What does the passage suggest about the effect of printing on literacy?\n\nA. Literacy rose immediately everywhere\n\nB. Literacy rose gradually and unevenly over generations\n\nC. Literacy fell because books became common\n\nD. Literacy was unaffected",
+  "source": {
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in g-H1"
+  }
+}

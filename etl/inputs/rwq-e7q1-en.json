@@ -1,14 +1,10 @@
 {
   "id": "rwq-e7q1-en",
   "lang": "en",
-  "title": "Save the World (E7q1, en)",
+  "title": "Save the World: E7q1",
   "text": "What is recycling?\n\nA. the process by which trees give us oxygen\n\nB. the practice of using items or materials again\n\nC. the practice of throwing out scrap paper\n\nD. the amount of power used by televisions",
   "source": {
-    "file": "frontend/src/data_q.js",
-    "passage": "E7",
-    "readworksUuid": "40fa3460-ebba-456a-a59a-10d7bdc09b65",
-    "abridged": true,
-    "question": "E7q1",
-    "readworksQid": 24264
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "question in rwf-E7-k2"
   }
 }

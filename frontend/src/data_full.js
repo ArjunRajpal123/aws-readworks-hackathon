@@ -18,7 +18,9 @@ export function addFull(MODES) {
           details: es
             ? [['Grado', it.grade], ['Lexile', it.lexile || '—'], ['Palabras', it.words], ['Género', GENRE_ES[it.genre] || it.genre], ['Fuente', link], ['Texto', 'El texto completo y las preguntas son de ReadWorks y están en inglés. La versión en español está pendiente (borrador de IA en el pipeline).']]
             : [['Grade', it.grade], ['Lexile', it.lexile || '—'], ['Words', it.words], ['Genre', it.genre], ['Source', link], ['Text', 'Full passage and question set from ReadWorks.']],
-          paras: it.paras, stops: [], questions: it.questions,
+          paras: it.paras, stops: [],
+          // Question audio: pipeline product rwq-<question>-en (English text).
+          questions: it.questions.map(q => ({ ...q, audio: `rwq-${q.id.toLowerCase()}-en` })),
         })
       }
     }
