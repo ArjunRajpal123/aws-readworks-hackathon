@@ -1,8 +1,13 @@
 // Interface text for the whole platform. English values are the original demo strings.
 // Spanish values are machine-translated drafts and need review.
+import { AD } from './admin_i18n.js'
+import { QI } from './q_i18n.js'
+import { AS } from './assist_i18n.js'
+import { TR } from './tour_i18n.js'
+
 export const I18N = {
   en: {
-  topSub: 'Word Stops concept', pill: 'Concept mockup · not a live ReadWorks feature', langLabel: 'Passage language',
+  langLabel: 'Passage language',
   a11yBtn: 'Accessibility', szLegend: 'Text size', rdLegend: 'Reading', dpLegend: 'Display and motion',
   szM: 'Default', szL: 'Large', szXL: 'Extra large', font: 'Easy-to-read font', spacing: 'Wider line and letter spacing',
   sentence: 'Highlight the whole sentence too', strip: 'Reading strip (one line at a time)', contrast: 'High contrast',
@@ -11,7 +16,7 @@ export const I18N = {
   kTab: '<kbd>Tab</kbd> then <kbd>Enter</kbd> opens a word', reset: 'Reset', back5: 'Back 5 seconds', fwd5: 'Forward 5 seconds',
   speed: 'Speed', restart: 'Start over', dark: 'Dark reading', lg1: 'Word Stop: tap for a question',
   lg2: 'Vocabulary word: tap for its card', hCard: 'Word card', hDetails: 'Details', hBands: 'By grade band',
-  words: 'words', thLegend: 'Color theme', thAuto: 'Match my device', thLight: 'Light', thDark: 'Dark', toDark: '☾ Dark mode', toLight: '☀ Light mode', srcPolly: v => `Voice: Amazon Polly neural (${v})`, srcBrowser: 'Voice: browser (estimated timing)', play: 'Play', pause: 'Pause', stepper: (k, n) => `Stop ${k} of ${n}`, move: 'Move', wsName: 'Word Stop', on: 'on',
+  words: 'words', passageLbl: 'Passage', passageDemo: 'Passages with Word Stops', idleNone: 'This passage has no Word Stops yet. Press play, and tap any word to hear it again.', detailsNone: 'No Word Stops or vocabulary words in this passage yet.', srcPollySent: v => `Voice: Amazon Polly neural (${v}), sentence highlight`, panelTab: 'Word panel', panelClose: 'Close panel', thLegend: 'Color theme', thAuto: 'Match my device', thLight: 'Light', thDark: 'Dark', toDark: '☾ Dark mode', toLight: '☀ Light mode', srcPolly: v => `Voice: Amazon Polly neural (${v})`, srcBrowser: 'Voice: browser (estimated timing)', play: 'Play', pause: 'Pause', stepper: (k, n) => `Stop ${k} of ${n}`, move: 'Move', wsName: 'Word Stop', on: 'on',
   caseFile: n => `CASE FILE #${n}`, tapHint: 'Tap words in the passage. Tap again to unselect.', checkClue: 'Check my clue words',
   tapOne: 'Tap at least one word first.', tapErr: 'Those words don’t explain it. Look right after the word “or.”',
   niceFind: w => `Nice find: “${w}”.`, yourReply: 'Your reply', replyPh: 'Reply: I think it means… because…',
@@ -22,7 +27,7 @@ export const I18N = {
   shades: 'Shades of meaning', english: 'English', cogPair: 'Cognado', cogEs: 'Cognate', spanish: 'Spanish', watch: 'Watch for',
   pairHint: 'Definition shown from the paired English text. ReadWorks data has no Spanish definition yet (open question).',
   trHint: 'Machine-translated definition (draft). Needs review.', openCard: 'Open word card: ',
-  detailsDemo: (n, vc) => `<b>In this demo:</b> ${n} Word Stop${n > 1 ? 's' : ''} · ${vc} tappable vocabulary word${vc > 1 ? 's' : ''}`,
+  detailsDemo: (n, vc) => `<b>On this page:</b> ${n} Word Stop${n > 1 ? 's' : ''} · ${vc} tappable vocabulary word${vc > 1 ? 's' : ''}`,
   jarHint: 'Tap a purple word or answer Glow’s question to catch a word. Tap it here to hear it again.',
   badges: [['def', 'Definition Detective'], ['back', 'Look-Back Tracker'], ['opp', 'Opposite Spotter']],
   badgeNote: 'Each badge is a clue type. Opposite Spotter is earned in other passages.', streak: 'First-try streak:',
@@ -41,7 +46,7 @@ export const I18N = {
   etlIdle: 'Press play to hear this passage. Tap any word to start reading from there.',
   stopsBtn: on => `Word Stops: ${on ? 'On' : 'Off'}`, gameBtn: on => `Game features: ${on ? 'On' : 'Off'}`,
   gameTitle: 'Optional add-on: glow jar, badges, streaks, word bank', voiceOn: 'Voice on', voiceOff: 'Voice off',
-  foot1: `<strong>About this mockup.</strong> The ReadWorks page frame stays the same in every band; only the Word Stop layer changes look. It is a hackathon concept, not a ReadWorks product. Glow, the badges and all illustrations are original drawings for this demo. Passage text, grade, Lexile, vocabulary, definitions, examples, synonyms and Spanish come from ReadWorks' public passage data. The voice is the browser's built-in speech with estimated word timing; the build would use Polly audio and word timestamps. Teachers would set the band per assignment; students never see a grade label.`,
+  foot1: `Passage text, grade, Lexile, vocabulary, questions and sample answers come from ReadWorks' public passage data. Illustrations are original drawings. Spanish text is a machine-translated draft that has not been reviewed.`,
   foot2: `<strong>Why guess first.</strong> A meta-analysis of 21 studies found instruction in working out word meaning from context had a 0.43 SD effect, and direct clue instruction did best (<a href="https://pedagogischestudien.nl/article/download/14910/16362" target="_blank" rel="noopener">Fukkink &amp; de Glopper, 1998</a>).`,
   foot3: `<strong>Sources:</strong>
     <a href="https://www.readworks.org/article/Lets-Meet-a-Park-Caretaker/2b781dab-4521-40d2-a9b6-ad5f2bb0ba98" target="_blank" rel="noopener">Let's Meet a Park Caretaker</a> ·
@@ -49,7 +54,7 @@ export const I18N = {
     <a href="https://www.readworks.org/article/Excerpt-from-Pride-and-Prejudice/ff1d34c9-14f1-4e78-b509-6568dc912a17" target="_blank" rel="noopener">Excerpt from Pride and Prejudice</a>`,
   },
   es: {
-  topSub: 'Concepto de Paradas de palabras', pill: 'Maqueta conceptual · no es una función real de ReadWorks',
+  
   langLabel: 'Idioma del texto', a11yBtn: 'Accesibilidad', szLegend: 'Tamaño del texto', rdLegend: 'Lectura',
   dpLegend: 'Pantalla y movimiento', szM: 'Predeterminado', szL: 'Grande', szXL: 'Extra grande',
   font: 'Fuente fácil de leer', spacing: 'Mayor espaciado entre líneas y letras', sentence: 'Resaltar también toda la oración',
@@ -60,7 +65,7 @@ export const I18N = {
   fwd5: 'Adelante 5 segundos', speed: 'Velocidad', restart: 'Empezar de nuevo', dark: 'Lectura oscura',
   lg1: 'Parada de palabra: toca para una pregunta', lg2: 'Palabra de vocabulario: toca para ver su tarjeta',
   hCard: 'Tarjeta de palabra', hDetails: 'Detalles', hBands: 'Por nivel',
-  words: 'palabras', thLegend: 'Tema de color', thAuto: 'Igual que mi dispositivo', thLight: 'Claro', thDark: 'Oscuro', toDark: '☾ Modo oscuro', toLight: '☀ Modo claro', srcPolly: v => `Voz: Amazon Polly neural (${v})`, srcBrowser: 'Voz: navegador (tiempos estimados)', play: 'Reproducir', pause: 'Pausar', stepper: (k, n) => `Parada ${k} de ${n}`, move: 'Jugada',
+  words: 'palabras', passageLbl: 'Texto', passageDemo: 'Textos con Paradas de palabras', idleNone: 'Este texto aún no tiene Paradas de palabras. Presiona play y toca cualquier palabra para oírla otra vez.', detailsNone: 'Este texto aún no tiene Paradas de palabras ni palabras de vocabulario.', srcPollySent: v => `Voz: Amazon Polly neural (${v}), resaltado por oración`, panelTab: 'Panel de palabras', panelClose: 'Cerrar panel', thLegend: 'Tema de color', thAuto: 'Igual que mi dispositivo', thLight: 'Claro', thDark: 'Oscuro', toDark: '☾ Modo oscuro', toLight: '☀ Modo claro', srcPolly: v => `Voz: Amazon Polly neural (${v})`, srcBrowser: 'Voz: navegador (tiempos estimados)', play: 'Reproducir', pause: 'Pausar', stepper: (k, n) => `Parada ${k} de ${n}`, move: 'Jugada',
   wsName: 'Parada de palabra', on: 'sobre', caseFile: n => `EXPEDIENTE n.º ${n}`,
   tapHint: 'Toca palabras del texto. Vuelve a tocar para quitarlas.', checkClue: 'Revisar mis palabras pista',
   tapOne: 'Primero toca al menos una palabra.', tapErr: 'Esas palabras no lo explican. Mira justo después de la palabra “o”.',
@@ -73,7 +78,7 @@ export const I18N = {
   watch: 'Ojo con',
   pairHint: 'Definición tomada del texto pareado en inglés. Los datos de ReadWorks aún no tienen definición en español (pregunta abierta).',
   trHint: 'Definición traducida automáticamente (borrador). Pendiente de revisión.', openCard: 'Abrir tarjeta de palabra: ',
-  detailsDemo: (n, vc) => `<b>En esta demostración:</b> ${n} Parada${n > 1 ? 's' : ''} de palabra · ${vc} palabra${vc > 1 ? 's' : ''} de vocabulario tocable${vc > 1 ? 's' : ''}`,
+  detailsDemo: (n, vc) => `<b>En esta página:</b> ${n} Parada${n > 1 ? 's' : ''} de palabra · ${vc} palabra${vc > 1 ? 's' : ''} de vocabulario tocable${vc > 1 ? 's' : ''}`,
   jarHint: 'Toca una palabra morada o responde a Glow para guardarla. Tócala aquí para oírla otra vez.',
   badges: [['def', 'Detective de definiciones'], ['back', 'Rastreador de pistas atrás'], ['opp', 'Cazador de opuestos']],
   badgeNote: 'Cada insignia es un tipo de pista. El Cazador de opuestos se gana en otros textos.',
@@ -92,7 +97,7 @@ export const I18N = {
   etlIdle: 'Pulsa reproducir para oír este texto. Toca cualquier palabra para empezar a leer desde ahí.',
   stopsBtn: on => `Paradas de palabras: ${on ? 'Sí' : 'No'}`, gameBtn: on => `Funciones de juego: ${on ? 'Sí' : 'No'}`,
   gameTitle: 'Extra opcional: frasco de luz, insignias, rachas, banco de palabras', voiceOn: 'Voz activada', voiceOff: 'Voz desactivada',
-  foot1: `<strong>Acerca de esta maqueta.</strong> El marco de la página de ReadWorks es el mismo en todos los niveles; solo cambia el aspecto de la capa de Paradas de palabras. Es un concepto de hackatón, no un producto de ReadWorks. Glow, las insignias y todas las ilustraciones son dibujos originales para esta demostración. El texto de los pasajes, el grado, el Lexile, el vocabulario, las definiciones, los ejemplos, los sinónimos y el español provienen de los datos públicos de ReadWorks. Las versiones en español de los niveles 3–12 son borradores de traducción automática, pendientes de revisión. La voz es el habla integrada del navegador con tiempos estimados de palabra; la versión final usaría audio de Polly y marcas de tiempo por palabra. Los docentes fijarían el nivel por tarea; los estudiantes nunca ven una etiqueta de grado.`,
+  foot1: `El texto, el grado, el Lexile, el vocabulario, las preguntas y las respuestas de ejemplo vienen de los datos públicos de ReadWorks. Las ilustraciones son dibujos originales. El texto en español es un borrador de traducción automática que no ha sido revisado.`,
   foot2: `<strong>Por qué adivinar primero.</strong> Un metaanálisis de 21 estudios halló que enseñar a deducir el significado de una palabra por el contexto tuvo un efecto de 0,43 DE, y la instrucción directa sobre pistas fue la que mejor funcionó (<a href="https://pedagogischestudien.nl/article/download/14910/16362" target="_blank" rel="noopener">Fukkink y de Glopper, 1998</a>).`,
   foot3: `<strong>Fuentes:</strong>
     <a href="https://www.readworks.org/article/Lets-Meet-a-Park-Caretaker/2b781dab-4521-40d2-a9b6-ad5f2bb0ba98" target="_blank" rel="noopener">Let's Meet a Park Caretaker</a> ·
@@ -100,3 +105,6 @@ export const I18N = {
     <a href="https://www.readworks.org/article/Excerpt-from-Pride-and-Prejudice/ff1d34c9-14f1-4e78-b509-6568dc912a17" target="_blank" rel="noopener">Excerpt from Pride and Prejudice</a>`,
   },
 }
+
+Object.assign(I18N.en, AD.en, QI.en, AS.en, TR.en)
+Object.assign(I18N.es, AD.es, QI.es, AS.es, TR.es)

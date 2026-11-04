@@ -1,4 +1,6 @@
 import { addSpanish } from './data_es.js'
+import { addRW } from './data_rw.js'
+import { addFull } from './data_full.js'
 // Placeholder demo content carried over from WordStops_v8 (passages, vocab cards, Word Stops, icons).
 // To be replaced by the soundAlong JSON + timing files.
 export const SPK='<svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M2 6h3l4-3v10L5 10H2z"/><path d="M11 5.5a3.5 3.5 0 0 1 0 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
@@ -108,3 +110,5 @@ export const MODES=[
 export const ACCENTS=[['#007693','#e3f2f6','Teal'],['#6b4bb0','#efe9fa','Purple'],['#c2410c','#fdeee4','Orange'],['#1d7442','#e6f3eb','Green']];
 
 addSpanish(CARDS, MODES)
+addRW(MODES)
+addFull(MODES)

@@ -18,6 +18,8 @@ There is one synthesis implementation in the repo: the ETL pipeline in `etl/`. T
 
 The full data contract (S3 layout, product record, timing file, API) is [`docs/baseref.txt`](../docs/baseref.txt).
 
+`etl_run/` is the cloud ETL (not behind the API). An EventBridge rule fires it for every `incoming/*.json` uploaded to the media bucket. It runs the same `pipeline.run()` for every voice track, then moves the input to `processed/` (or to `failed/` with an `.error.json` for bad input). Unlike POST, it regenerates an existing id. See `infra/cdk/lib/etl-stack.ts`.
+
 ## Storage
 
 Shared infra (`infra/cdk`'s `StorageStack`), not anything this endpoint provisions itself:
