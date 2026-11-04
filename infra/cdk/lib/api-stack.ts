@@ -20,7 +20,7 @@ export interface ApiStackProps extends cdk.StackProps {
 
 // ../../lambda relative to this file (infra/cdk/lib/api-stack.ts -> lambda/)
 const REPO_ROOT = path.join(__dirname, "..", "..", "..");
-const LAMBDA_ROOT = path.join(REPO_ROOT, "lambda");
+export const LAMBDA_ROOT = path.join(REPO_ROOT, "lambda");
 const COMMON_DIR = path.join(LAMBDA_ROOT, "common");
 const ETL_DIR = path.join(REPO_ROOT, "etl");
 
@@ -51,7 +51,7 @@ const ETL_RUNTIME_FILES = [
  * No Docker required: the pipeline only needs boto3/botocore, which ship
  * with the Lambda Python runtime, so this is a plain file copy.
  */
-function functionCode(functionDir: string): lambda.Code {
+export function functionCode(functionDir: string): lambda.Code {
   return lambda.Code.fromAsset(functionDir, {
     // Default asset hashing only looks at `functionDir`, but tryBundle below
     // also pulls in lambda/common from outside it -- hash the bundled

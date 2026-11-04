@@ -1,0 +1,663 @@
+{
+  "_comment": "On-demand list prices, us-west-2, USD. Entries with a 'query' are refreshed from the AWS Price List API by `estimate_cost.py --refresh-prices` (read-only, free). Entries without one are manual: check them by hand. tiers = [[beginRange, pricePerUnit], ...] in the unit shown. Free tiers are NOT applied unless they appear as a $0 tier in the Price List.",
+  "_fetched": "2026-11-04",
+  "region": "us-west-2",
+  "prices": {
+    "polly_standard_char": {
+      "unit": "char",
+      "tiers": [
+        [
+          0,
+          4e-06
+        ]
+      ],
+      "query": {
+        "service": "AmazonPolly",
+        "usagetype": "USW2-SynthesizeSpeech-Characters"
+      }
+    },
+    "polly_neural_char": {
+      "unit": "char",
+      "tiers": [
+        [
+          0,
+          1.6e-05
+        ]
+      ],
+      "query": {
+        "service": "AmazonPolly",
+        "usagetype": "USW2-SynthesizeSpeechNeural-Characters"
+      }
+    },
+    "polly_generative_char": {
+      "unit": "char",
+      "tiers": [
+        [
+          0,
+          3e-05
+        ]
+      ],
+      "query": {
+        "service": "AmazonPolly",
+        "usagetype": "USW2-SynthesizeSpeechGenerative-Characters"
+      }
+    },
+    "lambda_gb_s": {
+      "unit": "GB-s",
+      "tiers": [
+        [
+          0,
+          1.66667e-05
+        ],
+        [
+          6000000000,
+          1.5e-05
+        ],
+        [
+          15000000000,
+          1.33334e-05
+        ]
+      ],
+      "query": {
+        "service": "AWSLambda",
+        "usagetype": "USW2-Lambda-GB-Second"
+      }
+    },
+    "lambda_request": {
+      "unit": "request",
+      "tiers": [
+        [
+          0,
+          2e-07
+        ]
+      ],
+      "query": {
+        "service": "AWSLambda",
+        "usagetype": "USW2-Request"
+      }
+    },
+    "httpapi_request": {
+      "unit": "request",
+      "tiers": [
+        [
+          0,
+          1e-06
+        ],
+        [
+          300000000,
+          9e-07
+        ]
+      ],
+      "query": {
+        "service": "AmazonApiGateway",
+        "usagetype": "USW2-ApiGatewayHttpRequest"
+      }
+    },
+    "s3_storage_gb_mo": {
+      "unit": "GB-Mo",
+      "tiers": [
+        [
+          0,
+          0.023
+        ],
+        [
+          51200,
+          0.022
+        ],
+        [
+          512000,
+          0.021
+        ]
+      ],
+      "query": {
+        "service": "AmazonS3",
+        "usagetype": "USW2-TimedStorage-ByteHrs"
+      }
+    },
+    "s3_put": {
+      "unit": "request",
+      "tiers": [
+        [
+          0,
+          5e-06
+        ]
+      ],
+      "query": {
+        "service": "AmazonS3",
+        "usagetype": "USW2-Requests-Tier1"
+      }
+    },
+    "s3_get": {
+      "unit": "request",
+      "tiers": [
+        [
+          0,
+          4e-07
+        ]
+      ],
+      "query": {
+        "service": "AmazonS3",
+        "usagetype": "USW2-Requests-Tier2"
+      }
+    },
+    "s3_egress_gb": {
+      "unit": "GB",
+      "tiers": [
+        [
+          0,
+          0.09
+        ],
+        [
+          10240,
+          0.085
+        ],
+        [
+          51200,
+          0.07
+        ],
+        [
+          153600,
+          0.05
+        ]
+      ],
+      "query": {
+        "service": "AWSDataTransfer",
+        "usagetype": "USW2-DataTransfer-Out-Bytes"
+      }
+    },
+    "ddb_wru": {
+      "unit": "WRU",
+      "tiers": [
+        [
+          0,
+          6.25e-07
+        ]
+      ],
+      "query": {
+        "service": "AmazonDynamoDB",
+        "usagetype": "USW2-WriteRequestUnits"
+      }
+    },
+    "ddb_rru": {
+      "unit": "RRU",
+      "tiers": [
+        [
+          0,
+          1.25e-07
+        ]
+      ],
+      "query": {
+        "service": "AmazonDynamoDB",
+        "usagetype": "USW2-ReadRequestUnits"
+      }
+    },
+    "ddb_storage_gb_mo": {
+      "unit": "GB-Mo",
+      "tiers": [
+        [
+          0,
+          0.0
+        ],
+        [
+          25,
+          0.25
+        ]
+      ],
+      "query": {
+        "service": "AmazonDynamoDB",
+        "usagetype": "USW2-TimedStorage-ByteHrs"
+      }
+    },
+    "ddb_pitr_gb_mo": {
+      "unit": "GB-Mo",
+      "tiers": [
+        [
+          0,
+          0.2
+        ]
+      ],
+      "query": {
+        "service": "AmazonDynamoDB",
+        "usagetype": "USW2-TimedPITRStorage-ByteHrs"
+      }
+    },
+    "kms_key_mo": {
+      "unit": "key-Mo",
+      "tiers": [
+        [
+          0,
+          1.0
+        ]
+      ],
+      "query": {
+        "service": "awskms",
+        "usagetype": "us-west-2-KMS-Keys"
+      }
+    },
+    "kms_request": {
+      "unit": "request",
+      "tiers": [
+        [
+          0,
+          3e-06
+        ]
+      ],
+      "query": {
+        "service": "awskms",
+        "usagetype": "us-west-2-KMS-Requests"
+      }
+    },
+    "cf_egress_gb": {
+      "unit": "GB",
+      "tiers": [
+        [
+          0,
+          0.085
+        ],
+        [
+          10240,
+          0.08
+        ],
+        [
+          51200,
+          0.06
+        ],
+        [
+          153600,
+          0.04
+        ],
+        [
+          512000,
+          0.03
+        ],
+        [
+          1048576,
+          0.025
+        ],
+        [
+          5242880,
+          0.02
+        ]
+      ],
+      "query": {
+        "service": "AmazonCloudFront",
+        "usagetype": "US-DataTransfer-Out-Bytes"
+      }
+    },
+    "cf_https_request": {
+      "unit": "request",
+      "tiers": [
+        [
+          0,
+          1e-06
+        ]
+      ],
+      "query": {
+        "service": "AmazonCloudFront",
+        "usagetype": "US-Requests-Tier2-HTTPS"
+      }
+    },
+    "sfn_transition": {
+      "unit": "transition",
+      "tiers": [
+        [
+          0,
+          2.5e-05
+        ]
+      ],
+      "query": {
+        "service": "AmazonStates",
+        "usagetype": "USW2-StateTransition"
+      }
+    },
+    "sqs_request": {
+      "unit": "request",
+      "tiers": [
+        [
+          0,
+          4e-07
+        ],
+        [
+          100000000000,
+          3e-07
+        ],
+        [
+          200000000000,
+          2.4e-07
+        ]
+      ],
+      "query": {
+        "service": "AWSQueueService",
+        "usagetype": "USW2-Requests-Tier1"
+      }
+    },
+    "fargate_vcpu_hr": {
+      "unit": "vCPU-hr",
+      "tiers": [
+        [
+          0,
+          0.04048
+        ]
+      ],
+      "query": {
+        "service": "AmazonECS",
+        "usagetype": "USW2-Fargate-vCPU-Hours:perCPU"
+      }
+    },
+    "fargate_gb_hr": {
+      "unit": "GB-hr",
+      "tiers": [
+        [
+          0,
+          0.004445
+        ]
+      ],
+      "query": {
+        "service": "AmazonECS",
+        "usagetype": "USW2-Fargate-GB-Hours"
+      }
+    },
+    "ec2_t3_small_hr": {
+      "unit": "hr",
+      "tiers": [
+        [
+          0,
+          0.0208
+        ]
+      ],
+      "query": {
+        "service": "AmazonEC2",
+        "usagetype": "USW2-BoxUsage:t3.small",
+        "filters": {
+          "operatingSystem": "Linux",
+          "preInstalledSw": "NA",
+          "tenancy": "Shared",
+          "capacitystatus": "Used",
+          "licenseModel": "No License required"
+        }
+      }
+    },
+    "ebs_gp3_gb_mo": {
+      "unit": "GB-Mo",
+      "tiers": [
+        [
+          0,
+          0.08
+        ]
+      ],
+      "query": {
+        "service": "AmazonEC2",
+        "usagetype": "USW2-EBS:VolumeUsage.gp3"
+      }
+    },
+    "cw_logs_ingest_gb": {
+      "unit": "GB",
+      "tiers": [
+        [
+          0,
+          0.5
+        ]
+      ],
+      "query": {
+        "service": "AmazonCloudWatch",
+        "usagetype": "USW2-DataProcessing-Bytes",
+        "filters": {
+          "operation": "PutLogEvents"
+        }
+      }
+    },
+    "cw_logs_store_gb_mo": {
+      "unit": "GB-Mo",
+      "tiers": [
+        [
+          0,
+          0.03
+        ]
+      ],
+      "query": {
+        "service": "AmazonCloudWatch",
+        "usagetype": "USW2-TimedStorage-ByteHrs"
+      }
+    },
+    "cw_alarm_mo": {
+      "unit": "alarm-Mo",
+      "tiers": [
+        [
+          0,
+          0.1
+        ]
+      ],
+      "query": {
+        "service": "AmazonCloudWatch",
+        "usagetype": "USW2-CW:AlarmMonitorUsage"
+      }
+    },
+    "cw_dashboard_mo": {
+      "unit": "dashboard-Mo",
+      "tiers": [
+        [
+          0,
+          3.0
+        ]
+      ],
+      "manual": "CloudWatch pricing page: $3 per dashboard per month (first 3 free under Free Tier, not applied)."
+    },
+    "secret_mo": {
+      "unit": "secret-Mo",
+      "tiers": [
+        [
+          0,
+          0.4
+        ]
+      ],
+      "query": {
+        "service": "AWSSecretsManager",
+        "usagetype": "USW2-AWSSecretsManager-Secrets"
+      }
+    },
+    "sns_request": {
+      "unit": "request",
+      "tiers": [
+        [
+          0,
+          0.0
+        ],
+        [
+          1000000,
+          5e-07
+        ]
+      ],
+      "query": {
+        "service": "AmazonSNS",
+        "usagetype": "USW2-Requests-Tier1"
+      }
+    },
+    "firehose_gb": {
+      "unit": "GB",
+      "tiers": [
+        [
+          0,
+          0.029
+        ],
+        [
+          512000,
+          0.025
+        ],
+        [
+          2048000,
+          0.02
+        ]
+      ],
+      "query": {
+        "service": "AmazonKinesisFirehose",
+        "usagetype": "USW2-BilledBytes",
+        "filters": {
+          "operation": "PutRecordBatch"
+        }
+      }
+    },
+    "athena_tb": {
+      "unit": "TB",
+      "tiers": [
+        [
+          0,
+          5.0
+        ]
+      ],
+      "query": {
+        "service": "AmazonAthena",
+        "usagetype": "USW2-DataScannedInTB"
+      }
+    },
+    "codebuild_min": {
+      "unit": "minute",
+      "tiers": [
+        [
+          0,
+          0.005
+        ]
+      ],
+      "query": {
+        "service": "CodeBuild",
+        "usagetype": "USW2-Build-Min:Linux:g1.small"
+      }
+    },
+    "codepipeline_action_min": {
+      "unit": "minute",
+      "tiers": [
+        [
+          0,
+          0.002
+        ]
+      ],
+      "query": {
+        "service": "AWSCodePipeline",
+        "usagetype": "USW2-actionExecutionMinute"
+      }
+    },
+    "bedrock_in_mtok": {
+      "unit": "1M tokens",
+      "tiers": [
+        [
+          0,
+          1.0
+        ]
+      ],
+      "manual": "Claude Haiku 4.5 on-demand input list price. Model not chosen yet; change if the team picks another (e.g. Nova Lite)."
+    },
+    "bedrock_out_mtok": {
+      "unit": "1M tokens",
+      "tiers": [
+        [
+          0,
+          5.0
+        ]
+      ],
+      "manual": "Claude Haiku 4.5 on-demand output list price."
+    },
+    "eks_cluster_hr": {
+      "unit": "hr",
+      "tiers": [
+        [
+          0,
+          0.1
+        ]
+      ],
+      "query": {
+        "service": "AmazonEKS",
+        "usagetype": "USW2-AmazonEKS-Hours:perCluster"
+      }
+    },
+    "ec2_t3_medium_hr": {
+      "unit": "hr",
+      "tiers": [
+        [
+          0,
+          0.0416
+        ]
+      ],
+      "query": {
+        "service": "AmazonEC2",
+        "usagetype": "USW2-BoxUsage:t3.medium",
+        "filters": {
+          "operatingSystem": "Linux",
+          "preInstalledSw": "NA",
+          "tenancy": "Shared",
+          "capacitystatus": "Used",
+          "licenseModel": "No License required"
+        }
+      }
+    },
+    "nat_hr": {
+      "unit": "hr",
+      "tiers": [
+        [
+          0,
+          0.045
+        ]
+      ],
+      "query": {
+        "service": "AmazonEC2",
+        "usagetype": "USW2-NatGateway-Hours"
+      }
+    },
+    "nat_gb": {
+      "unit": "GB",
+      "tiers": [
+        [
+          0,
+          0.045
+        ]
+      ],
+      "query": {
+        "service": "AmazonEC2",
+        "usagetype": "USW2-NatGateway-Bytes"
+      }
+    },
+    "nlb_hr": {
+      "unit": "hr",
+      "tiers": [
+        [
+          0,
+          0.0225
+        ]
+      ],
+      "query": {
+        "service": "AWSELB",
+        "usagetype": "USW2-LoadBalancerUsage",
+        "filters": {
+          "productFamily": "Load Balancer-Network"
+        }
+      }
+    },
+    "nlb_lcu_hr": {
+      "unit": "LCU-hr",
+      "tiers": [
+        [
+          0,
+          0.006
+        ]
+      ],
+      "query": {
+        "service": "AWSELB",
+        "usagetype": "USW2-LCUUsage",
+        "filters": {
+          "productFamily": "Load Balancer-Network"
+        }
+      }
+    },
+    "public_ipv4_hr": {
+      "unit": "IP-hr",
+      "tiers": [
+        [
+          0,
+          0.005
+        ]
+      ],
+      "query": {
+        "service": "AmazonVPC",
+        "usagetype": "USW2-PublicIPv4:InUseAddress"
+      }
+    }
+  }
+}

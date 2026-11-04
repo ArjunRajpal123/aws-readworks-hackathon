@@ -41,6 +41,14 @@ Use `--track tts-1` to generate only the default voice (half the cost). To compa
 
 `run_local.py` prints the AWS account it's using, uploads the pronunciation lexicons (`--no-lexicon` to skip), keeps going if one passage fails, and prints a summary table. The Stage 2 sample inputs (`inputs/rws-*.json`) are committed; other inputs and all generated output (`frontend/public/sa/`) are git-ignored.
 
+## Run in the cloud (no local compute)
+
+Upload an input file to the media bucket's `incoming/` prefix and the `etl-run` Lambda processes it (see `infra/cdk/README.md`):
+
+```bash
+aws s3 cp inputs/rws-e2-en.json s3://<media bucket>/incoming/
+```
+
 ## Run against deployed AWS
 
 `run_aws.py` runs the same pipeline but writes to the deployed `StorageStack`: S3 media bucket under `sa/` and the DynamoDB reference table (names come from the stack outputs). It takes the same inputs and options as `run_local.py` (`--profile`, `--track`, `--no-lexicon`, input `pronunciation`) and uploads the lexicons first.

@@ -1,0 +1,16 @@
+{
+  "name": "sa-ui-e2e-test",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Playwright functional tests for the Sound Along UI (frontend/) plus a ticket generator for failures.",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "tickets": "node scripts/make_tickets.mjs",
+    "check": "playwright test; node scripts/make_tickets.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.64.1"
+  }
+}

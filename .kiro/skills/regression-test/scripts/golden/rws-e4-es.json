@@ -1,0 +1,520 @@
+{
+  "input": "rws-e4-es.json",
+  "objects": {
+    "audio/rws-e4-es/tts-1.input.ssml": {
+      "content": "<speak><amazon:effect name=\"drc\"><prosody rate=\"95%\"><p><s>Todos culparon a Joey.</s></p><p><s>A veces una parte se disolvía y otra no, como la vez que metió un pastel de arándanos machacado en su vaso de leche.</s></p><p><s>El de DeSean pesó ¼ de libra.</s></p></prosody></amazon:effect></speak>",
+      "contentType": "application/ssml+xml",
+      "encoding": null
+    },
+    "audio/rws-e4-es/tts-1.marks.jsonl": {
+      "content": "{\"time\": 0, \"type\": \"sentence\", \"start\": 59, \"end\": 59, \"value\": \"\"}\n{\"time\": 0, \"type\": \"word\", \"start\": 59, \"end\": 64, \"value\": \"Todos\"}\n{\"time\": 300, \"type\": \"word\", \"start\": 65, \"end\": 73, \"value\": \"culparon\"}\n{\"time\": 600, \"type\": \"word\", \"start\": 74, \"end\": 75, \"value\": \"a\"}\n{\"time\": 900, \"type\": \"word\", \"start\": 76, \"end\": 80, \"value\": \"Joey\"}\n{\"time\": 1200, \"type\": \"sentence\", \"start\": 95, \"end\": 95, \"value\": \"\"}\n{\"time\": 1200, \"type\": \"word\", \"start\": 95, \"end\": 96, \"value\": \"A\"}\n{\"time\": 1500, \"type\": \"word\", \"start\": 97, \"end\": 102, \"value\": \"veces\"}\n{\"time\": 1800, \"type\": \"word\", \"start\": 103, \"end\": 106, \"value\": \"una\"}\n{\"time\": 2100, \"type\": \"word\", \"start\": 107, \"end\": 112, \"value\": \"parte\"}\n{\"time\": 2400, \"type\": \"word\", \"start\": 113, \"end\": 115, \"value\": \"se\"}\n{\"time\": 2700, \"type\": \"word\", \"start\": 116, \"end\": 125, \"value\": \"disolv\\u00eda\"}\n{\"time\": 3000, \"type\": \"word\", \"start\": 126, \"end\": 127, \"value\": \"y\"}\n{\"time\": 3300, \"type\": \"word\", \"start\": 128, \"end\": 132, \"value\": \"otra\"}\n{\"time\": 3600, \"type\": \"word\", \"start\": 133, \"end\": 135, \"value\": \"no\"}\n{\"time\": 3900, \"type\": \"word\", \"start\": 137, \"end\": 141, \"value\": \"como\"}\n{\"time\": 4200, \"type\": \"word\", \"start\": 142, \"end\": 144, \"value\": \"la\"}\n{\"time\": 4500, \"type\": \"word\", \"start\": 145, \"end\": 148, \"value\": \"vez\"}\n{\"time\": 4800, \"type\": \"word\", \"start\": 149, \"end\": 152, \"value\": \"que\"}\n{\"time\": 5100, \"type\": \"word\", \"start\": 153, \"end\": 159, \"value\": \"meti\\u00f3\"}\n{\"time\": 5400, \"type\": \"word\", \"start\": 160, \"end\": 162, \"value\": \"un\"}\n{\"time\": 5700, \"type\": \"word\", \"start\": 163, \"end\": 169, \"value\": \"pastel\"}\n{\"time\": 6000, \"type\": \"word\", \"start\": 170, \"end\": 172, \"value\": \"de\"}\n{\"time\": 6300, \"type\": \"word\", \"start\": 173, \"end\": 183, \"value\": \"ar\\u00e1ndanos\"}\n{\"time\": 6600, \"type\": \"word\", \"start\": 184, \"end\": 193, \"value\": \"machacado\"}\n{\"time\": 6900, \"type\": \"word\", \"start\": 194, \"end\": 196, \"value\": \"en\"}\n{\"time\": 7200, \"type\": \"word\", \"start\": 197, \"end\": 199, \"value\": \"su\"}\n{\"time\": 7500, \"type\": \"word\", \"start\": 200, \"end\": 204, \"value\": \"vaso\"}\n{\"time\": 7800, \"type\": \"word\", \"start\": 205, \"end\": 207, \"value\": \"de\"}\n{\"time\": 8100, \"type\": \"word\", \"start\": 208, \"end\": 213, \"value\": \"leche\"}\n{\"time\": 8400, \"type\": \"sentence\", \"start\": 228, \"end\": 228, \"value\": \"\"}\n{\"time\": 8400, \"type\": \"word\", \"start\": 228, \"end\": 230, \"value\": \"El\"}\n{\"time\": 8700, \"type\": \"word\", \"start\": 231, \"end\": 233, \"value\": \"de\"}\n{\"time\": 9000, \"type\": \"word\", \"start\": 234, \"end\": 240, \"value\": \"DeSean\"}\n{\"time\": 9300, \"type\": \"word\", \"start\": 241, \"end\": 246, \"value\": \"pes\\u00f3\"}\n{\"time\": 9600, \"type\": \"word\", \"start\": 247, \"end\": 249, \"value\": \"\\u00bc\"}\n{\"time\": 9900, \"type\": \"word\", \"start\": 250, \"end\": 252, \"value\": \"de\"}\n{\"time\": 10200, \"type\": \"word\", \"start\": 253, \"end\": 258, \"value\": \"libra\"}\n",
+      "contentType": "application/x-ndjson",
+      "encoding": null
+    },
+    "audio/rws-e4-es/tts-1.mp3": {
+      "content": {
+        "bytes": 144000,
+        "sha256": "ca9acd040a30f2b308021a8b54d2ddda67bae56c4aeed6e3d96a12981d37b760"
+      },
+      "contentType": "audio/mpeg",
+      "encoding": null
+    },
+    "audio/rws-e4-es/tts-1.timing.json.gz": {
+      "content": {
+        "durationMs": 24000,
+        "end": [
+          300,
+          600,
+          900,
+          1200,
+          1500,
+          1800,
+          2100,
+          2400,
+          2700,
+          3000,
+          3300,
+          3600,
+          3900,
+          4200,
+          4500,
+          4800,
+          5100,
+          5400,
+          5700,
+          6000,
+          6300,
+          6600,
+          6900,
+          7200,
+          7500,
+          7800,
+          8100,
+          8400,
+          8700,
+          9000,
+          9300,
+          9600,
+          9900,
+          10200,
+          24000
+        ],
+        "n": 35,
+        "start": [
+          0,
+          300,
+          600,
+          900,
+          1200,
+          1500,
+          1800,
+          2100,
+          2400,
+          2700,
+          3000,
+          3300,
+          3600,
+          3900,
+          4200,
+          4500,
+          4800,
+          5100,
+          5400,
+          5700,
+          6000,
+          6300,
+          6600,
+          6900,
+          7200,
+          7500,
+          7800,
+          8100,
+          8400,
+          8700,
+          9000,
+          9300,
+          9600,
+          9900,
+          10200
+        ],
+        "textHash": "sha256:5ff6734d9d24b97cadbed2e1407c40fd05c0ebf13e0aa6b765dd056859c00096",
+        "trackId": "tts-1",
+        "v": 1
+      },
+      "contentType": "application/json",
+      "encoding": "gzip"
+    },
+    "audio/rws-e4-es/tts-2.input.ssml": {
+      "content": "<speak><amazon:effect name=\"drc\"><prosody rate=\"95%\"><p><s>Todos culparon a Joey.</s></p><p><s>A veces una parte se disolvía y otra no, como la vez que metió un pastel de arándanos machacado en su vaso de leche.</s></p><p><s>El de DeSean pesó ¼ de libra.</s></p></prosody></amazon:effect></speak>",
+      "contentType": "application/ssml+xml",
+      "encoding": null
+    },
+    "audio/rws-e4-es/tts-2.marks.jsonl": {
+      "content": "{\"time\": 0, \"type\": \"sentence\", \"start\": 59, \"end\": 59, \"value\": \"\"}\n{\"time\": 0, \"type\": \"word\", \"start\": 59, \"end\": 64, \"value\": \"Todos\"}\n{\"time\": 300, \"type\": \"word\", \"start\": 65, \"end\": 73, \"value\": \"culparon\"}\n{\"time\": 600, \"type\": \"word\", \"start\": 74, \"end\": 75, \"value\": \"a\"}\n{\"time\": 900, \"type\": \"word\", \"start\": 76, \"end\": 80, \"value\": \"Joey\"}\n{\"time\": 1200, \"type\": \"sentence\", \"start\": 95, \"end\": 95, \"value\": \"\"}\n{\"time\": 1200, \"type\": \"word\", \"start\": 95, \"end\": 96, \"value\": \"A\"}\n{\"time\": 1500, \"type\": \"word\", \"start\": 97, \"end\": 102, \"value\": \"veces\"}\n{\"time\": 1800, \"type\": \"word\", \"start\": 103, \"end\": 106, \"value\": \"una\"}\n{\"time\": 2100, \"type\": \"word\", \"start\": 107, \"end\": 112, \"value\": \"parte\"}\n{\"time\": 2400, \"type\": \"word\", \"start\": 113, \"end\": 115, \"value\": \"se\"}\n{\"time\": 2700, \"type\": \"word\", \"start\": 116, \"end\": 125, \"value\": \"disolv\\u00eda\"}\n{\"time\": 3000, \"type\": \"word\", \"start\": 126, \"end\": 127, \"value\": \"y\"}\n{\"time\": 3300, \"type\": \"word\", \"start\": 128, \"end\": 132, \"value\": \"otra\"}\n{\"time\": 3600, \"type\": \"word\", \"start\": 133, \"end\": 135, \"value\": \"no\"}\n{\"time\": 3900, \"type\": \"word\", \"start\": 137, \"end\": 141, \"value\": \"como\"}\n{\"time\": 4200, \"type\": \"word\", \"start\": 142, \"end\": 144, \"value\": \"la\"}\n{\"time\": 4500, \"type\": \"word\", \"start\": 145, \"end\": 148, \"value\": \"vez\"}\n{\"time\": 4800, \"type\": \"word\", \"start\": 149, \"end\": 152, \"value\": \"que\"}\n{\"time\": 5100, \"type\": \"word\", \"start\": 153, \"end\": 159, \"value\": \"meti\\u00f3\"}\n{\"time\": 5400, \"type\": \"word\", \"start\": 160, \"end\": 162, \"value\": \"un\"}\n{\"time\": 5700, \"type\": \"word\", \"start\": 163, \"end\": 169, \"value\": \"pastel\"}\n{\"time\": 6000, \"type\": \"word\", \"start\": 170, \"end\": 172, \"value\": \"de\"}\n{\"time\": 6300, \"type\": \"word\", \"start\": 173, \"end\": 183, \"value\": \"ar\\u00e1ndanos\"}\n{\"time\": 6600, \"type\": \"word\", \"start\": 184, \"end\": 193, \"value\": \"machacado\"}\n{\"time\": 6900, \"type\": \"word\", \"start\": 194, \"end\": 196, \"value\": \"en\"}\n{\"time\": 7200, \"type\": \"word\", \"start\": 197, \"end\": 199, \"value\": \"su\"}\n{\"time\": 7500, \"type\": \"word\", \"start\": 200, \"end\": 204, \"value\": \"vaso\"}\n{\"time\": 7800, \"type\": \"word\", \"start\": 205, \"end\": 207, \"value\": \"de\"}\n{\"time\": 8100, \"type\": \"word\", \"start\": 208, \"end\": 213, \"value\": \"leche\"}\n{\"time\": 8400, \"type\": \"sentence\", \"start\": 228, \"end\": 228, \"value\": \"\"}\n{\"time\": 8400, \"type\": \"word\", \"start\": 228, \"end\": 230, \"value\": \"El\"}\n{\"time\": 8700, \"type\": \"word\", \"start\": 231, \"end\": 233, \"value\": \"de\"}\n{\"time\": 9000, \"type\": \"word\", \"start\": 234, \"end\": 240, \"value\": \"DeSean\"}\n{\"time\": 9300, \"type\": \"word\", \"start\": 241, \"end\": 246, \"value\": \"pes\\u00f3\"}\n{\"time\": 9600, \"type\": \"word\", \"start\": 247, \"end\": 249, \"value\": \"\\u00bc\"}\n{\"time\": 9900, \"type\": \"word\", \"start\": 250, \"end\": 252, \"value\": \"de\"}\n{\"time\": 10200, \"type\": \"word\", \"start\": 253, \"end\": 258, \"value\": \"libra\"}\n",
+      "contentType": "application/x-ndjson",
+      "encoding": null
+    },
+    "audio/rws-e4-es/tts-2.mp3": {
+      "content": {
+        "bytes": 144000,
+        "sha256": "ca9acd040a30f2b308021a8b54d2ddda67bae56c4aeed6e3d96a12981d37b760"
+      },
+      "contentType": "audio/mpeg",
+      "encoding": null
+    },
+    "audio/rws-e4-es/tts-2.timing.json.gz": {
+      "content": {
+        "durationMs": 24000,
+        "end": [
+          300,
+          600,
+          900,
+          1200,
+          1500,
+          1800,
+          2100,
+          2400,
+          2700,
+          3000,
+          3300,
+          3600,
+          3900,
+          4200,
+          4500,
+          4800,
+          5100,
+          5400,
+          5700,
+          6000,
+          6300,
+          6600,
+          6900,
+          7200,
+          7500,
+          7800,
+          8100,
+          8400,
+          8700,
+          9000,
+          9300,
+          9600,
+          9900,
+          10200,
+          24000
+        ],
+        "n": 35,
+        "start": [
+          0,
+          300,
+          600,
+          900,
+          1200,
+          1500,
+          1800,
+          2100,
+          2400,
+          2700,
+          3000,
+          3300,
+          3600,
+          3900,
+          4200,
+          4500,
+          4800,
+          5100,
+          5400,
+          5700,
+          6000,
+          6300,
+          6600,
+          6900,
+          7200,
+          7500,
+          7800,
+          8100,
+          8400,
+          8700,
+          9000,
+          9300,
+          9600,
+          9900,
+          10200
+        ],
+        "textHash": "sha256:5ff6734d9d24b97cadbed2e1407c40fd05c0ebf13e0aa6b765dd056859c00096",
+        "trackId": "tts-2",
+        "v": 1
+      },
+      "contentType": "application/json",
+      "encoding": "gzip"
+    },
+    "product/rws-e4-es.soundAlong.json": {
+      "content": {
+        "contentTokenized": "<p><span data-w=\"0\">Todos</span> <span data-w=\"1\">culparon</span> <span data-w=\"2\">a</span> <span data-w=\"3\">Joey.</span></p><p><span data-w=\"4\">A</span> <span data-w=\"5\">veces</span> <span data-w=\"6\">una</span> <span data-w=\"7\">parte</span> <span data-w=\"8\">se</span> <span data-w=\"9\">disolvía</span> <span data-w=\"10\">y</span> <span data-w=\"11\">otra</span> <span data-w=\"12\">no,</span> <span data-w=\"13\">como</span> <span data-w=\"14\">la</span> <span data-w=\"15\">vez</span> <span data-w=\"16\">que</span> <span data-w=\"17\">metió</span> <span data-w=\"18\">un</span> <span data-w=\"19\">pastel</span> <span data-w=\"20\">de</span> <span data-w=\"21\">arándanos</span> <span data-w=\"22\">machacado</span> <span data-w=\"23\">en</span> <span data-w=\"24\">su</span> <span data-w=\"25\">vaso</span> <span data-w=\"26\">de</span> <span data-w=\"27\">leche.</span></p><p><span data-w=\"28\">El</span> <span data-w=\"29\">de</span> <span data-w=\"30\">DeSean</span> <span data-w=\"31\">pesó</span> <span data-w=\"32\">¼</span> <span data-w=\"33\">de</span> <span data-w=\"34\">libra.</span></p>",
+        "generation": {
+          "billedChars": 668,
+          "configVersion": "es-US/neural/Lupe/ssml/lex-1/r95%/drc1/pb0",
+          "estCostUsd": 0.01069,
+          "inputHash": "sha256:5ff6734d9d24b97cadbed2e1407c40fd05c0ebf13e0aa6b765dd056859c00096",
+          "pipelineVersion": "sa-pipeline-0.3.1",
+          "runAt": "<masked>"
+        },
+        "id": "rws-e4-es",
+        "lang": "es",
+        "schemaVersion": 3,
+        "structure": {
+          "paragraphStarts": [
+            0,
+            4,
+            28
+          ],
+          "sentenceStarts": [
+            0,
+            4,
+            28
+          ]
+        },
+        "textHash": "sha256:5ff6734d9d24b97cadbed2e1407c40fd05c0ebf13e0aa6b765dd056859c00096",
+        "title": "Experiments (E4, es)",
+        "tokenCount": 35,
+        "tokenizerVersion": "sa-tok-es-1.0",
+        "tracks": [
+          {
+            "audioKey": "audio/rws-e4-es/tts-1.mp3",
+            "configVersion": "es-US/neural/Lupe/ssml/lex-1/r95%/drc1/pb0",
+            "default": true,
+            "engine": "neural",
+            "granularity": "word",
+            "id": "tts-1",
+            "kind": "tts",
+            "lexicon": "saEsUS",
+            "qa": {
+              "billedChars": 334,
+              "durationMs": 24000,
+              "estCostUsd": 0.00534,
+              "lowConfidence": [],
+              "marks": 35,
+              "mergedSentenceBreaks": [],
+              "pollySentences": 3,
+              "sentences": 3,
+              "ssmlSentences": 3,
+              "status": "passed",
+              "tokens": 35
+            },
+            "settings": {
+              "drc": true,
+              "lexiconMode": "polly",
+              "paragraphBreakMs": 0,
+              "pronunciationOverrides": 0,
+              "rate": "95%",
+              "sampleRate": "24000",
+              "textType": "ssml"
+            },
+            "timingKey": "audio/rws-e4-es/tts-1.timing.json.gz",
+            "timingSource": "polly-speech-marks",
+            "voiceGender": "female",
+            "voiceId": "Lupe"
+          },
+          {
+            "audioKey": "audio/rws-e4-es/tts-2.mp3",
+            "configVersion": "es-US/neural/Pedro/ssml/lex-1/r95%/drc1/pb0",
+            "default": false,
+            "engine": "neural",
+            "granularity": "word",
+            "id": "tts-2",
+            "kind": "tts",
+            "lexicon": "saEsUS",
+            "qa": {
+              "billedChars": 334,
+              "durationMs": 24000,
+              "estCostUsd": 0.00534,
+              "lowConfidence": [],
+              "marks": 35,
+              "mergedSentenceBreaks": [],
+              "pollySentences": 3,
+              "sentences": 3,
+              "ssmlSentences": 3,
+              "status": "passed",
+              "tokens": 35
+            },
+            "settings": {
+              "drc": true,
+              "lexiconMode": "polly",
+              "paragraphBreakMs": 0,
+              "pronunciationOverrides": 0,
+              "rate": "95%",
+              "sampleRate": "24000",
+              "textType": "ssml"
+            },
+            "timingKey": "audio/rws-e4-es/tts-2.timing.json.gz",
+            "timingSource": "polly-speech-marks",
+            "voiceGender": "male",
+            "voiceId": "Pedro"
+          }
+        ]
+      },
+      "contentType": "application/json",
+      "encoding": null
+    }
+  },
+  "pollyRequests": [
+    {
+      "Engine": "neural",
+      "LanguageCode": "es-US",
+      "LexiconNames": [
+        "saEsUS"
+      ],
+      "OutputFormat": "mp3",
+      "SampleRate": "24000",
+      "TextType": "ssml",
+      "VoiceId": "Lupe"
+    },
+    {
+      "Engine": "neural",
+      "LanguageCode": "es-US",
+      "LexiconNames": [
+        "saEsUS"
+      ],
+      "OutputFormat": "json",
+      "SpeechMarkTypes": [
+        "word",
+        "sentence"
+      ],
+      "TextType": "ssml",
+      "VoiceId": "Lupe"
+    },
+    {
+      "Engine": "neural",
+      "LanguageCode": "es-US",
+      "LexiconNames": [
+        "saEsUS"
+      ],
+      "OutputFormat": "mp3",
+      "SampleRate": "24000",
+      "TextType": "ssml",
+      "VoiceId": "Pedro"
+    },
+    {
+      "Engine": "neural",
+      "LanguageCode": "es-US",
+      "LexiconNames": [
+        "saEsUS"
+      ],
+      "OutputFormat": "json",
+      "SpeechMarkTypes": [
+        "word",
+        "sentence"
+      ],
+      "TextType": "ssml",
+      "VoiceId": "Pedro"
+    }
+  ],
+  "record": {
+    "contentTokenized": "<p><span data-w=\"0\">Todos</span> <span data-w=\"1\">culparon</span> <span data-w=\"2\">a</span> <span data-w=\"3\">Joey.</span></p><p><span data-w=\"4\">A</span> <span data-w=\"5\">veces</span> <span data-w=\"6\">una</span> <span data-w=\"7\">parte</span> <span data-w=\"8\">se</span> <span data-w=\"9\">disolvía</span> <span data-w=\"10\">y</span> <span data-w=\"11\">otra</span> <span data-w=\"12\">no,</span> <span data-w=\"13\">como</span> <span data-w=\"14\">la</span> <span data-w=\"15\">vez</span> <span data-w=\"16\">que</span> <span data-w=\"17\">metió</span> <span data-w=\"18\">un</span> <span data-w=\"19\">pastel</span> <span data-w=\"20\">de</span> <span data-w=\"21\">arándanos</span> <span data-w=\"22\">machacado</span> <span data-w=\"23\">en</span> <span data-w=\"24\">su</span> <span data-w=\"25\">vaso</span> <span data-w=\"26\">de</span> <span data-w=\"27\">leche.</span></p><p><span data-w=\"28\">El</span> <span data-w=\"29\">de</span> <span data-w=\"30\">DeSean</span> <span data-w=\"31\">pesó</span> <span data-w=\"32\">¼</span> <span data-w=\"33\">de</span> <span data-w=\"34\">libra.</span></p>",
+    "generation": {
+      "billedChars": 668,
+      "configVersion": "es-US/neural/Lupe/ssml/lex-1/r95%/drc1/pb0",
+      "estCostUsd": 0.01069,
+      "inputHash": "sha256:5ff6734d9d24b97cadbed2e1407c40fd05c0ebf13e0aa6b765dd056859c00096",
+      "pipelineVersion": "sa-pipeline-0.3.1",
+      "runAt": "<masked>"
+    },
+    "id": "rws-e4-es",
+    "lang": "es",
+    "schemaVersion": 3,
+    "structure": {
+      "paragraphStarts": [
+        0,
+        4,
+        28
+      ],
+      "sentenceStarts": [
+        0,
+        4,
+        28
+      ]
+    },
+    "textHash": "sha256:5ff6734d9d24b97cadbed2e1407c40fd05c0ebf13e0aa6b765dd056859c00096",
+    "title": "Experiments (E4, es)",
+    "tokenCount": 35,
+    "tokenizerVersion": "sa-tok-es-1.0",
+    "tracks": [
+      {
+        "audioKey": "audio/rws-e4-es/tts-1.mp3",
+        "configVersion": "es-US/neural/Lupe/ssml/lex-1/r95%/drc1/pb0",
+        "default": true,
+        "engine": "neural",
+        "granularity": "word",
+        "id": "tts-1",
+        "kind": "tts",
+        "lexicon": "saEsUS",
+        "qa": {
+          "billedChars": 334,
+          "durationMs": 24000,
+          "estCostUsd": 0.00534,
+          "lowConfidence": [],
+          "marks": 35,
+          "mergedSentenceBreaks": [],
+          "pollySentences": 3,
+          "sentences": 3,
+          "ssmlSentences": 3,
+          "status": "passed",
+          "tokens": 35
+        },
+        "settings": {
+          "drc": true,
+          "lexiconMode": "polly",
+          "paragraphBreakMs": 0,
+          "pronunciationOverrides": 0,
+          "rate": "95%",
+          "sampleRate": "24000",
+          "textType": "ssml"
+        },
+        "timingKey": "audio/rws-e4-es/tts-1.timing.json.gz",
+        "timingSource": "polly-speech-marks",
+        "voiceGender": "female",
+        "voiceId": "Lupe"
+      },
+      {
+        "audioKey": "audio/rws-e4-es/tts-2.mp3",
+        "configVersion": "es-US/neural/Pedro/ssml/lex-1/r95%/drc1/pb0",
+        "default": false,
+        "engine": "neural",
+        "granularity": "word",
+        "id": "tts-2",
+        "kind": "tts",
+        "lexicon": "saEsUS",
+        "qa": {
+          "billedChars": 334,
+          "durationMs": 24000,
+          "estCostUsd": 0.00534,
+          "lowConfidence": [],
+          "marks": 35,
+          "mergedSentenceBreaks": [],
+          "pollySentences": 3,
+          "sentences": 3,
+          "ssmlSentences": 3,
+          "status": "passed",
+          "tokens": 35
+        },
+        "settings": {
+          "drc": true,
+          "lexiconMode": "polly",
+          "paragraphBreakMs": 0,
+          "pronunciationOverrides": 0,
+          "rate": "95%",
+          "sampleRate": "24000",
+          "textType": "ssml"
+        },
+        "timingKey": "audio/rws-e4-es/tts-2.timing.json.gz",
+        "timingSource": "polly-speech-marks",
+        "voiceGender": "male",
+        "voiceId": "Pedro"
+      }
+    ]
+  },
+  "summary": {
+    "audioKey": "audio/rws-e4-es/tts-1.mp3",
+    "billedChars": 668,
+    "durationMs": 24000,
+    "estCostUsd": 0.01069,
+    "id": "rws-e4-es",
+    "lowConfidence": 0,
+    "pollySentences": 3,
+    "qa": "passed",
+    "sentences": 3,
+    "ssmlSentences": 3,
+    "timingKey": "audio/rws-e4-es/tts-1.timing.json.gz",
+    "tokenCount": 35,
+    "tracks": [
+      {
+        "audioKey": "audio/rws-e4-es/tts-1.mp3",
+        "billedChars": 334,
+        "durationMs": 24000,
+        "estCostUsd": 0.00534,
+        "lowConfidence": 0,
+        "pollySentences": 3,
+        "qa": "passed",
+        "ssmlSentences": 3,
+        "timingKey": "audio/rws-e4-es/tts-1.timing.json.gz",
+        "track": "tts-1",
+        "voiceGender": "female",
+        "voiceId": "Lupe"
+      },
+      {
+        "audioKey": "audio/rws-e4-es/tts-2.mp3",
+        "billedChars": 334,
+        "durationMs": 24000,
+        "estCostUsd": 0.00534,
+        "lowConfidence": 0,
+        "pollySentences": 3,
+        "qa": "passed",
+        "ssmlSentences": 3,
+        "timingKey": "audio/rws-e4-es/tts-2.timing.json.gz",
+        "track": "tts-2",
+        "voiceGender": "male",
+        "voiceId": "Pedro"
+      }
+    ],
+    "voiceId": "Lupe"
+  }
+}
