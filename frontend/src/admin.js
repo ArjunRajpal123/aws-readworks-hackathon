@@ -3,14 +3,13 @@
 // else (ReadWorks IDs, bulk CSVs, translation, cards, Word Stops, review) is still a demo: the "request" shown on
 // the right is the shape the team's pipeline would receive, and the queue progress is simulated.
 import { detect, aiSuggest } from './assist.js'
-import { createProduct } from './api.js'
+import { createSubmission, getSubmission, submissionsEnabled } from './api.js'
 import { RW_KNOWN } from './vocab_db.js'
 import { loadRatings, clearRatings } from './rate.js'
 
 const STORE = 'sa-admin-queue'
 const BANDS = [['k2', 'K-2'], ['35', '3-5'], ['68', '6-8'], ['912', '9-12']]
 const STAGE_MS = 1400
-const API_MAX_CHARS = 3000 // POST /api/v1/text-to-speech limit (lambda/text_to_speech_post/handler.py)
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 const words = s => (s.trim() ? s.trim().split(/\s+/).length : 0)
@@ -171,7 +170,7 @@ export function initAdmin(t) {
   let queue = []
   try { queue = JSON.parse(localStorage.getItem(STORE) || '[]') } catch { queue = [] }
   // An API request still pending when the page closed never got its answer back.
-  for (const e of queue) if (e.api) { e.api = false; e.state = 'error'; e.error = 'Page closed before the API answered' }
+  // Submissions are server-side, so a reload just resumes polling (see pollSubmissions).
   const save = () => { try { localStorage.setItem(STORE, JSON.stringify(queue)) } catch { /* storage can be blocked */ } }
 
   const method = () => $('input[name="adMethod"]:checked').value
@@ -302,7 +301,7 @@ export function initAdmin(t) {
     q.innerHTML = `<div class="ad-tw"><table><thead><tr><th>${t('adColPass')}</th><th>${t('adColStatus')}</th><th>${t('adColProg')}</th><th>${t('adColAct')}</th></tr></thead><tbody>${queue.map(e => {
       const total = e.stages.length
       const pct = e.state === 'running' ? Math.round(100 * e.at / total) : 100
-      return `<tr><td><strong>${esc(e.title)}</strong><br><span class="ad-help">${esc(e.langs)} · ${esc(e.band)} · ${esc(e.time)}</span>${e.error ? `<br><span class="ad-help">${esc(e.error)}</span>` : ''}</td>
+      return `<tr><td><strong>${esc(e.title)}</strong><br><span class="ad-help">${esc(e.langs)} · ${esc(e.band)} · ${esc(e.time)}</span>${e.progress && e.state === 'running' ? `<br><span class="ad-help">${esc(e.progress)}</span>` : ''}${e.error ? `<br><span class="ad-help">${esc(e.error)}</span>` : ''}</td>
         <td><span class="ad-pill ad-${e.state}">${stageLabel(e)}</span></td>
         <td><div class="ad-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div></td>
         <td class="ad-acts">${e.state === 'review' ? `<button type="button" class="ad-btn ad-small" data-act="approve" data-id="${e.id}">${t('adApprove')}</button>` : ''}${e.pid && e.state !== 'running' && e.state !== 'error' ? `<a class="ad-btn ad-small" href="?m=${encodeURIComponent(e.pid)}">${t('adOpen')}</a>` : ''}<button type="button" class="ad-btn ad-ghost ad-small" data-act="remove" data-id="${e.id}">${t('adRemove')}</button></td></tr>`
@@ -433,14 +432,66 @@ export function initAdmin(t) {
     if (changed) { save(); renderQueue() }
   }, STAGE_MS)
 
-  // Pasted text, or text read from a single file, can go to POST /api/v1/text-to-speech; the other methods have no API yet.
-  const apiText = () => (method() === 'paste' || (method() === 'file' && files.length <= 1) ? sourceText().trim() : '')
+  // ---- real submissions: POST /api/v1/submissions queues each passage for the cloud ETL ----
+  // CSV for bulk upload: header row with a `text` column; optional id, title, lang columns.
+  function parseCsv(src) {
+    const rows = []; let row = [], cell = '', q = false
+    for (let i = 0; i < src.length; i++) {
+      const c = src[i]
+      if (q) { if (c === '"' && src[i + 1] === '"') { cell += '"'; i++ } else if (c === '"') q = false; else cell += c }
+      else if (c === '"') q = true
+      else if (c === ',') { row.push(cell); cell = '' }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && src[i + 1] === '\n') i++; row.push(cell); cell = ''; if (row.some(x => x.trim())) rows.push(row); row = [] }
+      else cell += c
+    }
+    row.push(cell); if (row.some(x => x.trim())) rows.push(row)
+    if (!rows.length) return []
+    const head = rows[0].map(h => h.trim().toLowerCase())
+    if (!head.includes('text')) throw new Error('CSV needs a "text" column')
+    return rows.slice(1).map(r => Object.fromEntries(head.map((h, i) => [h, (r[i] || '').trim()]))).filter(o => o.text)
+  }
+  // The passages this submission sends. Every method with text is sent; ReadWorks links have no text to send yet.
+  async function submissionItems(p, title) {
+    const languageCode = p.passage.language || 'en-US'
+    if (method() === 'paste') return [{ text: sourceText().trim(), title, languageCode }]
+    if (method() === 'file') {
+      const edited = currentText().trim()
+      if (edited || fileTexts.length <= 1) return [{ text: (edited || fileTexts[0] || '').trim(), title, languageCode }]
+      return fileTexts.map((text, i) => ({ text: text.trim(), title: (files[i] ? files[i].name.replace(/\.[^.]+$/, '') : title).slice(0, 200), languageCode }))
+    }
+    if (method() === 'bulk') {
+      const f = $('#adBulk').files[0]
+      if (!f || !/\.csv$/i.test(f.name)) throw new Error('Bulk upload sends CSV files only (zip is not supported yet)')
+      return parseCsv(await f.text()).map(r => ({ text: r.text, title: (r.title || title).slice(0, 200), ...(r.id ? { id: r.id } : {}), ...(r.lang ? { lang: r.lang } : { languageCode }) }))
+    }
+    return null // 'rw': nothing to send
+  }
+  const done = e => (e.review === 'required' ? 'review' : 'done')
+  async function pollSubmissions() {
+    let changed = false
+    for (const e of queue) {
+      if (!e.sub || e.state !== 'running') continue
+      const st = await getSubmission(e.sub)
+      if (!st) continue
+      const c = st.counts || {}
+      e.progress = `${c.done || 0} done · ${c.queued || 0} in progress · ${(c.failed || 0) + (c.rejected || 0)} failed`
+      const ok = st.items.filter(i => i.status === 'done')
+      if (ok.length) e.pid = ok[0].id
+      if (st.complete) {
+        const bad = st.items.filter(i => i.status !== 'done')
+        e.at = e.stages.length
+        e.state = ok.length ? done(e) : 'error'
+        e.error = bad.length ? bad.map(i => `${i.id || '?'}: ${i.error || i.status}`).join('; ').slice(0, 300) : ''
+      }
+      changed = true
+    }
+    if (changed) { save(); renderQueue() }
+  }
+  setInterval(pollSubmissions, 8000)
 
   async function submit() {
     if (missing().length) return
     const p = payload()
-    const text = apiText()
-    if (text.length > API_MAX_CHARS && window.SA_API_URL) { $('#adMsg').textContent = t('adTooLong', API_MAX_CHARS); return }
     const n = Math.max(1, itemCount())
     const title = p.passage.title || (p.input.readworksId ? 'ReadWorks ' + p.input.readworksId.slice(0, 8) : p.input.bulkFile || 'Untitled')
     const entry = {
@@ -449,20 +500,26 @@ export function initAdmin(t) {
       band: p.passage.gradeBand ? BANDS.find(b => b[0] === p.passage.gradeBand)[1] : '—',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       stages: stagesFor(p), at: 0, state: 'running', review: p.review.mode, vis: p.review.afterApproval,
-      api: !!(text && window.SA_API_URL),
+      api: submissionsEnabled(),
     }
+    let items = null
+    if (entry.api) {
+      try { items = await submissionItems(p, title.slice(0, 200)) } catch (err) { $('#adMsg').textContent = err.message; return }
+      if (!items) { entry.api = false; entry.preview = true } // ReadWorks link: no text to send yet
+      else if (!items.length) { $('#adMsg').textContent = 'Nothing to send: no passage text found.'; return }
+    } else entry.preview = true
+    if (entry.preview) entry.error = 'Preview only: not sent to the pipeline' + (submissionsEnabled() ? ' (ReadWorks links need the passage text)' : ' (no API configured)')
     queue.unshift(entry)
     save(); $('#adMsg').textContent = ''; render()
     $('#adQH').scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
     if (!entry.api) return
 
-    // Voices come from etl/voices.json on the server; "audio" on means every configured voice, as the request shows.
-    const res = await createProduct({ text, title: title.slice(0, 200), languageCode: p.passage.language || 'en-US', allVoices: on('adAud') })
+    // The server queues each passage for the cloud ETL and answers at once; pollSubmissions tracks it.
+    const res = await createSubmission(items)
     const e = queue.find(x => x.id === entry.id)
-    if (!e) return // removed while it was running
-    e.api = false
-    if (res && res.ok) { e.pid = res.record.id; e.at = e.stages.length; e.state = e.review === 'required' ? 'review' : 'done' }
-    else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
+    if (!e) return // removed while it was sending
+    if (res && res.submissionId && res.ok) { e.sub = res.submissionId; e.progress = `${items.length} queued` }
+    else { e.api = false; e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
     save(); renderQueue()
   }
 

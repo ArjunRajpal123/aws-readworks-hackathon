@@ -70,7 +70,6 @@ def test_post_all_voices(fake_aws):
 @pytest.mark.parametrize("body, msg", [
     ({}, "'text' is required"),
     ({"text": "   "}, "'text' is required"),
-    ({"text": "x" * 3001}, "3000 characters"),
     ({"text": "hi", "languageCode": "fr-FR"}, "'languageCode'"),
     ({"text": "hi", "id": "../etc/passwd"}, "'id' must match"),
     ({"text": "hi", "voiceId": "Joanna"}, "'voiceId' must be one of the en voices: Danielle, Stephen"),

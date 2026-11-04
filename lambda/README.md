@@ -55,7 +55,7 @@ The record stores only stable S3 keys (`audioKey`, `timingKey`), never a presign
 
 | Field | Required | Notes |
 | --- | --- | --- |
-| `text` | yes | Non-empty, at most 3000 characters (Polly synchronous cap) |
+| `text` | yes | Non-empty. Over 3,000 characters is synthesized in parts; very long text can exceed the ~29 s API limit, so use the cloud ETL for full passages |
 | `languageCode` | no | `en-US` (default) or `es-US`; `lang: "en"` also accepted |
 | `id` | no | Starts with a letter or digit, then `[A-Za-z0-9._-]`, max 64 chars; default random hex. An id that already exists is rejected with **409** and nothing is written (use `etl/run_aws.py` to regenerate a passage) |
 | `title` | no | At most 200 characters. Default: `id` |

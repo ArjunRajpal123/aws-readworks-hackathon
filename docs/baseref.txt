@@ -114,7 +114,7 @@ Player rules (frontend/src/engine.js loadAudio):
 -------------------------------------------------
 POST /api/v1/text-to-speech
   {
-    "text": "Today is a good day.",     // required, <= 3000 chars
+    "text": "Today is a good day.",     // required, non-empty
     "languageCode": "en-US",            // optional: en-US (default) | es-US  ("lang": "en" also accepted)
     "id": "001",                        // optional, default random hex; an existing id is rejected (409)
     "title": "Breaking Barriers",       // optional, default = id

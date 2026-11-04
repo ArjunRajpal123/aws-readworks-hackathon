@@ -93,6 +93,8 @@ export function functionCode(functionDir: string): lambda.Code {
 export class ApiStack extends cdk.Stack {
   /** `/api/v1/text-to-speech` endpoint URL — FrontendStack wires this into the player at deploy time. */
   public readonly apiUrl: string;
+  /** POST to queue passages for the cloud ETL; GET .../{submissionId} for status. */
+  public readonly submissionsUrl: string;
 
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
@@ -178,6 +180,29 @@ export class ApiStack extends cdk.Stack {
       methods: [apigwv2.HttpMethod.GET],
       integration: new HttpLambdaIntegration("GetIntegration", getFn),
     });
+
+    // Submissions: queue passages for the cloud ETL (S3 incoming/ -> etl-run).
+    // Returns 202 at once, so long text and batches aren't bound by the ~29 s
+    // API Gateway limit. Least privilege: write incoming/ + submissions/,
+    // read processed/ + failed/ + submissions/ + sa/product/ (existence checks).
+    const subFn = makeFunction("SubmissionsFn", "submissions", "submissions", 256);
+    mediaBucket.grantPut(subFn, "incoming/*");
+    mediaBucket.grantPut(subFn, "submissions/*");
+    for (const prefix of ["submissions/*", "processed/*", "failed/*", "sa/product/*", "incoming/*"]) {
+      mediaBucket.grantRead(subFn, prefix);
+    }
+    httpApi.addRoutes({
+      path: "/api/v1/submissions",
+      methods: [apigwv2.HttpMethod.POST],
+      integration: new HttpLambdaIntegration("SubmissionsPostIntegration", subFn),
+    });
+    httpApi.addRoutes({
+      path: "/api/v1/submissions/{submissionId}",
+      methods: [apigwv2.HttpMethod.GET],
+      integration: new HttpLambdaIntegration("SubmissionsGetIntegration", subFn),
+    });
+    this.submissionsUrl = `${httpApi.apiEndpoint}/api/v1/submissions`;
+    new cdk.CfnOutput(this, "SubmissionsUrl", { value: this.submissionsUrl });
 
     this.apiUrl = `${httpApi.apiEndpoint}/api/v1/text-to-speech`;
     new cdk.CfnOutput(this, "ApiUrl", { value: this.apiUrl });

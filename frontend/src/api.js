@@ -51,3 +51,34 @@ export async function createProduct(body) {
     return { ok: false, error: e.message || 'Network error' }
   }
 }
+
+// Submissions: POST /api/v1/submissions queues passages for the cloud ETL
+// (S3 incoming/ -> etl-run Lambda) and returns at once, so there's no length
+// or batch-size problem with the API's ~29 s timeout. Same API host as
+// SA_API_URL. See lambda/submissions/handler.py.
+const SUBMISSIONS = API ? API.replace(/\/text-to-speech\/?$/, '/submissions') : ''
+export const submissionsEnabled = () => !!SUBMISSIONS
+
+// items: [{text, title?, lang?|languageCode?, id?, pronunciation?}]. Returns
+// {ok: true, submissionId, items:[{id, status, error?}]} or {ok: false, error},
+// or null when no API is configured.
+export async function createSubmission(items, { overwrite = false } = {}) {
+  if (!SUBMISSIONS) return null
+  try {
+    const r = await fetch(SUBMISSIONS, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items, overwrite }) })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok && !(j.items && j.items.length)) return { ok: false, error: j.error || `HTTP ${r.status}` }
+    return { ok: (j.queued || 0) > 0, submissionId: j.submissionId, items: j.items || [], error: j.queued ? undefined : (j.items || []).map(i => i.error).filter(Boolean).join('; ') || j.error }
+  } catch (e) {
+    return { ok: false, error: e.message || 'Network error' }
+  }
+}
+
+// {submissionId, complete, counts, items:[{id, status: queued|done|failed|rejected|unknown, error?}]} or null.
+export async function getSubmission(id) {
+  if (!SUBMISSIONS) return null
+  try {
+    const r = await fetch(`${SUBMISSIONS}/${encodeURIComponent(id)}`)
+    return r.ok ? await r.json() : null
+  } catch { return null }
+}

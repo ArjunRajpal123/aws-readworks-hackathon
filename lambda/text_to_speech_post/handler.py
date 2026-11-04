@@ -8,7 +8,9 @@ by passage id), so the Vue player and the GET endpoint read API-generated
 passages exactly like catalog passages.
 
 Request body:
-    text          required, non-empty, <= 3000 characters
+    text          required, non-empty. Text over Polly's 3,000-char sync cap is
+                  synthesized in parts by the pipeline; very long text can hit
+                  the 25 s Lambda / ~29 s API Gateway limit (use the cloud ETL)
     languageCode  optional, e.g. "en-US" / "es-US" (default "en-US"); `lang` ("en"/"es") also accepted
     id            optional passage id (starts with a letter or digit, then
                   [A-Za-z0-9._-], max 64 chars); default: random hex.
@@ -45,7 +47,6 @@ from ssml import build_ssml, parse_overrides
 from tokenizer import tokenize
 from voices import tracks_for
 
-MAX_TEXT_CHARS = 3000  # Polly synchronous SynthesizeSpeech cap (spoken characters)
 MAX_TITLE_CHARS = 200
 SUPPORTED_LANGS = ("en", "es")
 # Must start with a letter or digit: rejects ".", "..", ".hidden", "-x" etc.
@@ -117,8 +118,6 @@ def handler(event, context):
     text = body.get("text")
     if not text or not isinstance(text, str) or not text.strip():
         return error_response(400, "'text' is required and must be a non-empty string")
-    if len(text) > MAX_TEXT_CHARS:
-        return error_response(400, f"'text' must be {MAX_TEXT_CHARS} characters or fewer")
 
     lang = _lang2(body)
     if lang is None:

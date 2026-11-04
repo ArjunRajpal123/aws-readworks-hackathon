@@ -256,14 +256,14 @@ def api(monkeypatch):
 
 
 @pytest.mark.parametrize("lang", ["en", "es"])
-def test_api_text_at_cap_is_201_and_over_cap_is_400(api, lang):
+def test_api_text_over_sync_cap_is_201_in_parts(api, lang):
+    # No 3,000-char API limit: longer text is synthesized in parts.
     use, post = api
     status, _ = post({"text": spoken_text(CAP, lang), "lang": lang, "id": "cap"})
     assert status == 201
     polly, _ = use(polly=ScalingPolly())
-    status, body = post({"text": spoken_text(CAP + 1, lang), "lang": lang})
-    assert status == 400 and "3000" in body["error"]
-    assert polly.calls == []
+    status, body = post({"text": spoken_text(CAP * 2, lang), "lang": lang})
+    assert status == 201 and body["tracks"][0]["settings"]["parts"] >= 2
 
 
 def test_api_over_ssml_cap_is_synthesized_in_parts(api):
