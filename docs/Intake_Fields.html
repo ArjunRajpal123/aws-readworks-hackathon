@@ -1,0 +1,725 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sound Along Intake Fields</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: slim contents rail beside a single reading column; tables carry the detail. */
+:root{
+  --bg:#fbfcfc; --fg:#1d2730; --muted:#5a6772; --line:#d9e0e4; --panel:#f1f5f6;
+  --accent:#00657f; --accent-soft:#e0f0f4; --code:#e9eff1; --warn:#8a4b00;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171b; --fg:#e4e9ec; --muted:#9aa7b1; --line:#2c373f; --panel:#1a2127;
+  --accent:#5cc7e2; --accent-soft:#16333d; --code:#222c33; --warn:#f0b36b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171b; --fg:#e4e9ec; --muted:#9aa7b1; --line:#2c373f; --panel:#1a2127;
+  --accent:#5cc7e2; --accent-soft:#16333d; --code:#222c33; --warn:#f0b36b; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--sans);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 72px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav{position:sticky;top:24px;align-self:start;display:grid;gap:2px;font-size:14px}
+nav b{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+nav a{color:var(--muted);text-decoration:none;padding:5px 0 5px 12px;border-left:2px solid var(--line)}
+nav a:hover,nav a:focus-visible{color:var(--accent);border-left-color:var(--accent);outline:none}
+main{min-width:0}
+.draft{font:400 12px/1.5 var(--mono);color:var(--warn);margin:0 0 20px;max-width:70ch}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.15;font-weight:600;margin:0 0 12px;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:62ch;margin:0 0 36px}
+h2{font-size:24px;line-height:1.25;font-weight:600;margin:48px 0 12px;padding-top:24px;border-top:1px solid var(--line);scroll-margin-top:16px;text-wrap:balance}
+h3{font-size:18px;line-height:1.3;font-weight:600;margin:32px 0 8px;scroll-margin-top:16px;color:var(--accent)}
+p,li{max-width:74ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+a{color:var(--accent)}
+strong{font-weight:600}
+code{font:400 .88em var(--mono);background:var(--code);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
+.tw{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+th{text-align:left;font:500 12px var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--panel);padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:10px 12px;vertical-align:top;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:500}
+@media (max-width:820px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}nav{position:static;margin-bottom:24px;grid-auto-flow:row}}
+</style>
+<div class="wrap">
+<nav aria-label="Contents"><b>Contents</b>
+<a href="#1-submission-applies-to-the-whole-request">1. Submission (applies to the whole request)</a>
+<a href="#2-content-where-the-text-comes-from">2. Content (where the text comes from)</a>
+<a href="#3-about-the-passage">3. About the passage</a>
+<a href="#4-rights">4. Rights</a>
+<a href="#5-text-handling">5. Text handling</a>
+<a href="#6-what-the-pipeline-should-do-pipeline">6. What the pipeline should do (pipeline)</a>
+<a href="#7-comprehension-questions">7. Comprehension questions</a>
+<a href="#8-review-and-publish-review">8. Review and publish (review)</a>
+<a href="#9-created-by-the-system-never-typed">9. Created by the system (never typed)</a>
+<a href="#10-bulk-csv-columns">10. Bulk CSV columns</a>
+<a href="#11-rules-the-api-should-enforce">11. Rules the API should enforce</a>
+<a href="#12-example-request">12. Example request</a>
+<a href="#13-questions-for-the-dev-team">13. Questions for the dev team</a>
+<a href="#14-form-assist-and-feedback-ui-contract">14. Form assist and feedback (UI contract)</a>
+</nav>
+<main>
+<p class="draft">Draft concept for the ReadWorks x AWS hackathon team, Nov 3, 2026. Proposed fields for engineering to react to. Not a ReadWorks product.</p>
+<h1>Sound Along: proposed intake fields</h1>
+<p class="lede">The fields an admin enters, or the system fills in, when new content goes into the pipeline.</p>
+
+<p>What an admin enters (or the system fills in) when new content goes into the pipeline. The key names match the request shown on the Admin screen of the demo, so the demo and the API can stay in step. Limits marked "proposed" are suggestions, not decisions.</p>
+<p><strong>Filled by:</strong> <em>Admin</em> = a person types or picks it. <em>Source</em> = pulled from ReadWorks passage data when a ReadWorks ID is given. <em>System</em> = generated, never typed.</p>
+<h2 id="1-submission-applies-to-the-whole-request">1. Submission (applies to the whole request)</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Values and limits</th>
+<th>Default</th>
+<th>Filled by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>batchLabel</code></td>
+<td>text</td>
+<td>no</td>
+<td>up to 80 characters</td>
+<td>none</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>dryRun</code></td>
+<td>true/false</td>
+<td>no</td>
+<td>true returns the estimate and checks, queues nothing</td>
+<td>false</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>priority</code></td>
+<td>choice</td>
+<td>no</td>
+<td><code>normal</code>, <code>high</code></td>
+<td><code>normal</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>notifyEmail</code></td>
+<td>email</td>
+<td>no</td>
+<td>one address</td>
+<td>none</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>submittedBy</code></td>
+<td>text</td>
+<td>yes</td>
+<td>user id from sign-in</td>
+<td></td>
+<td>System</td>
+</tr>
+<tr>
+<td><code>submittedAt</code></td>
+<td>date-time</td>
+<td>yes</td>
+<td>UTC</td>
+<td></td>
+<td>System</td>
+</tr>
+<tr>
+<td><code>idempotencyKey</code></td>
+<td>text</td>
+<td>yes</td>
+<td>same key twice returns the first result</td>
+<td></td>
+<td>System</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="2-content-where-the-text-comes-from">2. Content (where the text comes from)</h2>
+<p>Exactly one <code>input.method</code>.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Values and limits</th>
+<th>Filled by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>input.method</code></td>
+<td>choice</td>
+<td>yes</td>
+<td><code>paste</code>, <code>file</code>, <code>readworks</code>, <code>bulk</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>input.text</code></td>
+<td>text</td>
+<td>if <code>paste</code></td>
+<td>at least 40 characters; proposed maximum 100,000 characters (the Polly asynchronous limit per request)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>input.files[]</code></td>
+<td>list</td>
+<td>if <code>file</code></td>
+<td><code>.txt .md .html .json .docx .pdf .rtf</code>; proposed 5 MB per file</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>input.files[].name</code>, <code>.bytes</code>, <code>.mime</code>, <code>.storageKey</code></td>
+<td>text/number</td>
+<td>yes</td>
+<td>storage key assigned on upload</td>
+<td>System</td>
+</tr>
+<tr>
+<td><code>input.readworksId</code></td>
+<td>text</td>
+<td>if <code>readworks</code></td>
+<td>a UUID, or a readworks.org article link the UI reduces to its UUID</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>input.bulkFile</code></td>
+<td>file</td>
+<td>if <code>bulk</code></td>
+<td><code>.csv</code> (one row per passage) or <code>.zip</code> of text files plus a <code>.csv</code> that names them; proposed 500 rows</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>input.characters</code></td>
+<td>number</td>
+<td>yes</td>
+<td>counted after cleaning</td>
+<td>System</td>
+</tr>
+<tr>
+<td><code>textHash</code></td>
+<td>text</td>
+<td>yes</td>
+<td>hash of the word list; same hash as the last run means stop, no cost</td>
+<td>System</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-about-the-passage">3. About the passage</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Values and limits</th>
+<th>Filled by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>passage.title</code></td>
+<td>text</td>
+<td>yes (not needed for ReadWorks ID)</td>
+<td>up to 200 characters</td>
+<td>Admin / Source</td>
+</tr>
+<tr>
+<td><code>passage.author</code></td>
+<td>text</td>
+<td>no</td>
+<td></td>
+<td>Admin / Source</td>
+</tr>
+<tr>
+<td><code>passage.language</code></td>
+<td>choice</td>
+<td>yes (not needed for ReadWorks ID)</td>
+<td><code>en-US</code>, <code>es-US</code></td>
+<td>Admin / Source</td>
+</tr>
+<tr>
+<td><code>passage.gradeBand</code></td>
+<td>choice</td>
+<td>yes</td>
+<td><code>k2</code>, <code>35</code>, <code>68</code>, <code>912</code></td>
+<td>Admin / Source</td>
+</tr>
+<tr>
+<td><code>passage.grade</code></td>
+<td>choice</td>
+<td>no</td>
+<td><code>K</code>, <code>1</code> to <code>12</code></td>
+<td>Admin / Source</td>
+</tr>
+<tr>
+<td><code>passage.lexile</code></td>
+<td>text</td>
+<td>no</td>
+<td>for example <code>590L</code>, <code>BR120L</code>; no Lexile allowed</td>
+<td>Admin / Source</td>
+</tr>
+<tr>
+<td><code>passage.genre</code></td>
+<td>choice</td>
+<td>yes</td>
+<td><code>fiction</code>, <code>nonfiction</code>, <code>poetry</code>, <code>drama</code>, <code>other</code></td>
+<td>Admin / Source</td>
+</tr>
+<tr>
+<td><code>passage.topic</code></td>
+<td>text</td>
+<td>no</td>
+<td>subject or topic</td>
+<td>Admin / Source</td>
+</tr>
+<tr>
+<td><code>passage.readworksId</code></td>
+<td>text</td>
+<td>no</td>
+<td>set if the passage already exists</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>passage.pairedPassageId</code></td>
+<td>text</td>
+<td>no</td>
+<td>the English or Spanish partner of a paired text</td>
+<td>Admin / Source</td>
+</tr>
+<tr>
+<td><code>passage.sourceUrl</code></td>
+<td>url</td>
+<td>no</td>
+<td>where the text came from</td>
+<td>Admin</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-rights">4. Rights</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Values and limits</th>
+<th>Filled by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>passage.rights.source</code></td>
+<td>choice</td>
+<td>yes</td>
+<td><code>readworks</code>, <code>public-domain</code>, <code>licensed</code>, <code>other</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>passage.rights.confirmed</code></td>
+<td>true/false</td>
+<td>yes</td>
+<td>must be true to submit</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>passage.rights.notes</code></td>
+<td>text</td>
+<td>if <code>licensed</code> or <code>other</code></td>
+<td>licence details or attribution</td>
+<td>Admin</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-text-handling">5. Text handling</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text.excludeFigures</code></td>
+<td>true/false</td>
+<td>true</td>
+<td>Drops figures and captions before numbering words</td>
+</tr>
+<tr>
+<td><code>text.keepVocabularyTags</code></td>
+<td>true/false</td>
+<td>true when ReadWorks ID given</td>
+<td>Keeps the existing vocabulary markup around words</td>
+</tr>
+<tr>
+<td><code>tokenizerVersion</code></td>
+<td>text</td>
+<td>per language, System</td>
+<td><code>sa-tok-en-1.0</code>, <code>sa-tok-es-1.0</code>. Spanish keeps the inverted marks and accents attached to the word</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-what-the-pipeline-should-do-pipeline">6. What the pipeline should do (<code>pipeline</code>)</h2>
+<p>Word numbering and timing (<code>pipeline.tokenize</code>) is always on.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Values and limits</th>
+<th>AI used?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pipeline.audio.enabled</code></td>
+<td>true/false</td>
+<td>true</td>
+<td></td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>pipeline.audio.languages[]</code></td>
+<td>list</td>
+<td>both</td>
+<td><code>en-US</code>, <code>es-US</code></td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>pipeline.audio.engine</code></td>
+<td>choice</td>
+<td><code>polly-neural</code></td>
+<td>read only; changing it needs approval</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>pipeline.audio.voices</code></td>
+<td>map</td>
+<td>from config</td>
+<td>English <code>Danielle</code> (female) and <code>Stephen</code> (male); Spanish <code>Lupe</code> (female) and <code>Pedro</code> (male). One audio track per voice so students can choose. Set in pipeline settings, not per passage</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>pipeline.humanAudio.file</code></td>
+<td>file</td>
+<td>none</td>
+<td>an existing MP3 (or the ReadWorks audio name); the pipeline only adds word timing by alignment</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>pipeline.pronunciation[]</code></td>
+<td>list</td>
+<td>none</td>
+<td>each <code>{word, say, language}</code>, for names such as Hunsford and Rosings</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>pipeline.spanishVersion.mode</code></td>
+<td>choice</td>
+<td><code>readworks-paired</code> if a pair exists, else <code>ai-draft</code></td>
+<td><code>readworks-paired</code>, <code>provided</code>, <code>ai-draft</code>, <code>none</code></td>
+<td>yes, draft</td>
+</tr>
+<tr>
+<td><code>pipeline.spanishVersion.glossary[]</code></td>
+<td>list</td>
+<td>none</td>
+<td>each <code>{en, es}</code>, keeps key terms consistent</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>pipeline.vocabularyCards.enabled</code></td>
+<td>true/false</td>
+<td>true</td>
+<td></td>
+<td>yes for Spanish, draft</td>
+</tr>
+<tr>
+<td><code>pipeline.vocabularyCards.languages[]</code></td>
+<td>list</td>
+<td>both</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>pipeline.vocabularyCards.words[]</code></td>
+<td>list</td>
+<td>from ReadWorks vocabulary</td>
+<td>optional override, each <code>{word, senseId}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>pipeline.wordStops.enabled</code></td>
+<td>true/false</td>
+<td>true</td>
+<td></td>
+<td>yes, draft</td>
+</tr>
+<tr>
+<td><code>pipeline.wordStops.bands[]</code></td>
+<td>list</td>
+<td>all four</td>
+<td><code>k2</code>, <code>35</code>, <code>68</code>, <code>912</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>pipeline.wordStops.types[]</code></td>
+<td>list</td>
+<td>by band</td>
+<td><code>picture_choice</code>, <code>multiple_choice</code>, <code>tap_clue</code>, <code>written</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>pipeline.wordStops.maxPerPassage</code></td>
+<td>number</td>
+<td>3</td>
+<td>proposed 1 to 6</td>
+<td></td>
+</tr>
+<tr>
+<td><code>pipeline.wordStops.audio</code></td>
+<td>true/false</td>
+<td>true</td>
+<td>pre-generated audio for each question, choice and feedback line</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>pipeline.wordStops.pictureChoices</code></td>
+<td>true/false</td>
+<td>false</td>
+<td>needs a decision on where the images come from</td>
+<td>open</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-comprehension-questions">7. Comprehension questions</h2>
+<p>What the public ReadWorks passage record already holds (checked on nine grade-4 passages): <code>questionSets</code>, with a set id (<code>qsid</code>), usually ten questions, and <code>abridged_question_ids</code> (a short set of five).</p>
+<ul>
+<li><strong>Multiple choice</strong> (<code>type</code> 0): question text, four lettered choices, each with an <code>answerId</code> and a <code>correct</code> flag.</li>
+<li><strong>Written response</strong> (<code>type</code> 1): question text and one <code>correct</code> answer that works as a sample answer. One passage in the nine (Losing Power) has only written-response questions.</li>
+<li>Question and answer text arrives as HTML (spans, entities). It is cleaned to plain text before audio.</li>
+</ul>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Values and limits</th>
+<th>AI used?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>questions.source</code></td>
+<td>choice</td>
+<td><code>readworks-import</code> if a ReadWorks ID is given</td>
+<td><code>readworks-import</code>, <code>upload</code>, <code>ai-draft</code>, <code>none</code></td>
+<td>only for <code>ai-draft</code></td>
+</tr>
+<tr>
+<td><code>questions.set</code></td>
+<td>choice</td>
+<td><code>full</code></td>
+<td><code>full</code>, <code>abridged</code> (the five ReadWorks lists as abridged)</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>questions.file</code></td>
+<td>file</td>
+<td>none</td>
+<td>CSV or JSON, if <code>upload</code>; same shape as the ReadWorks set (type, question, choices with one correct, sample answer)</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>questions.languages[]</code></td>
+<td>list</td>
+<td>follows the passage</td>
+<td>Spanish questions are an AI draft and need review</td>
+<td>yes for Spanish, draft</td>
+</tr>
+<tr>
+<td><code>questions.audio</code></td>
+<td>true/false</td>
+<td>true</td>
+<td>One audio per question that reads the question, then "A", "B", "C", "D" with each choice; word timing is produced the same way as for the passage so words highlight as they are read</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>questions.evidenceHighlight</code></td>
+<td>true/false</td>
+<td>false</td>
+<td>Links each correct answer to the word numbers that support it. <strong>Not in the ReadWorks data</strong>, so it needs an AI draft step and review</td>
+<td>yes, draft</td>
+</tr>
+<tr>
+<td><code>questions.kinds[]</code></td>
+<td>list</td>
+<td>both</td>
+<td><code>literal</code>, <code>inferential</code> (only for <code>ai-draft</code>; ReadWorks sets are not tagged this way in the record)</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<p>Rules: multiple-choice scoring uses the ReadWorks <code>correct</code> flag and happens in the browser. Written answers are not stored. The question audio id and its word list (question first, then lettered choices) must be created together so the highlight matches.</p>
+<h2 id="8-review-and-publish-review">8. Review and publish (<code>review</code>)</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Values and limits</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>review.mode</code></td>
+<td>choice</td>
+<td><code>required</code></td>
+<td><code>required</code>, <code>auto</code> (publish when all automatic checks pass)</td>
+</tr>
+<tr>
+<td><code>review.reviewers[]</code></td>
+<td>list</td>
+<td>none</td>
+<td>names or emails</td>
+</tr>
+<tr>
+<td><code>review.spanishReviewer</code></td>
+<td>text</td>
+<td>none</td>
+<td>needed when any Spanish text is AI-drafted</td>
+</tr>
+<tr>
+<td><code>review.dueDate</code></td>
+<td>date</td>
+<td>none</td>
+<td></td>
+</tr>
+<tr>
+<td><code>review.afterApproval</code></td>
+<td>choice</td>
+<td><code>draft</code></td>
+<td><code>draft</code>, <code>staging</code>, <code>published</code></td>
+</tr>
+<tr>
+<td><code>review.notes</code></td>
+<td>text</td>
+<td>none</td>
+<td>shown to the reviewer; licence details go here too</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="9-created-by-the-system-never-typed">9. Created by the system (never typed)</h2>
+<p><code>passageId</code>, <code>versionId</code>, <code>runId</code>, <code>schemaVersion</code>, <code>textHash</code>, <code>tokenCount</code>, per-stage status and timestamps, automatic check results (every word timed, times increasing, last word before the audio ends, fallback to sentence highlight), actual Polly characters and cost per language, who approved and when, and links to the finished files.</p>
+<h2 id="10-bulk-csv-columns">10. Bulk CSV columns</h2>
+<p><code>title, author, language, gradeBand, grade, lexile, genre, topic, readworksId, pairedPassageId, rights, textFile</code>. Pipeline options in a bulk run use the defaults above unless the request sets them for the whole batch.</p>
+<h2 id="11-rules-the-api-should-enforce">11. Rules the API should enforce</h2>
+<ul>
+<li>A request is rejected, with every problem listed at once, if a required field is missing, the rights box is not confirmed, or the text is under 40 characters.</li>
+<li>The same <code>idempotencyKey</code> never creates a second run.</li>
+<li>Changing the text creates a new version, a new <code>textHash</code>, and re-runs everything that depends on the words (audio, timing, Spanish, cards, questions).</li>
+<li>Anything AI-written starts as <code>draft</code> and is not shown to students until it passes the checks and, if <code>review.mode</code> is <code>required</code>, is approved.</li>
+<li>Nothing AI-generated is created when a student opens a passage.</li>
+</ul>
+<h2 id="12-example-request">12. Example request</h2>
+<pre><code class="language-json">{
+  &quot;batchLabel&quot;: &quot;Fall grade 4 sample&quot;,
+  &quot;input&quot;: { &quot;method&quot;: &quot;paste&quot;, &quot;text&quot;: &quot;It was a very peaceful place. …&quot; },
+  &quot;passage&quot;: {
+    &quot;title&quot;: &quot;The Most Important Question&quot;, &quot;language&quot;: &quot;en-US&quot;, &quot;gradeBand&quot;: &quot;35&quot;, &quot;grade&quot;: &quot;4&quot;,
+    &quot;genre&quot;: &quot;fiction&quot;, &quot;rights&quot;: { &quot;source&quot;: &quot;readworks&quot;, &quot;confirmed&quot;: true }
+  },
+  &quot;pipeline&quot;: {
+    &quot;tokenize&quot;: true,
+    &quot;audio&quot;: { &quot;enabled&quot;: true, &quot;languages&quot;: [&quot;en-US&quot;, &quot;es-US&quot;] },
+    &quot;spanishVersion&quot;: { &quot;mode&quot;: &quot;ai-draft&quot; },
+    &quot;vocabularyCards&quot;: { &quot;enabled&quot;: true, &quot;languages&quot;: [&quot;en-US&quot;, &quot;es-US&quot;] },
+    &quot;wordStops&quot;: { &quot;enabled&quot;: true, &quot;bands&quot;: [&quot;35&quot;], &quot;audio&quot;: true }
+  },
+  &quot;questions&quot;: { &quot;source&quot;: &quot;readworks-import&quot;, &quot;audio&quot;: true, &quot;evidenceHighlight&quot;: true },
+  &quot;review&quot;: { &quot;mode&quot;: &quot;required&quot;, &quot;spanishReviewer&quot;: &quot;name@example.org&quot;, &quot;afterApproval&quot;: &quot;staging&quot; }
+}
+</code></pre>
+<h2 id="13-questions-for-the-dev-team">13. Questions for the dev team</h2>
+<ol>
+<li>One request per passage, or can a batch carry per-passage overrides?</li>
+<li>Where do uploaded files live before the run (a staging prefix in the same bucket, or a separate one), and how long are they kept?</li>
+<li>How does the admin screen learn each stage's status: polling, or pushed events?</li>
+<li>Which of these limits (file size, row count, text length) does the team want to set?</li>
+<li>Is the sign-in and role model (admin, editor, reviewer) provided by the platform, or part of this build?</li>
+</ol>
+<h2 id="14-form-assist-and-feedback-ui-contract">14. Form assist and feedback (UI contract)</h2>
+<p><strong>Fill from the text (runs in the browser, no AI).</strong> After text is pasted, a file is read, or a ReadWorks link is entered, the form fills what the text already tells us and marks each field "Filled from your text" until the admin edits it: language (from common words and accents), reading-level estimate and grade band (sentence and word length), a title guess (a short first line or the file name), and, when the text matches a known ReadWorks passage, its title, author, genre, Lexile, ReadWorks ID and rights. It also lists words that already exist in the vocabulary database. Anything the admin has edited is never overwritten.</p>
+<p><strong>Fill with AI (optional button under Submit).</strong> A confirmation says what is sent and that suggestions need review. Only empty fields are suggested, each marked "AI suggestion: check it". The demo simulates this in the browser. The real button calls a service when <code>window.SA_AI_ENDPOINT</code> is set:</p>
+<pre><code>POST {SA_AI_ENDPOINT}
+{ &quot;text&quot;: &quot;...&quot;, &quot;language&quot;: &quot;en-US&quot; }
+
+200 OK
+{ &quot;fields&quot;: { &quot;title&quot;: &quot;...&quot;, &quot;author&quot;: &quot;...&quot;, &quot;genre&quot;: &quot;fiction&quot;, &quot;topic&quot;: &quot;...&quot;,
+              &quot;gradeBand&quot;: &quot;35&quot;, &quot;grade&quot;: &quot;4&quot;, &quot;language&quot;: &quot;en-US&quot;, &quot;lexile&quot;: &quot;590L&quot; },
+  &quot;vocabulary&quot;: [&quot;word&quot;, &quot;word&quot;] }
+</code></pre>
+<p>The submission records what was used: <code>assist.detected</code> (language, estimated grade and band, matched ReadWorks ID, number of vocabulary words found, fields filled) and <code>assist.ai</code> (<code>used</code>, <code>mode</code>, fields and vocabulary suggested). Vocabulary words from the database go in <code>pipeline.vocabularyCards.words</code> with <code>source: "database"</code>; AI-suggested words with <code>source: "ai-suggested"</code> and <code>needsReview: true</code>.</p>
+<p><strong>Student feedback (the Rate button and the finish pop-up).</strong> Each rating is one record. The demo keeps it in the browser; the team's service would collect it.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>passage</code></td>
+<td>text</td>
+<td>the passage and grade-band mode id</td>
+</tr>
+<tr>
+<td><code>audio</code></td>
+<td>text</td>
+<td>the audio id that was playing</td>
+</tr>
+<tr>
+<td><code>helpful</code></td>
+<td>true/false</td>
+<td>"Was this content helpful?"</td>
+</tr>
+<tr>
+<td><code>audioGood</code></td>
+<td>true/false</td>
+<td>"How did the voice sound?" (good, or could be better): the audio quality check</td>
+</tr>
+<tr>
+<td><code>voice</code></td>
+<td>text</td>
+<td>the voice that was playing (for example <code>Danielle</code>), or <code>browser</code> when no audio file was used</td>
+</tr>
+<tr>
+<td><code>comment</code></td>
+<td>text</td>
+<td>optional, up to 500 characters</td>
+</tr>
+<tr>
+<td><code>at</code></td>
+<td>date-time</td>
+<td>UTC</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="voices-in-the-soundalong-record">Voices in the soundAlong record</h3>
+<p>Students choose a voice in the player (English: Danielle or Stephen; Spanish: Lupe or Pedro). The <code>soundAlong</code> record lists one entry in <code>tracks[]</code> per voice, each with its own <code>voiceId</code>, <code>audioKey</code>, <code>timingKey</code> and quality result. The player plays the track whose <code>voiceId</code> matches the student's choice. If a passage has no track for that voice yet, it plays the default track and says which voice it is playing. The same rule applies to the audio for each comprehension question.</p>
+</main>
+</div>
+</html>
