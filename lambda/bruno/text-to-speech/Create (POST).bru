@@ -1,0 +1,38 @@
+meta {
+  name: Create (POST)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/text-to-speech
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "text": "Hello world, this is a Sound Along test.",
+    "languageCode": "en-US",
+    "title": "Bruno test"
+  }
+}
+
+vars:post-response {
+  ttsId: res.body.id
+}
+
+docs {
+  Runs the Sound Along pipeline on `text` (Danielle for en-US, Lupe for
+  es-US, from etl/voices.json) and stores the product record + audio +
+  timing under sa/ in the shared media bucket and reference table. The
+  response id is captured into the `ttsId` variable, so running "Get (GET)"
+  right after this works without manual copy/paste.
+
+  Optional: `id`, `voiceId` (e.g. "Stephen" for a second track),
+  `allVoices`, `pronunciation`. See lambda/README.md and docs/baseref.txt.
+}

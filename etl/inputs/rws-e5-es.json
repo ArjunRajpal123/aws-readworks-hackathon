@@ -1,0 +1,30 @@
+{
+  "id": "rws-e5-es",
+  "lang": "es",
+  "title": "Slow and Steady (E5, es)",
+  "text": "Las placas tectónicas descansan sobre una capa de magma caliente.\n\nLos científicos han descubierto que esta placa crece en su lado oriental, pero se destruye cuando se desliza bajo las placas de su lado occidental.\n\nEste supercontinente se formó hace unos 300 millones de años y era básicamente un único trozo gigante de tierra.",
+  "source": {
+    "workbook": "RW_Sentences.xlsx",
+    "sheet": "Spanish_MT",
+    "rowId": "E5",
+    "sourceUrl": "https://www.readworks.org/article/Slow-and-Steady/4012bc7e-1e10-4df1-a285-99856d4148b5",
+    "machineTranslated": true,
+    "segments": [
+      {
+        "paragraph": 0,
+        "column": "Short simple sentence",
+        "case": "short"
+      },
+      {
+        "paragraph": 1,
+        "column": "Complex longer sentence",
+        "case": "complex"
+      },
+      {
+        "paragraph": 2,
+        "column": "Sentence with a number",
+        "case": "number"
+      }
+    ]
+  }
+}

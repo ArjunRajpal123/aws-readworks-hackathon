@@ -1,0 +1,30 @@
+{
+  "id": "rws-e4-en",
+  "lang": "en",
+  "title": "Experiments (E4, en)",
+  "text": "Everyone blamed Joey.\n\nSometimes part of it would dissolve and part wouldn’t, like the time he shoved a mashed-up blueberry cake into his glass of milk.\n\nDeSean’s weighed ¼ pound.",
+  "source": {
+    "workbook": "RW_Sentences.xlsx",
+    "sheet": "Sentences",
+    "rowId": "E4",
+    "sourceUrl": "https://www.readworks.org/article/Experiments/7c0ac02b-78d6-44ba-b843-df81b31938e1",
+    "machineTranslated": false,
+    "segments": [
+      {
+        "paragraph": 0,
+        "column": "Short simple sentence",
+        "case": "short"
+      },
+      {
+        "paragraph": 1,
+        "column": "Complex longer sentence",
+        "case": "complex"
+      },
+      {
+        "paragraph": 2,
+        "column": "Sentence with a number",
+        "case": "number"
+      }
+    ]
+  }
+}

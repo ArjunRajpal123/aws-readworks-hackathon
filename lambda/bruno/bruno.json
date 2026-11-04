@@ -1,0 +1,6 @@
+{
+  "version": "1",
+  "name": "Sound Along — Text to Speech",
+  "type": "collection",
+  "ignore": ["node_modules", ".git"]
+}
