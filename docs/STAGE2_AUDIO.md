@@ -36,7 +36,7 @@
 | Per-passage `pronunciation` in the input JSON, `{"<tokenIndex>": {"w": "amazon:VB"}}` (also `sub`, `phoneme`, `lang`, `sayAs`) | One-off fixes: "live" (verb), `½`, English names in Spanish text | none |
 | `"ssml": false` | Back to the original plain-text request | — |
 
-`configVersion` on the track records every setting that changes the audio, for example `en-US/neural/Ruth/ssml/lex-1/r95%/drc1/pb0`.
+`configVersion` on the track records every setting that changes the audio, for example `en-US/neural/Danielle/ssml/lex-1/r95%/drc1/pb0`.
 
 ## Timing (unchanged approach, one fix)
 - Polly's word-mark offsets are **UTF-8 bytes into the exact input, SSML tags included** (verified with Ruth). `ssml.py` records each token's byte span while building the SSML, and `audio.build_timing(..., token_spans=...)` maps marks onto tokens by those spans. Without SSML it falls back to the original text search.
@@ -50,7 +50,7 @@
 - Timing file: adds `v`, `trackId`, `durationMs` (team schema v3 `timingFile`).
 
 ## First run (Nov 3, 2026, sandbox)
-Sample set: `docs/RW_Sentences.xlsx` -> `etl/inputs/rws-*.json` (the Spanish sheet is a machine translation, not reviewed). 18 sample inputs (9 EN with Ruth, 9 ES with Lupe; grade 4 edge cases: numbers, `½`, ordinals, `Mr./Sr.`, `U.S./EE. UU.`, dates):
+Sample set: `docs/RW_Sentences.xlsx` -> `etl/inputs/rws-*.json` (the Spanish sheet is a machine translation, not reviewed). 18 sample inputs (9 EN with Ruth, the pre-audition voice, 9 ES with Lupe; grade 4 edge cases: numbers, `½`, ordinals, `Mr./Sr.`, `U.S./EE. UU.`, dates):
 - **18/18 `qa.status: passed`.** Polly's sentence count matched the intended sentences in all 18.
 - Title and abbreviation breaks were merged in 6 passages.
 - 1 word estimated (the "el patio" case).
@@ -68,7 +68,12 @@ The Vue player loaded them as "Amazon Polly neural (Ruth)" with live highlightin
    - async synthesis for text over 3,000 characters
 3. **Deploy** (with the team): S3/EventBridge trigger, retries and a DLQ, writing to the existing `StorageStack` bucket and reference table.
 
+## Integration with the API and AWS (sa-pipeline-0.3.1)
+- **One pipeline.** `POST /api/v1/text-to-speech` now runs `pipeline.run()` (the ETL modules are bundled into the Lambda by `ApiStack`). The API's own Joanna / plain-text Polly code and its `tts/` layout are gone. API, `run_local.py` and `run_aws.py` all produce the same files and record. Contract: [`baseref.txt`](baseref.txt).
+- **`run_aws.py`** now uploads the lexicons first, takes several inputs, `--track`, `--profile`, and each input's `pronunciation`, and keeps going if one passage fails, like `run_local.py`.
+- **DynamoDB:** cost fields are floats; `storage._to_dynamo` now converts them to `Decimal` (boto3 rejects floats, so `run_aws.py` used to fail on `put_item`).
+- **QA fallback value** is now `"fallback_sentence"` (schema v3). The player still only checks for `"passed"`.
+
 ## Open points for the team
 - The shared tokenizer ends a sentence after `Mr.` / `U.S.`. Stage 2 works around it for audio only, but `structure.sentenceStarts` (sentence highlight) still splits there. Suggest the same abbreviation rule in `tokenizer.py`.
-- The QA fallback value: etl writes `"sentence"`, schema v3 says `"fallback_sentence"`. The player only checks for `"passed"`.
 - Lexicon entries are starting guesses (DeSean, Scottadino, `EE.` `UU.`, `Sr.`) to check by ear.

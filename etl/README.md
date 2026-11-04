@@ -3,7 +3,7 @@
 `pipeline.run()` turns a passage `{id, lang, title, text}` into what the Vue player reads:
 
 ```
-sa/product/<id>.soundAlong.json          product record (contentTokenized, structure, tracks[0], generation)
+sa/product/<id>.soundAlong.json          product record (contentTokenized, structure, tracks[], generation)
 sa/audio/<id>/tts-1.mp3                  default voice (female: Danielle / Lupe)
 sa/audio/<id>/tts-2.mp3                  second voice (male: Stephen / Pedro)
 sa/audio/<id>/tts-N.timing.json.gz       {v, trackId, start[], end[], n, durationMs, textHash}
@@ -41,8 +41,19 @@ Use `--track tts-1` to generate only the default voice (half the cost). To compa
 
 `run_local.py` prints the AWS account it's using, uploads the pronunciation lexicons (`--no-lexicon` to skip), keeps going if one passage fails, and prints a summary table. The Stage 2 sample inputs (`inputs/rws-*.json`) are committed; other inputs and all generated output (`frontend/public/sa/`) are git-ignored.
 
+## Run against deployed AWS
+
+`run_aws.py` runs the same pipeline but writes to the deployed `StorageStack`: S3 media bucket under `sa/` and the DynamoDB reference table (names come from the stack outputs). It takes the same inputs and options as `run_local.py` (`--profile`, `--track`, `--no-lexicon`, input `pronunciation`) and uploads the lexicons first.
+
+```bash
+cd etl
+uv run python run_aws.py "inputs/rws-*.json" --profile <your-profile> --track tts-1
+```
+
+The caller needs `polly:SynthesizeSpeech`, `polly:PutLexicon`, `cloudformation:DescribeStacks`, `s3:PutObject` on the bucket, `dynamodb:PutItem` on the table and `kms:GenerateDataKey` on the storage key. The deployed API (`POST /api/v1/text-to-speech`, see `lambda/README.md`) runs this same pipeline. The data contract for all three entry points is [`docs/baseref.txt`](../docs/baseref.txt).
+
 ## Tests
 
 ```bash
-uv run --with pytest --with openpyxl pytest etl/tests -q     # from the repo root; no AWS calls
+uv run --with pytest --with openpyxl pytest etl/tests lambda/tests -q   # from the repo root; no AWS calls
 ```

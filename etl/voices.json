@@ -1,5 +1,5 @@
 {
-  "_comment": "Stage 2 (P3) voices + naturalness settings per language. Each language gets one audio track per entry in `tracks`; the `default` track is tracks[0] in the product record, which is what the player plays. Polly Neural cannot do emphasis, pitch, breaths or whispering; the settings below are the levers it does respond to. See docs/STAGE2_AUDIO.md. Set \"ssml\": false to fall back to the original plain-text request.",
+  "_comment": "Stage 2 (P3) voices + naturalness settings per language, used by the ETL and by the API Lambda (bundled by infra/cdk ApiStack). Each language gets one audio track per entry in `tracks`; the `default` track is tracks[0] in the product record, which is what the player plays. Polly Neural cannot do emphasis, pitch, breaths or whispering; the settings below are the levers it does respond to. See docs/STAGE2_AUDIO.md. Set \"ssml\": false to fall back to the original plain-text request.",
   "v": 2,
   "voices": {
     "en": {
