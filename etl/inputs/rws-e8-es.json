@@ -1,0 +1,35 @@
+{
+  "id": "rws-e8-es",
+  "lang": "es",
+  "title": "Field Trip (E8, es)",
+  "text": "Su energía había vuelto.\n\nAunque afuera hacía sol, sintió una nube negra flotando sobre su cabeza, amenazando con una tormenta dentro de su cerebro y haciéndolo enojar.\n\nLa mañana de su excursión de 6.º grado al Centro Rose para la Tierra y el Espacio, en el Museo de Historia Natural, se enfermó.\n\nSeguramente el museo estaba cerrado y el Sr. Connolly se había ido a casa.",
+  "source": {
+    "workbook": "RW_Sentences.xlsx",
+    "sheet": "Spanish_MT",
+    "rowId": "E8",
+    "sourceUrl": "https://www.readworks.org/article/Field-Trip/eeff0e15-58d8-45b1-8161-93ef6ab4ad49",
+    "machineTranslated": true,
+    "segments": [
+      {
+        "paragraph": 0,
+        "column": "Short simple sentence",
+        "case": "short"
+      },
+      {
+        "paragraph": 1,
+        "column": "Complex longer sentence",
+        "case": "complex"
+      },
+      {
+        "paragraph": 2,
+        "column": "Sentence with a number",
+        "case": "number"
+      },
+      {
+        "paragraph": 3,
+        "column": "Sentence with Sr./Sra. (from Mr./Mrs.)",
+        "case": "title_abbrev"
+      }
+    ]
+  }
+}

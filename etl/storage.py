@@ -11,7 +11,7 @@ StorageStack is deployed.
 from __future__ import annotations
 
 import json
-import os
+from decimal import Decimal
 from pathlib import Path
 
 
@@ -68,13 +68,18 @@ class AwsStorage:
 
 
 def _to_dynamo(obj):
-    """DynamoDB (boto3 resource) rejects empty strings in some contexts and
-    floats; keep it simple: ints stay ints, drop None, pass through the rest.
-    The product record is already int/str/list/dict, so this mostly strips
-    None values.
+    """Make a product record acceptable to the boto3 DynamoDB resource.
+
+    - floats -> Decimal (boto3 rejects Python floats; the record carries
+      cost fields such as qa.estCostUsd and generation.estCostUsd). Going
+      through str() keeps the printed value (0.00544, not 0.0054399999...).
+    - None values are dropped (DynamoDB has no null in our usage).
+    - bools are left alone (bool is an int subclass, not a float).
     """
     if isinstance(obj, dict):
         return {k: _to_dynamo(v) for k, v in obj.items() if v is not None}
     if isinstance(obj, list):
         return [_to_dynamo(v) for v in obj]
+    if isinstance(obj, float):
+        return Decimal(str(obj))
     return obj

@@ -17,9 +17,8 @@ headers {
 body:json {
   {
     "text": "Hello world, this is a Sound Along test.",
-    "voiceId": "Joanna",
     "languageCode": "en-US",
-    "engine": "neural"
+    "title": "Bruno test"
   }
 }
 
@@ -28,11 +27,12 @@ vars:post-response {
 }
 
 docs {
-  Starts synthesis + word timing for `text` and stores the result in the
-  shared media bucket + reference table. Response id is captured into the
-  `ttsId` collection variable, so running "Get (GET)" right after this works
-  without manual copy/paste.
+  Runs the Sound Along pipeline on `text` (Danielle for en-US, Lupe for
+  es-US, from etl/voices.json) and stores the product record + audio +
+  timing under sa/ in the shared media bucket and reference table. The
+  response id is captured into the `ttsId` variable, so running "Get (GET)"
+  right after this works without manual copy/paste.
 
-  `voiceId` / `languageCode` / `engine` are optional — see lambda/README.md
-  for defaults and the full response shape (`text`, `audio`, `timestamp`).
+  Optional: `id`, `voiceId` (e.g. "Stephen" for a second track),
+  `allVoices`, `pronunciation`. See lambda/README.md and docs/baseref.txt.
 }

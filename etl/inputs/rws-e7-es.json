@@ -1,0 +1,35 @@
+{
+  "id": "rws-e7-es",
+  "lang": "es",
+  "title": "Save the World (E7, es)",
+  "text": "¡Detente ahí mismo!\n\nSi estás escribiendo en tu cuarto y tienes papel de borrador, puedes echarlo en un contenedor de reciclaje en lugar de tirarlo a la basura.\n\nSegún la Agencia de Protección Ambiental, Estados Unidos recicla más del 30 por ciento de sus desechos.\n\nEn 1999, el reciclaje evitó que más de 64 toneladas de material terminaran en vertederos.",
+  "source": {
+    "workbook": "RW_Sentences.xlsx",
+    "sheet": "Spanish_MT",
+    "rowId": "E7",
+    "sourceUrl": "https://www.readworks.org/article/Save-the-World/40fa3460-ebba-456a-a59a-10d7bdc09b65",
+    "machineTranslated": true,
+    "segments": [
+      {
+        "paragraph": 0,
+        "column": "Short simple sentence",
+        "case": "short"
+      },
+      {
+        "paragraph": 1,
+        "column": "Complex longer sentence",
+        "case": "complex"
+      },
+      {
+        "paragraph": 2,
+        "column": "Sentence with a number",
+        "case": "number"
+      },
+      {
+        "paragraph": 3,
+        "column": "Sentence with a date/year",
+        "case": "date"
+      }
+    ]
+  }
+}

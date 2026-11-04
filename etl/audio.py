@@ -21,11 +21,17 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from tokenizer import Token
+from voices import VoiceConfig, load_voices
 
+# Default voice per language now comes from voices.json (Stage 2 config):
+# Danielle (en) / Lupe (es), Neural. Same shape as before for existing callers.
 VOICE_BY_LANG = {
-    "en": {"voiceId": "Joanna", "engine": "neural"},
-    "es": {"voiceId": "Lupe", "engine": "neural"},
+    lang: {"voiceId": v.voice_id, "engine": v.engine}
+    for lang, v in load_voices().items()
 }
+
+QA_PASSED = "passed"
+QA_FALLBACK = "fallback_sentence"
 
 # Polly synchronous synthesize_speech caps at 3000 billed characters.
 SYNC_CHAR_CAP = 3000
@@ -40,7 +46,7 @@ class Timing:
     engine: str
     duration_ms: int
     # QA: every token mapped, times non-decreasing, last start < duration.
-    qa_status: str  # "passed" | "sentence"
+    qa_status: str  # "passed" | "fallback_sentence" (schema v3)
     low_conf: List[int]  # token indices with no direct mark (interpolated)
 
 
@@ -74,16 +80,26 @@ def build_timing(
     voice_id: str,
     engine: str,
     text_hash: str,
+    token_spans: Optional[List[tuple[int, int]]] = None,
 ) -> Timing:
-    """Map Polly word marks (byte offsets) onto tokens -> start[]/end[] ms."""
+    """Map Polly word marks (byte offsets) onto tokens -> start[]/end[] ms.
+
+    `token_spans` (optional): each token's UTF-8 byte span in `polly_text`,
+    as recorded by ssml.build_ssml. Needed for SSML input, where searching
+    for the raw token text could hit a tag or miss an XML-escaped token.
+    When omitted, spans are found by searching the plain text (original path).
+    """
     marks = [
         json.loads(line)
         for line in marks_jsonlines.splitlines()
         if line.strip()
     ]
+    # Only word marks map to tokens; sentence/ssml marks may share offsets.
+    marks = [m for m in marks if m.get("type", "word") == "word"]
     # Each mark: {time, type:'word', start, end, value} where start/end are
     # UTF-8 byte offsets into polly_text.
-    token_spans = _byte_spans(tokens, polly_text)
+    if token_spans is None:
+        token_spans = _byte_spans(tokens, polly_text)
 
     n = len(tokens)
     start: List[Optional[int]] = [None] * n
@@ -160,9 +176,13 @@ def _qa(
     n_tokens: int,
     low_conf: List[int],
 ) -> str:
-    """Word-level QA. Falls back to 'sentence' on failure (never blocks)."""
+    """Word-level QA. Falls back to sentence highlighting on failure (never blocks).
+
+    Values follow schema v3: "passed" | "fallback_sentence". The player only
+    uses word timing when the status is "passed".
+    """
     if not start_ms:
-        return "sentence"
+        return QA_FALLBACK
     non_decreasing = all(
         start_ms[i] <= start_ms[i + 1] for i in range(len(start_ms) - 1)
     )
@@ -170,12 +190,12 @@ def _qa(
     # Too many tokens without a direct mark => not trustworthy at word level.
     coverage_ok = len(low_conf) <= max(1, n_tokens // 10)
     if non_decreasing and last_within and coverage_ok:
-        return "passed"
-    return "sentence"
+        return QA_PASSED
+    return QA_FALLBACK
 
 
 def synthesize(polly_client, text: str, voice_id: str, engine: str):
-    """Return (mp3_bytes, marks_jsonlines) from two Polly calls."""
+    """Return (mp3_bytes, marks_jsonlines) from two Polly calls (plain text)."""
     audio = polly_client.synthesize_speech(
         Text=text,
         OutputFormat="mp3",
@@ -193,3 +213,54 @@ def synthesize(polly_client, text: str, voice_id: str, engine: str):
     )
     marks_jsonlines = marks["AudioStream"].read().decode("utf-8")
     return mp3_bytes, marks_jsonlines
+
+
+@dataclass
+class Synthesis:
+    mp3: bytes
+    marks_jsonlines: str  # word + sentence marks, JSON lines
+    billed_chars: int  # sum of RequestCharacters over both calls
+
+
+def synthesize_track(polly_client, text: str, voice: VoiceConfig,
+                     text_type: str = "ssml") -> Synthesis:
+    """Stage 2 synthesis: audio + word/sentence marks with identical input.
+
+    Both calls use the same Text, TextType, VoiceId, Engine and LexiconNames,
+    so the marks line up with the audio. Sentence marks are requested too
+    (same request, no extra cost) for the sentence-count QA check.
+    """
+    common = {
+        "Text": text,
+        "TextType": text_type,
+        "VoiceId": voice.voice_id,
+        "Engine": voice.engine,
+        "LanguageCode": voice.language_code,
+    }
+    if voice.lexicon_names:
+        common["LexiconNames"] = voice.lexicon_names
+    audio = polly_client.synthesize_speech(
+        OutputFormat="mp3", SampleRate=voice.sample_rate, **common
+    )
+    marks = polly_client.synthesize_speech(
+        OutputFormat="json", SpeechMarkTypes=["word", "sentence"], **common
+    )
+    return Synthesis(
+        mp3=audio["AudioStream"].read(),
+        marks_jsonlines=marks["AudioStream"].read().decode("utf-8"),
+        billed_chars=int(audio.get("RequestCharacters", 0))
+        + int(marks.get("RequestCharacters", 0)),
+    )
+
+
+def ensure_lexicons(polly_client, voices: dict) -> List[str]:
+    """Upload each language's PLS lexicon to Polly (idempotent PutLexicon)."""
+    names = []
+    for v in voices.values():
+        if v.lexicon_name and v.lexicon_path and not v.inline_lexicon:
+            polly_client.put_lexicon(
+                Name=v.lexicon_name,
+                Content=v.lexicon_path.read_text(encoding="utf-8"),
+            )
+            names.append(v.lexicon_name)
+    return names
