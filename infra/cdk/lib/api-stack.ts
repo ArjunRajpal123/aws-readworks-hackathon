@@ -72,8 +72,10 @@ export class ApiStack extends cdk.Stack {
     // lambda/common/reference_store.py read.
     const ttsEnv = {
       TTS_MEDIA_BUCKET: mediaBucket.bucketName,
-      TTS_TEXT_S3_KEY_PREFIX: "tts/texts",
-      TTS_AUDIO_S3_KEY_PREFIX: "tts/audio",
+      // Matches the passage data contract in docs/baseref.txt
+      // ("audio": "audio/001.mp3", "text": "text/001.json").
+      TTS_TEXT_S3_KEY_PREFIX: "text",
+      TTS_AUDIO_S3_KEY_PREFIX: "audio",
       TTS_REFERENCE_TABLE: referenceTable.tableName,
       TTS_URL_TTL_SECONDS: "3600",
       TTS_DEFAULT_VOICE_ID: "Joanna",
