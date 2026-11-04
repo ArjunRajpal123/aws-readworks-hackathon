@@ -11,19 +11,27 @@ There is one synthesis implementation in the repo: the ETL pipeline in `etl/`. T
 
 `common/` holds the Lambda-only helpers:
 
-Storage is the shared infra (`infra/cdk`'s `StorageStack`), not anything this endpoint provisions itself:
-- **Media bucket** (S3, KMS-encrypted) — text and audio blobs, under `text/` and `audio/` prefixes, matching the passage data contract in `docs/baseref.txt`.
-- **Reference table** (DynamoDB, PK `id`, GSI `lang-index` on `lang`) — one item per request: `id`, `lang`, `text_path`, `audio_path`, `timestamp`. `lang` is the 2-letter code derived from `languageCode` (e.g. `en-US` → `EN`), so the table's language GSI also covers these rows.
+- `pipeline_runtime.py`: cached Polly client, `AwsStorage` for the bucket and table, lexicon upload once per container
+- `s3_store.py`: presigned GET URLs (SigV4, regional endpoint) for `tracks[].audioKey` / `timingKey`
+- `reference_store.py`: reads the product record from DynamoDB
+- `responses.py`: API Gateway proxy responses
 
-The table stores only the stable `*_path` S3 keys, never a presigned URL — `text`/`audio` are generated fresh on every POST and GET response (see `common/s3_store.presigned_url`), so a link is always valid for `TTS_URL_TTL_SECONDS` from whenever you actually fetched it, not from when the record was created.
+The full data contract (S3 layout, product record, timing file, API) is [`docs/baseref.txt`](../docs/baseref.txt).
+
+## Storage
+
+Shared infra (`infra/cdk`'s `StorageStack`), not anything this endpoint provisions itself:
+
+- **Media bucket** (S3, KMS-encrypted): `sa/product/<id>.soundAlong.json` and `sa/audio/<id>/<trackId>.{mp3,timing.json.gz,marks.jsonl,input.ssml}`. Same layout `etl/run_aws.py` writes and the Vue player reads.
+- **Reference table** (DynamoDB, PK `id`, GSI `lang-index` on `lang`): one item per passage, the product record. `lang` is lowercase `en` / `es`.
+
+The record stores only stable S3 keys (`audioKey`, `timingKey`), never a presigned URL. `urls` is signed fresh on every POST and GET response, so a link is valid for `TTS_URL_TTL_SECONDS` from when you fetched it, not from when the passage was generated.
 
 ## Environment variables
 
 | Name | Required | Default | Notes |
 | --- | --- | --- | --- |
 | `TTS_MEDIA_BUCKET` | yes | — | Shared S3 media bucket (from `StorageStack`) |
-| `TTS_TEXT_S3_KEY_PREFIX` | no | `text` | Key prefix for stored source text |
-| `TTS_AUDIO_S3_KEY_PREFIX` | no | `audio` | Key prefix for generated audio |
 | `TTS_REFERENCE_TABLE` | yes | — | Shared DynamoDB reference table (from `StorageStack`) |
 | `TTS_S3_KEY_PREFIX` | no | `sa/` | Prefix for every key; record keys are relative to it |
 | `TTS_URL_TTL_SECONDS` | no | `3600` | Presigned URL expiry |

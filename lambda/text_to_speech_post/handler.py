@@ -25,6 +25,8 @@ Response 201: the product record plus `urls`: {trackId: {audio, timing}}
 (presigned, expire after TTS_URL_TTL_SECONDS).
 """
 
+import base64
+import binascii
 import json
 import re
 import uuid
@@ -63,10 +65,23 @@ def _track_ids(body, lang):
     raise LookupError(voice_id)
 
 
+def _read_body(event):
+    """Raw request body as text.
+
+    HTTP API base64-encodes the body (isBase64Encoded) when the request's
+    Content-Type isn't a text type, e.g. curl -d without a header sends
+    application/x-www-form-urlencoded.
+    """
+    raw = event.get("body") or ""
+    if event.get("isBase64Encoded"):
+        raw = base64.b64decode(raw, validate=True).decode("utf-8")
+    return raw or "{}"
+
+
 def handler(event, context):
     try:
-        body = json.loads(event.get("body") or "{}")
-    except json.JSONDecodeError:
+        body = json.loads(_read_body(event))
+    except (json.JSONDecodeError, binascii.Error, UnicodeDecodeError):
         return error_response(400, "Request body must be valid JSON")
     if not isinstance(body, dict):
         return error_response(400, "Request body must be a JSON object")

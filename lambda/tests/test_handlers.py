@@ -79,6 +79,18 @@ def test_post_validation(fake_aws, body, msg):
 def test_post_bad_json(fake_aws):
     resp = post_mod.handler({"body": "{nope"}, None)
     assert resp["statusCode"] == 400
+    resp = post_mod.handler({"body": "not base64!", "isBase64Encoded": True}, None)
+    assert resp["statusCode"] == 400
+
+
+def test_post_base64_encoded_body(fake_aws):
+    # HTTP API sends this when the client omits Content-Type: application/json.
+    import base64
+
+    raw = json.dumps({"text": "¡Hola!", "lang": "es", "id": "b64"}).encode("utf-8")
+    resp = post_mod.handler({"body": base64.b64encode(raw).decode(), "isBase64Encoded": True}, None)
+    body = json.loads(resp["body"])
+    assert resp["statusCode"] == 201 and body["id"] == "b64" and body["tracks"][0]["voiceId"] == "Lupe"
 
 
 def test_post_polly_failure_is_502(fake_aws, monkeypatch):
