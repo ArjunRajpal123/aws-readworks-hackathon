@@ -128,6 +128,11 @@ export class ApiStack extends cdk.Stack {
     mediaBucket.grantReadWrite(postFn);
     mediaBucket.grantRead(getFn);
     referenceTable.grantWriteData(postFn);
+    // POST refuses a client-supplied id that already exists (it must never
+    // overwrite a passage), so it needs GetItem and decrypt on the table's key.
+    // Narrower than grantReadData: no Query/Scan/BatchGet.
+    referenceTable.grant(postFn, "dynamodb:GetItem");
+    referenceTable.encryptionKey?.grantDecrypt(postFn);
     referenceTable.grantReadData(getFn);
 
     // SynthesizeSpeech has no resource-level permissions, only "*".

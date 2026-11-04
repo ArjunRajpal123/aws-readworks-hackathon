@@ -116,7 +116,7 @@ POST /api/v1/text-to-speech
   {
     "text": "Today is a good day.",     // required, <= 3000 chars
     "languageCode": "en-US",            // optional: en-US (default) | es-US  ("lang": "en" also accepted)
-    "id": "001",                        // optional, default random hex; existing id is regenerated
+    "id": "001",                        // optional, default random hex; an existing id is rejected (409)
     "title": "Breaking Barriers",       // optional, default = id
     "voiceId": "Stephen",               // optional: add that configured voice's track
     "allVoices": false,                 // optional: generate every configured track

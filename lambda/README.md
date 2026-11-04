@@ -55,8 +55,8 @@ The record stores only stable S3 keys (`audioKey`, `timingKey`), never a presign
 | --- | --- | --- |
 | `text` | yes | Non-empty, at most 3000 characters (Polly synchronous cap) |
 | `languageCode` | no | `en-US` (default) or `es-US`; `lang: "en"` also accepted |
-| `id` | no | `[A-Za-z0-9._-]{1,64}`, default random hex. An existing id is regenerated |
-| `title` | no | Default: `id` |
+| `id` | no | Starts with a letter or digit, then `[A-Za-z0-9._-]`, max 64 chars; default random hex. An id that already exists is rejected with **409** and nothing is written (use `etl/run_aws.py` to regenerate a passage) |
+| `title` | no | At most 200 characters. Default: `id` |
 | `voiceId` | no | A configured voice for the language (e.g. `Stephen`). Adds that track to the default one |
 | `allVoices` | no | `true` generates every configured track |
 | `pronunciation` | no | Per-token overrides, same format as ETL inputs, e.g. `{"3": {"w": "amazon:VB"}}` |
