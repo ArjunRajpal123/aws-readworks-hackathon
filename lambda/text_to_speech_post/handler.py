@@ -48,11 +48,11 @@ def handler(event, context):
         "id": record_id,
         "lang": language_code.split("-")[0].upper(),
         "text_path": text_path,
-        "text": text_url,
         "audio_path": audio_path,
-        "audio": audio_url,
         "timestamp": build_timestamps(word_marks),
     }
+    # text/audio presigned URLs aren't stored -- they'd go stale after
+    # TTS_URL_TTL_SECONDS. GET regenerates them from *_path on each read.
     save_record(record)
 
-    return json_response(201, record)
+    return json_response(201, {**record, "text": text_url, "audio": audio_url})

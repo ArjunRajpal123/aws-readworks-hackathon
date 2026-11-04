@@ -12,16 +12,18 @@ Two Lambda functions backing `/api/v1/text-to-speech` behind API Gateway (Lambda
 Word-level timing uses Polly's synchronous `SynthesizeSpeech` with `SpeechMarkTypes=["word"]`, which requires the `neural` or `standard` engine (not `generative`) — see `common/polly.py`.
 
 Storage is the shared infra (`infra/cdk`'s `StorageStack`), not anything this endpoint provisions itself:
-- **Media bucket** (S3, KMS-encrypted) — text and audio blobs, under `tts/texts/` and `tts/audio/` prefixes (kept separate from the main passage pipeline's eventual key layout).
-- **Reference table** (DynamoDB, PK `id`, GSI `lang-index` on `lang`) — one item per request: `id`, `lang`, `text_path`/`text`, `audio_path`/`audio`, `timestamp`. `lang` is the 2-letter code derived from `languageCode` (e.g. `en-US` → `EN`), so the table's language GSI also covers these rows.
+- **Media bucket** (S3, KMS-encrypted) — text and audio blobs, under `text/` and `audio/` prefixes, matching the passage data contract in `docs/baseref.txt`.
+- **Reference table** (DynamoDB, PK `id`, GSI `lang-index` on `lang`) — one item per request: `id`, `lang`, `text_path`, `audio_path`, `timestamp`. `lang` is the 2-letter code derived from `languageCode` (e.g. `en-US` → `EN`), so the table's language GSI also covers these rows.
+
+The table stores only the stable `*_path` S3 keys, never a presigned URL — `text`/`audio` are generated fresh on every POST and GET response (see `common/s3_store.presigned_url`), so a link is always valid for `TTS_URL_TTL_SECONDS` from whenever you actually fetched it, not from when the record was created.
 
 ## Environment variables
 
 | Name | Required | Default | Notes |
 | --- | --- | --- | --- |
 | `TTS_MEDIA_BUCKET` | yes | — | Shared S3 media bucket (from `StorageStack`) |
-| `TTS_TEXT_S3_KEY_PREFIX` | no | `tts/texts` | Key prefix for stored source text |
-| `TTS_AUDIO_S3_KEY_PREFIX` | no | `tts/audio` | Key prefix for generated audio |
+| `TTS_TEXT_S3_KEY_PREFIX` | no | `text` | Key prefix for stored source text |
+| `TTS_AUDIO_S3_KEY_PREFIX` | no | `audio` | Key prefix for generated audio |
 | `TTS_REFERENCE_TABLE` | yes | — | Shared DynamoDB reference table (from `StorageStack`) |
 | `TTS_URL_TTL_SECONDS` | no | `3600` | Presigned URL expiry for `text`/`audio` links |
 | `TTS_DEFAULT_VOICE_ID` | no | `Joanna` | Overridable per-request via `voiceId` |
@@ -48,20 +50,20 @@ Each function's execution role needs:
 {
   "id": "6f1e2c...",
   "lang": "EN",
-  "text_path": "tts/texts/6f1e2c....txt",
-  "text": "https://s3.../tts/texts/6f1e2c....txt?...",
-  "audio_path": "tts/audio/6f1e2c....mp3",
-  "audio": "https://s3.../tts/audio/6f1e2c....mp3?...",
+  "text_path": "text/6f1e2c....txt",
+  "text": "https://s3.../text/6f1e2c....txt?...",
+  "audio_path": "audio/6f1e2c....mp3",
+  "audio": "https://s3.../audio/6f1e2c....mp3?...",
   "timestamp": [
     { "id": 0, "s": 0, "e": 320, "block": "Hello" },
     { "id": 1, "s": 320, "e": 320, "block": "world" }
   ]
 }
 ```
-`*_path` is the raw S3 key (stable, no expiry); `text`/`audio` are presigned GET URLs that expire after `TTS_URL_TTL_SECONDS`.
+`*_path` is the raw S3 key (stable, stored in the reference table); `text`/`audio` are presigned GET URLs, freshly signed for this response, expiring after `TTS_URL_TTL_SECONDS`.
 
 **GET `/api/v1/text-to-speech?id=6f1e2c...`**
-→ `200` — same shape as the POST response, loaded back from the reference table.
+→ `200` — same shape, `text`/`audio` re-signed fresh from the stored `*_path`.
 → `404` if `id` doesn't exist.
 
 ## Running locally

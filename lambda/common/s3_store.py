@@ -35,7 +35,10 @@ def _put(key, body, content_type):
     _s3.put_object(Bucket=BUCKET, Key=key, Body=body, ContentType=content_type)
 
 
-def _presigned_url(key):
+def presigned_url(key):
+    # Called fresh on every response (POST and GET) rather than stored --
+    # a presigned URL baked into a DB record goes dead after
+    # TTS_URL_TTL_SECONDS even though the object itself is still there.
     return _s3.generate_presigned_url(
         "get_object", Params={"Bucket": BUCKET, "Key": key}, ExpiresIn=URL_TTL_SECONDS
     )
@@ -44,10 +47,10 @@ def _presigned_url(key):
 def save_text(record_id, text):
     key = f"{TEXT_PREFIX}/{record_id}.txt"
     _put(key, text.encode("utf-8"), "text/plain")
-    return key, _presigned_url(key)
+    return key, presigned_url(key)
 
 
 def save_audio(record_id, audio_bytes):
     key = f"{AUDIO_PREFIX}/{record_id}.mp3"
     _put(key, audio_bytes, "audio/mpeg")
-    return key, _presigned_url(key)
+    return key, presigned_url(key)
