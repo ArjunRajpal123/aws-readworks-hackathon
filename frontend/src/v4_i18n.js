@@ -3,7 +3,7 @@ const plural = (n, a, b) => (n === 1 ? a : b)
 export const V4 = {
   en: {
     demoTag: 'Demo only', demoGrade: 'grade levels',
-    navContent: 'Content', navTools: 'My Tools', navAssign: 'Assignments & Progress', navAdmin: 'Class Admin', navMenu: 'Menu',
+    navContent: 'Content', navTools: 'My Tools', navAssign: 'Assignments & Progress', navAdmin: 'Platform Admin', navMenu: 'Menu',
     footDisc: 'Disclaimer: the voice is computer-generated (Amazon Polly neural), not a recording of a person. Grade levels are for demonstration only. Spanish text is a machine-translated draft that has not been reviewed.',
     badgeNote2: 'Each badge is a clue type you find in a Word Stop.', badgeNone: 'This passage has no Word Stops, so there are no badges to earn here.', badgeTry: 'Open a passage with Word Stops', badgeEarned: n => `Badge earned: ${n}`,
     mvTitle: 'Your clue skills', mvIntro: 'Every Word Stop uses a clue type: word parts, restatement, definition or contrast. Answer on your first try to build a streak. The counts show which clue types you have used.', mvStreak: 'Streak (first-try answers in a row):', mvUsed: 'Clue types you have used', mvColor: 'Pick a highlight color',
@@ -83,7 +83,7 @@ export const V4 = {
   },
   es: {
     demoTag: 'Solo demostración', demoGrade: 'niveles',
-    navContent: 'Contenido', navTools: 'Mis herramientas', navAssign: 'Tareas y progreso', navAdmin: 'Administrar clase', navMenu: 'Menú',
+    navContent: 'Contenido', navTools: 'Mis herramientas', navAssign: 'Tareas y progreso', navAdmin: 'Admin de la plataforma', navMenu: 'Menú',
     footDisc: 'Aviso: la voz es generada por computadora (Amazon Polly neural), no es la grabación de una persona. Los niveles de grado son solo para demostración. El texto en español es un borrador traducido automáticamente que no ha sido revisado.',
     badgeNote2: 'Cada insignia es un tipo de pista que encuentras en una Parada de palabras.', badgeNone: 'Este texto no tiene Paradas de palabras, así que aquí no hay insignias que ganar.', badgeTry: 'Abrir un texto con Paradas de palabras', badgeEarned: n => `Insignia ganada: ${n}`,
     mvTitle: 'Tus habilidades con pistas', mvIntro: 'Cada Parada de palabras usa un tipo de pista: partes de la palabra, reformulación, definición o contraste. Responde al primer intento para armar una racha. Los números muestran qué tipos de pista has usado.', mvStreak: 'Racha (respuestas al primer intento seguidas):', mvUsed: 'Tipos de pista que has usado', mvColor: 'Elige un color de resaltado',

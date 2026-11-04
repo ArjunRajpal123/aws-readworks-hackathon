@@ -48,7 +48,7 @@ A **How to use** button in the top bar (on the reading page and on the Admin scr
 
 - **Info (i) buttons** next to Support, Word Stops and Game features open a short explanation of what each is and what it is good for. Support lists Listen, Follow, Echo and Your turn.
 - **Text size** buttons (A- and A+) sit just above the passage text.
-- The top bar follows the ReadWorks pattern: Content, My Tools (Accessibility and Dark mode), Assignments & Progress and Class Admin, with How to use, the English / Español switch and the profile on the right. On phones the links collapse into a menu button.
+- The top bar follows the ReadWorks pattern: Content, My Tools (Accessibility and Dark mode), Assignments & Progress and Platform Admin (the content intake screen for the platform, separate from the teacher's class view), with How to use, the English / Español switch and the profile on the right. On phones the links collapse into a menu button.
 
 - A small note under the player says the voice is computer-generated and names the voice that was picked.
 - **Resume**: stop part way through a passage and a bar offers Resume the next time it is opened (the position is kept in the browser).

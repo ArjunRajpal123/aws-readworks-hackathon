@@ -20,7 +20,7 @@ onMounted(init)
       </div>
     </div>
     <button class="rwlink" id="famBtn" type="button" aria-pressed="false" aria-controls="family"><span data-i18n="navAssign">Assignments &amp; Progress</span></button>
-    <button class="rwlink" id="adminBtn" type="button" aria-pressed="false" aria-controls="admin"><span data-i18n="navAdmin">Class Admin</span></button>
+    <button class="rwlink" id="adminBtn" type="button" aria-pressed="false" aria-controls="admin"><span data-i18n="navAdmin">Platform Admin</span></button>
     <button class="rwsmall rwhow" id="howBtn" type="button"><span class="howq" aria-hidden="true">?</span><span data-i18n="howBtn">How to use</span></button>
   </nav>
   <div class="lngwrap" role="group" aria-label="Passage language" data-i18n-label="langLabel"><button class="lng" type="button" data-l="en" data-s="EN" aria-pressed="true">English</button><button class="lng" type="button" data-l="es" data-s="ES" aria-pressed="false">Español</button></div>
