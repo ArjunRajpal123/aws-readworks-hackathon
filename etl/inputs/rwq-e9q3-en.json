@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e9q3-en",
+  "lang": "en",
+  "title": "Lizzie Escapes (E9q3, en)",
+  "text": "Read this sentence from the story: “Lizzie’s idea of an exciting summer was sitting in an air-conditioned library and systematically devouring a high stack of novels.”\n\nWhat can be concluded from this sentence?\n\nA. Lizzie likes to read.\n\nB. Lizzie does not like to read.\n\nC. Lizzie wants to go to summer camp.\n\nD. Lizzie does not want to go to summer camp.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E9",
+    "readworksUuid": "6b5dc923-b7a2-475b-8a26-6dde0ef73e50",
+    "abridged": true,
+    "question": "E9q3",
+    "readworksQid": 11911
+  }
+}

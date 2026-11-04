@@ -7,6 +7,7 @@ of the mark, and one sentence mark is emitted per <s>.
 
 import gzip
 import json
+import re
 from dataclasses import replace
 
 import pytest
@@ -102,10 +103,76 @@ def test_plain_text_switch_restores_original_request(monkeypatch):
     assert "audio/t-plain/tts-1.input.txt" in storage.objects
 
 
-def test_over_sync_cap_still_refused():
+def test_one_sentence_over_part_cap_is_refused():
+    # 700 words, no sentence end: cannot be split at a paragraph or sentence boundary.
     p = PassageInput(id="t-long", lang="en", title="T", text="word " * 700)
-    with pytest.raises(ValueError, match="sync cap"):
+    with pytest.raises(ValueError, match="part cap"):
         run(p, FakePolly(), FakeStorage())
+
+
+def _long_text(paras=12, sents=4):
+    # ~12 x 4 sentences x 12 words: about 4,000 spoken characters (over the 3,000 cap).
+    s = "The quick brown fox jumps over the lazy dog near the river bank."
+    return "\n\n".join(" ".join([s] * sents) for _ in range(paras))
+
+
+def test_long_passage_is_split_into_parts_and_joined():
+    p = PassageInput(id="t-long2", lang="en", title="T", text=_long_text())
+    result, product, timing, storage, polly = _run(p, FakePolly(audio_per_word=True))
+    t1 = product["tracks"][0]
+    parts = t1["settings"]["parts"]
+    assert parts >= 2 and result["tracks"][0]["parts"] == parts
+    # Every Polly call stays under the sync caps; audio + marks per part, per voice.
+    assert len(polly.calls) == 2 * parts * len(product["tracks"])
+    for c in polly.calls:
+        assert len(re.sub(r"<[^>]*>", "", c["Text"])) <= pipeline.PART_SPOKEN_CAP
+        assert len(c["Text"]) <= pipeline.PART_TOTAL_CAP
+    # One time per word across all parts, in order, ending with the joined audio.
+    assert timing["n"] == product["tokenCount"] == len(timing["start"])
+    assert all(a <= b for a, b in zip(timing["start"], timing["start"][1:]))
+    assert timing["end"][-1] == timing["durationMs"] == t1["qa"]["durationMs"]
+    assert t1["qa"]["status"] == "passed" and t1["qa"]["lowConfidence"] == []
+    assert t1["qa"]["pollySentences"] == t1["qa"]["ssmlSentences"] == len(product["structure"]["sentenceStarts"])
+    # Parts start at paragraph boundaries; later parts are offset by the earlier audio.
+    para_first = set(product["structure"]["paragraphStarts"])
+    # The joined MP3 is every part's audio back to back.
+    part_mp3s = [len(c["Text"]) for c in polly.calls if c["VoiceId"] == "Danielle" and c["OutputFormat"] == "mp3"]
+    assert len(part_mp3s) == parts
+    ssml = storage.objects[f"audio/t-long2/tts-1.input.ssml"][0].decode("utf-8")
+    assert ssml.count("<!-- part ") == parts and ssml.startswith("<!-- part 0: tokens 0-")
+    starts = [int(x.split("tokens ")[1].split("-")[0]) for x in ssml.split("<!-- part ")[1:]]
+    assert set(starts) <= para_first
+    marks = [json.loads(l) for l in storage.objects["audio/t-long2/tts-1.marks.jsonl"][0].decode().splitlines()]
+    assert {m["part"] for m in marks} == set(range(parts))
+    assert timing["start"][starts[1]] >= 1000  # second part starts after the first part's audio
+
+
+def test_long_single_paragraph_splits_at_sentences():
+    p = PassageInput(id="t-long3", lang="en", title="T", text=_long_text(paras=1, sents=48))
+    _, product, timing, storage, polly = _run(p, FakePolly(audio_per_word=True))
+    t1 = product["tracks"][0]
+    assert t1["settings"]["parts"] >= 2 and t1["qa"]["status"] == "passed"
+    ssml = storage.objects["audio/t-long3/tts-1.input.ssml"][0].decode("utf-8")
+    starts = [int(x.split("tokens ")[1].split("-")[0]) for x in ssml.split("<!-- part ")[1:]]
+    assert set(starts) <= set(product["structure"]["sentenceStarts"])
+
+
+def test_long_passage_pronunciation_override_lands_in_its_part():
+    text = _long_text()
+    p = PassageInput(id="t-long4", lang="en", title="T", text=text,
+                     pronunciation={"600": {"sub": "foxy"}})
+    _, product, _, _, polly = _run(p, FakePolly(audio_per_word=True))
+    texts = [c["Text"] for c in polly.calls if c["VoiceId"] == "Danielle" and c["OutputFormat"] == "mp3"]
+    hits = [k for k, t in enumerate(texts) if 'alias="foxy"' in t]
+    assert len(hits) == 1 and hits[0] >= 1  # token 600 is in a later part
+
+
+def test_short_passage_is_one_part():
+    p = PassageInput(id="t-short", lang="en", title="T", text="Hello there. Bye now.")
+    _, product, _, storage, polly = _run(p)
+    assert product["tracks"][0]["settings"]["parts"] == 1
+    assert "<!-- part" not in storage.objects["audio/t-short/tts-1.input.ssml"][0].decode()
+    assert len(polly.calls) == 4
 
 
 def test_two_voice_tracks_female_default_then_male():

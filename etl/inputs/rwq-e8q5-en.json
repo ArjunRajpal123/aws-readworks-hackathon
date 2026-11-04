@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e8q5-en",
+  "lang": "en",
+  "title": "Field Trip (E8q5, en)",
+  "text": "What is the story mostly about?\n\nA. The many things Jeremy learns on his trip to the observatory\n\nB. The day Jeremy stays out home because he is sick\n\nC. How Professor Helfand became interested in astronomy\n\nD. Jeremy’s field trip to the Rose Center",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E8",
+    "readworksUuid": "eeff0e15-58d8-45b1-8161-93ef6ab4ad49",
+    "abridged": true,
+    "question": "E8q5",
+    "readworksQid": 10529
+  }
+}

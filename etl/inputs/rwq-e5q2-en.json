@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e5q2-en",
+  "lang": "en",
+  "title": "Slow and Steady (E5q2, en)",
+  "text": "What does the author compare tectonic plates to?\n\nA. large kitchen tiles\n\nB. a layer of hot magma\n\nC. the Rocky Mountains\n\nD. a very large collision",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E5",
+    "readworksUuid": "4012bc7e-1e10-4df1-a285-99856d4148b5",
+    "abridged": true,
+    "question": "E5q2",
+    "readworksQid": 11683
+  }
+}

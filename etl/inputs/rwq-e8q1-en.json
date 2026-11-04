@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e8q1-en",
+  "lang": "en",
+  "title": "Field Trip (E8q1, en)",
+  "text": "Why does Jeremy miss the field trip with his science class?\n\nA. because his dad wants him to stay home\n\nB. because science is his least favorite subject\n\nC. because he is sick\n\nD. because he wanted to go to an observatory instead",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E8",
+    "readworksUuid": "eeff0e15-58d8-45b1-8161-93ef6ab4ad49",
+    "abridged": true,
+    "question": "E8q1",
+    "readworksQid": 10525
+  }
+}

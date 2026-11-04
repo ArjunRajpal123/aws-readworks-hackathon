@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e6q6-en",
+  "lang": "en",
+  "title": "Breaking (E6q6, en)",
+  "text": "Read the following sentence: “When I started out, I was just writing little things at home—about the bird that met its demise at the teeth of my cat, Jasper, or the tragedy of the flowers: when every single one of mom’s paperwhite bulbs got washed out in a storm.”\n\nAs used in this sentence, what does the word “demise” most nearly mean?\n\nA. birth\n\nB. father\n\nC. song\n\nD. death",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E6",
+    "readworksUuid": "3632d2cb-d424-4c87-96e6-f851b4b9e185",
+    "abridged": true,
+    "question": "E6q6",
+    "readworksQid": 9436
+  }
+}

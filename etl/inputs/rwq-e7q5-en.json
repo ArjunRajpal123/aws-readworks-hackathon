@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e7q5-en",
+  "lang": "en",
+  "title": "Save the World (E7q5, en)",
+  "text": "What is the main idea of this text?\n\nA. There are many ways you can help the planet from home.\n\nB. Cell phone batteries contain chemicals that can pollute air and water.\n\nC. Many types of cans can be recycled at can-return machines at supermarkets.\n\nD. Trees help give us oxygen, which we need in order to live.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E7",
+    "readworksUuid": "40fa3460-ebba-456a-a59a-10d7bdc09b65",
+    "abridged": true,
+    "question": "E7q5",
+    "readworksQid": 24268
+  }
+}

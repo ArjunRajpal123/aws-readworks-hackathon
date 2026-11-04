@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e3q4-en",
+  "lang": "en",
+  "title": "Immigration (E3q4, en)",
+  "text": "Why does the text say that “Immigrants are an important part of the fabric of the United States”?\n\nA. Immigration has long been part of United States history and immigrants have made many contributions to the country.\n\nB. Immigrants in the United States have mostly started businesses that make fabric and clothing.\n\nC. The United States has allowed people who immigrated in the past to make laws for new immigrants.\n\nD. Chinese immigrants arrived in the United States when they heard they could make money in the Gold Rush.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E3",
+    "readworksUuid": "7e973877-3a60-47b3-afc4-8b4a7a2f5289",
+    "abridged": true,
+    "question": "E3q4",
+    "readworksQid": 245798
+  }
+}

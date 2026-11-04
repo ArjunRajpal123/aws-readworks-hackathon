@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e1q3-en",
+  "lang": "en",
+  "title": "The Most Important Question (E1q3, en)",
+  "text": "The other animals in the jungle are curious about the hippopotamus. Which evidence from the text best supports this conclusion?\n\nA. The meerkat wants to tell the hippopotamus to go away.\n\nB. None of the other animals had ever seen the hippopotamus before.\n\nC. Each species of animals drank at its own section of the pond.\n\nD. The other animals ask each other questions about the hippopotamus.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E1",
+    "readworksUuid": "1bc604a7-d7af-4631-a220-b4ec77a3bb73",
+    "abridged": true,
+    "question": "E1q3",
+    "readworksQid": 10265
+  }
+}

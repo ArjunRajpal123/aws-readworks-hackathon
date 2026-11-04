@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e9q4-en",
+  "lang": "en",
+  "title": "Lizzie Escapes (E9q4, en)",
+  "text": "Why does Lizzie vow that she will not return to summer camp?\n\nA. Lizzie’s mom tells her that the summer camp added knitting and archery as new activities this year.\n\nB. Lizzie would rather spend every day of the summer at home with her mom than be at camp.\n\nC. Lizzie got into a fight at camp last summer with her bunkmate and does not want to see her ever again.\n\nD. Lizzie did not like summer camp in the past and does not expect to like it in the future.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E9",
+    "readworksUuid": "6b5dc923-b7a2-475b-8a26-6dde0ef73e50",
+    "abridged": true,
+    "question": "E9q4",
+    "readworksQid": 11912
+  }
+}

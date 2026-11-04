@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e9q6-en",
+  "lang": "en",
+  "title": "Lizzie Escapes (E9q6, en)",
+  "text": "Read the following sentences: “For a moment, Lizzie was too surprised to speak. Then she gathered herself. ‘I like early DeLillo.’”\n\nWhat does the phrase “she gathered herself” mean?\n\nA. Lizzie got very upset.\n\nB. Lizzie got herself under control.\n\nC. Lizzie picked up something she had dropped.\n\nD. Lizzie could not think of anything to say.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E9",
+    "readworksUuid": "6b5dc923-b7a2-475b-8a26-6dde0ef73e50",
+    "abridged": true,
+    "question": "E9q6",
+    "readworksQid": 11916
+  }
+}

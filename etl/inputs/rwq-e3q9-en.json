@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e3q9-en",
+  "lang": "en",
+  "title": "Immigration (E3q9, en)",
+  "text": "According to the text, what are two reasons people who already lived in the United States treated new immigrants unfairly?",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E3",
+    "readworksUuid": "7e973877-3a60-47b3-afc4-8b4a7a2f5289",
+    "abridged": true,
+    "question": "E3q9",
+    "readworksQid": 245803
+  }
+}

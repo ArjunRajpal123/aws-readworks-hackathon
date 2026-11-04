@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e2q7-en",
+  "lang": "en",
+  "title": "Losing Power (E2q7, en)",
+  "text": "What word or phrase best completes the sentence?\n\nThe electricity can go out when there are blizzards _______ snow can cause power lines to break.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E2",
+    "readworksUuid": "88a5273b-2e19-497b-a771-ef8f5c107198",
+    "abridged": true,
+    "question": "E2q7",
+    "readworksQid": 22947
+  }
+}

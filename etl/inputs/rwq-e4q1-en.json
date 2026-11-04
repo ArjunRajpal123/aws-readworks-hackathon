@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e4q1-en",
+  "lang": "en",
+  "title": "Experiments (E4q1, en)",
+  "text": "What does Joey do with the food on his lunch plate?\n\nA. He mixes it all together.\n\nB. He eats it very quickly.\n\nC. He throws it at the people sitting around him.\n\nD. He eats the chocolate cake but not the green beans.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E4",
+    "readworksUuid": "7c0ac02b-78d6-44ba-b843-df81b31938e1",
+    "abridged": true,
+    "question": "E4q1",
+    "readworksQid": 10433
+  }
+}

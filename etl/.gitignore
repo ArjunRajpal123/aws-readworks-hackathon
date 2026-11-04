@@ -8,3 +8,6 @@ inputs/*.json
 !inputs/e1-p1.json
 # Stage 2 sample sentences (from docs/RW_Sentences.xlsx), shared with the team
 !inputs/rws-*.json
+# UI full passages and questions (frontend/scripts/export_inputs.mjs)
+!inputs/rwf-*.json
+!inputs/rwq-*.json

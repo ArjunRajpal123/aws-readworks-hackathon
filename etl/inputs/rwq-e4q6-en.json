@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e4q6-en",
+  "lang": "en",
+  "title": "Experiments (E4q6, en)",
+  "text": "Read the following sentences: “So DeSean decided to conduct an experiment of his own. ‘Hey, I’m going to ask the kitchen staff if we can weigh each plate separately this time,’ he said. ‘Then we’ll know whose fault this is.’”\n\nWhat does the word experiment mean?\n\nA. a problem that occurs when no one is expecting it\n\nB. one or more actions taken in order to find something out\n\nC. a type of behavior that is harmful to the person doing it\n\nD. an agreement made between two or more people to solve a problem",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E4",
+    "readworksUuid": "7c0ac02b-78d6-44ba-b843-df81b31938e1",
+    "abridged": true,
+    "question": "E4q6",
+    "readworksQid": 10448
+  }
+}

@@ -15,7 +15,8 @@ export function createQuestions({ t, stopPassage, voiceOn, voice }) {
     if (cache[ck] !== undefined) return cache[ck]
     cache[ck] = null
     try {
-      const prod = await (await fetch(`sa/product/${id}.soundAlong.json`)).json()
+      // Pipeline product for this question: rwq-<id>-en (scripts/export_inputs.mjs).
+      const prod = await (await fetch(`sa/product/rwq-${id.toLowerCase()}-en.soundAlong.json`)).json()
       const want = voice(), ok = x => x.qa && x.qa.status !== 'failed'
       const tr = prod.tracks.find(x => x.voiceId === want && ok(x)) || prod.tracks.find(x => x.default && ok(x)) || prod.tracks.find(ok)
       if (!tr) return null

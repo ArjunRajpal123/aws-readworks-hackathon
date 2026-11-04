@@ -39,7 +39,11 @@ cd ../frontend && npm install && npm run dev     # then http://127.0.0.1:5173/?m
 
 Use `--track tts-1` to generate only the default voice (half the cost). To compare voices, run `audition.py inputs/rws-e9-en.json --voices Danielle,Stephen,Ruth --profile <your-profile>` and open `frontend/public/sa/audition/audition.html`.
 
-`run_local.py` prints the AWS account it's using, uploads the pronunciation lexicons (`--no-lexicon` to skip), keeps going if one passage fails, and prints a summary table. The Stage 2 sample inputs (`inputs/rws-*.json`) are committed; other inputs and all generated output (`frontend/public/sa/`) are git-ignored.
+The UI's full ReadWorks passages and comprehension questions are inputs too: `inputs/rwf-<passage>-en.json` (full passage) and `inputs/rwq-<passage>q<n>-en.json` (one question with its choices), exported from `frontend/src/data_q.js` by `node frontend/scripts/export_inputs.mjs`. Generate them with `run_local.py "inputs/rwf-*.json" "inputs/rwq-*.json"` (about $5 for both voices). Passages over Polly's 3,000-character limit are synthesized in parts and joined (see `docs/STAGE2_AUDIO.md`).
+
+After generating new audio, restart `npm run dev`: the dev server ignores `public/sa/` changes (`vite.config.js`), so new files are only served after a restart.
+
+`run_local.py` prints the AWS account it's using, uploads the pronunciation lexicons (`--no-lexicon` to skip), keeps going if one passage fails, and prints a summary table. The Stage 2 sample inputs (`inputs/rws-*.json`, `rwf-*`, `rwq-*`) are committed; other inputs and all generated output (`frontend/public/sa/`) are git-ignored.
 
 ## Run against deployed AWS
 

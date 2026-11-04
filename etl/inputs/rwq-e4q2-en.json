@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e4q2-en",
+  "lang": "en",
+  "title": "Experiments (E4q2, en)",
+  "text": "In this story, staying after lunch to help with the dishes is an effect. What is the cause?\n\nA. sharing food with other people at lunch\n\nB. mixing food together to create new tastes\n\nC. eating at the lunch table with the largest amount of wasted food\n\nD. coming up with the idea of stirring glue into glasses of water for fun",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E4",
+    "readworksUuid": "7c0ac02b-78d6-44ba-b843-df81b31938e1",
+    "abridged": true,
+    "question": "E4q2",
+    "readworksQid": 10434
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e1q5-en",
+  "lang": "en",
+  "title": "The Most Important Question (E1q5, en)",
+  "text": "What is this story mainly about?\n\nA. Ponds are the center of animal life.\n\nB. Hippopotami are mysterious animals.\n\nC. Relationships between animals are based on the food chain.\n\nD. Giraffes and hippopotami do not get along well.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E1",
+    "readworksUuid": "1bc604a7-d7af-4631-a220-b4ec77a3bb73",
+    "abridged": true,
+    "question": "E1q5",
+    "readworksQid": 10267
+  }
+}

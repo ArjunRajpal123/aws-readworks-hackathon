@@ -24,7 +24,7 @@ from __future__ import annotations
 import gzip
 import io
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from typing import Protocol
 
@@ -35,12 +35,19 @@ from tokenizer import tokenize
 from voices import tracks_for
 
 # 0.3.1: qa.status fallback is "fallback_sentence" (schema v3); API runs this pipeline.
-PIPELINE_VERSION = "sa-pipeline-0.3.1"
+# 0.4.0: passages over the sync cap are synthesized in parts and joined (long text).
+PIPELINE_VERSION = "sa-pipeline-0.4.0"
 # Polly Neural list price per 1M characters; speech marks are billed separately
 # at the same rate, so billed_chars already counts both requests.
 NEURAL_USD_PER_MCHAR = 16.0
 # Synchronous SynthesizeSpeech also caps total input (SSML tags included).
 SYNC_TOTAL_CHAR_CAP = 6000
+# Long passages are split at paragraph (else sentence) boundaries into parts
+# that stay under both sync caps with some headroom, synthesized one by one,
+# and joined: MP3 frames concatenated, each part's word times offset by the
+# audio before it. Short passages (one part) take exactly the original path.
+PART_SPOKEN_CAP = 2800
+PART_TOTAL_CAP = 5600
 
 
 @dataclass
@@ -104,31 +111,136 @@ def _gzip_json(obj: dict) -> bytes:
     return gz.getvalue()
 
 
+def _sub_tokenized(tk, lo: int, hi: int):
+    """Tokens lo..hi-1 as their own Tokenized (indices from 0), for one part."""
+    toks = [replace(t, i=t.i - lo) for t in tk.tokens[lo:hi]]
+    paras = sorted({0} | {s - lo for s in tk.paragraph_starts if lo <= s < hi})
+    sents = sorted({0} | {s - lo for s in tk.sentence_starts if lo <= s < hi})
+    return replace(tk, tokens=toks, paragraph_starts=paras, sentence_starts=sents)
+
+
+def _sub_passage(passage: PassageInput, lo: int, hi: int) -> PassageInput:
+    pron = {str(int(k) - lo): v for k, v in (passage.pronunciation or {}).items()
+            if lo <= int(k) < hi}
+    return replace(passage, pronunciation=pron or None)
+
+
+def _part_input(passage, tk, voice, lo, hi) -> dict:
+    return _polly_input(_sub_tokenized(tk, lo, hi), voice, _sub_passage(passage, lo, hi))
+
+
+def _fits(pin: dict, spoken_cap: int, total_cap: int) -> bool:
+    return pin["spoken_chars"] <= spoken_cap and len(pin["text"]) <= total_cap
+
+
+def plan_parts(passage: PassageInput, tk, voice) -> list[tuple[int, int]]:
+    """Token ranges [lo, hi) to synthesize separately; [(0, n)] if it fits in one call."""
+    n = tk.token_count
+    if _fits(_polly_input(tk, voice, passage), audio_mod.SYNC_CHAR_CAP, SYNC_TOTAL_CHAR_CAP):
+        return [(0, n)]
+
+    def fits(lo, hi):
+        return _fits(_part_input(passage, tk, voice, lo, hi), PART_SPOKEN_CAP, PART_TOTAL_CAP)
+
+    # Units: whole paragraphs, or a paragraph's sentences if it is too long.
+    bounds = sorted({0, *tk.paragraph_starts}) + [n]
+    units: list[tuple[int, int]] = []
+    for a, b in zip(bounds, bounds[1:]):
+        if fits(a, b):
+            units.append((a, b))
+            continue
+        ss = sorted({a} | {s for s in tk.sentence_starts if a < s < b}) + [b]
+        for c, d in zip(ss, ss[1:]):
+            if not fits(c, d):
+                raise ValueError(f"passage {passage.id}: one sentence (tokens {c}-{d - 1}) "
+                                 f"is over the {PART_SPOKEN_CAP}-char part cap")
+            units.append((c, d))
+    # Greedily pack units into as few parts as fit.
+    parts = [units[0]]
+    for a, b in units[1:]:
+        if fits(parts[-1][0], b):
+            parts[-1] = (parts[-1][0], b)
+        else:
+            parts.append((a, b))
+    return parts
+
+
+def _synthesize_parts(passage, tk, voice, polly_client, parts) -> dict:
+    """Synthesize each part and join audio, marks and timing into one track."""
+    mp3s, mark_lines, inputs = [], [], []
+    start, end, low_conf, merged = [], [], [], []
+    billed = ssml_sentences = word_marks = 0
+    offset = 0
+    ok = True
+    for k, (lo, hi) in enumerate(parts):
+        sub_tk = _sub_tokenized(tk, lo, hi)
+        pin = _polly_input(sub_tk, voice, _sub_passage(passage, lo, hi))
+        synth = audio_mod.synthesize_track(polly_client, pin["text"], voice, pin["type"])
+        dur = mp3duration.duration_ms(synth.mp3)
+        t = audio_mod.build_timing(
+            tokens=sub_tk.tokens, polly_text=pin["text"], marks_jsonlines=synth.marks_jsonlines,
+            duration_ms=dur, voice_id=voice.voice_id, engine=voice.engine,
+            text_hash=tk.text_hash, token_spans=pin["spans"],
+        )
+        ok = ok and t.qa_status == audio_mod.QA_PASSED
+        start += [x + offset for x in t.start]
+        end += [x + offset for x in t.end]
+        low_conf += [i + lo for i in t.low_conf]
+        merged += [i + lo for i in pin["merged"]]
+        ssml_sentences += pin["ssml_sentences"] or 0
+        billed += synth.billed_chars
+        # Marks keep their byte offsets into this part's input; times are made absolute.
+        for line in synth.marks_jsonlines.splitlines():
+            if line.strip():
+                m = json.loads(line)
+                m["time"] = int(m["time"]) + offset
+                m["part"] = k
+                word_marks += m.get("type") == "word"
+                mark_lines.append(json.dumps(m, ensure_ascii=False))
+        mp3s.append(synth.mp3)
+        inputs.append(f"<!-- part {k}: tokens {lo}-{hi - 1} -->\n{pin['text']}")
+        offset += dur
+
+    mp3 = b"".join(mp3s)
+    duration = mp3duration.duration_ms(mp3)
+    end[-1] = duration
+    status = audio_mod._qa(start, duration, word_marks, len(start), low_conf)
+    timing = audio_mod.Timing(
+        start=start, end=end, n=len(start), voice_id=voice.voice_id, engine=voice.engine,
+        duration_ms=duration, qa_status=status if ok else audio_mod.QA_FALLBACK,
+        low_conf=low_conf,
+    )
+    ssml = voice.ssml
+    pin = {"text": "\n".join(inputs), "type": "ssml" if ssml else "text",
+           "ssml_sentences": ssml_sentences if ssml else None, "merged": merged}
+    synth = audio_mod.Synthesis(mp3=mp3, marks_jsonlines="\n".join(mark_lines) + "\n",
+                                billed_chars=billed)
+    return {"pin": pin, "synth": synth, "timing": timing}
+
+
 def _make_track(passage: PassageInput, tk, voice, polly_client) -> tuple[dict, dict, dict]:
     """Synthesize one voice track. Returns (track record, files to write, summary)."""
-    pin = _polly_input(tk, voice, passage)
-    if pin["spoken_chars"] > audio_mod.SYNC_CHAR_CAP or len(pin["text"]) > SYNC_TOTAL_CHAR_CAP:
-        raise ValueError(
-            f"passage {passage.id} is over Polly's {audio_mod.SYNC_CHAR_CAP}-char "
-            "sync cap; async synthesis path not implemented yet"
+    parts = plan_parts(passage, tk, voice)
+    if len(parts) == 1:
+        pin = _polly_input(tk, voice, passage)
+        synth = audio_mod.synthesize_track(polly_client, pin["text"], voice, pin["type"])
+        duration = mp3duration.duration_ms(synth.mp3)
+        timing = audio_mod.build_timing(
+            tokens=tk.tokens,
+            polly_text=pin["text"],
+            marks_jsonlines=synth.marks_jsonlines,
+            duration_ms=duration,
+            voice_id=voice.voice_id,
+            engine=voice.engine,
+            text_hash=tk.text_hash,
+            token_spans=pin["spans"],
         )
-
-    synth = audio_mod.synthesize_track(polly_client, pin["text"], voice, pin["type"])
-    duration = mp3duration.duration_ms(synth.mp3)
+    else:
+        joined = _synthesize_parts(passage, tk, voice, polly_client, parts)
+        pin, synth, timing = joined["pin"], joined["synth"], joined["timing"]
     all_marks = [json.loads(l) for l in synth.marks_jsonlines.splitlines() if l.strip()]
     word_marks = sum(1 for m in all_marks if m.get("type") == "word")
     polly_sentences = sum(1 for m in all_marks if m.get("type") == "sentence")
-
-    timing = audio_mod.build_timing(
-        tokens=tk.tokens,
-        polly_text=pin["text"],
-        marks_jsonlines=synth.marks_jsonlines,
-        duration_ms=duration,
-        voice_id=voice.voice_id,
-        engine=voice.engine,
-        text_hash=tk.text_hash,
-        token_spans=pin["spans"],
-    )
 
     tid = voice.track_id
     ext = "ssml" if pin["type"] == "ssml" else "txt"
@@ -173,6 +285,7 @@ def _make_track(passage: PassageInput, tk, voice, polly_client) -> tuple[dict, d
             "lexiconMode": ("inline" if voice.inline_lexicon
                             else "polly" if voice.lexicon_names else "none"),
             "pronunciationOverrides": len(passage.pronunciation or {}),
+            "parts": len(parts),
         },
         "qa": {
             "status": timing.qa_status,
@@ -208,6 +321,7 @@ def _make_track(passage: PassageInput, tk, voice, polly_client) -> tuple[dict, d
         "ssmlSentences": pin["ssml_sentences"],
         "billedChars": synth.billed_chars,
         "estCostUsd": cost,
+        "parts": len(parts),
         "audioKey": audio_key,
         "timingKey": timing_key,
     }

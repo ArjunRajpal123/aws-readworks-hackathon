@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e2q2-en",
+  "lang": "en",
+  "title": "Losing Power (E2q2, en)",
+  "text": "Who are the two most important characters in the story?",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E2",
+    "readworksUuid": "88a5273b-2e19-497b-a771-ef8f5c107198",
+    "abridged": true,
+    "question": "E2q2",
+    "readworksQid": 22942
+  }
+}

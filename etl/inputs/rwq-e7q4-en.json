@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e7q4-en",
+  "lang": "en",
+  "title": "Save the World (E7q4, en)",
+  "text": "Based on the information in the text, why might people want to reduce waste?\n\nA. because reducing waste can help the planet\n\nB. because there is not enough waste on the planet\n\nC. because the planet needs waste in order to thrive\n\nD. because waste has no effect on the planet",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E7",
+    "readworksUuid": "40fa3460-ebba-456a-a59a-10d7bdc09b65",
+    "abridged": true,
+    "question": "E7q4",
+    "readworksQid": 24267
+  }
+}

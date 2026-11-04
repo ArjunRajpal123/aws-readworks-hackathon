@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e3q1-en",
+  "lang": "en",
+  "title": "Immigration (E3q1, en)",
+  "text": "What is an immigrant?\n\nA. a law that decides a limit for the number of people who can move to a place\n\nB. a member of the United States Congress who voted on the Page Act of 1875\n\nC. a person who leaves his or her country to settle and live in another country\n\nD. a community built by people who moved to the United States from Ireland",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E3",
+    "readworksUuid": "7e973877-3a60-47b3-afc4-8b4a7a2f5289",
+    "abridged": true,
+    "question": "E3q1",
+    "readworksQid": 245795
+  }
+}
