@@ -5,6 +5,7 @@ import { FULL_LIST } from './data_full.js'
 import { createQuestions } from './questions.js'
 import { createDialogs } from './rate.js'
 import { createTour } from './tour.js'
+import { addPipelineMode } from './pipeline_mode.js'
 import { SPK, MUTE, GLOW, JAR, BADGE, ICON, CARDS, MODES, ACCENTS } from './data.js'
 
 // Imperative player ported from WordStops_v8; drives the markup rendered by App.vue.
@@ -357,6 +358,7 @@ $('#voice').onchange=()=>{const L=voiceLang();try{localStorage.setItem('ws-voice
 const tour=createTour({t,isAdmin:()=>document.body.classList.contains('admin'),before:()=>{if(!document.body.classList.contains('admin')){setView('p');setSide(false);stopAll()}}});
 $('#howBtn').onclick=()=>tour.start();
 $('#adminBtn').onclick=()=>setAdmin(!document.body.classList.contains('admin'));
-load(start);
+// ?m=<id> that isn't built in: try a pipeline/API product record (sa/product/<id>.soundAlong.json).
+if(q&&!MODES.some(m=>m.id===q))addPipelineMode(MODES,q).then(m=>load(m?m.id:start));else load(start);
 if(location.hash==='#admin')setAdmin(true);
 }

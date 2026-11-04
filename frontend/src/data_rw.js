@@ -1,6 +1,7 @@
 // Nine ReadWorks grade-4 passages as a short sentence set (from RW_Sentences.xlsx), English and Spanish.
 // English sentences are copied from the ReadWorks passages. Spanish is a machine-translated draft (Claude), not reviewed.
 // Each combination of passage, grade-band look and language becomes a mode: rw-<id>-<band>[es].
+// Audio is the pipeline's product for the same text: rws-<id>-<en|es> (etl/inputs/rws-*.json, same sentences).
 export const RW = [
  {
   "id": "E1",
@@ -186,7 +187,7 @@ export function addRW(MODES) {
         const link = `<a href="${p.url}" target="_blank" rel="noopener">readworks.org</a>`
         const note = p.note ? [[es ? 'Nota' : 'Note', p.note]] : []
         MODES.push({
-          id: `rw-${p.id}-${band}${es ? 'es' : ''}`, band, rw: p.id, audio: p.id + (es ? 'es' : ''),
+          id: `rw-${p.id}-${band}${es ? 'es' : ''}`, band, rw: p.id, audio: `rws-${p.id.toLowerCase()}-${es ? 'es' : 'en'}`,
           lang: es ? 'es-US' : 'en-US', tab: base.tab, sub: base.sub, voice: base.voice, reward: base.reward, stopTitle: base.stopTitle, how: base.how,
           title: p.title,
           details: es
