@@ -33,3 +33,21 @@ export async function fetchProduct(id) {
     return null
   }
 }
+
+// Generates a new passage with POST /api/v1/text-to-speech (Polly audio, word
+// timing and the product record, stored where GET and the player read them).
+// body: {text, title?, languageCode?, allVoices?}; see
+// lambda/text_to_speech_post/handler.py. Returns {ok: true, record} or
+// {ok: false, error}. With no API configured there is nothing to call:
+// returns null so the caller can fall back.
+export async function createProduct(body) {
+  if (!API) return null
+  try {
+    const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok) return { ok: false, error: j.error || `HTTP ${r.status}` }
+    return { ok: true, record: j }
+  } catch (e) {
+    return { ok: false, error: e.message || 'Network error' }
+  }
+}

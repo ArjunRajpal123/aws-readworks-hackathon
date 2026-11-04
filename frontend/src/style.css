@@ -401,6 +401,7 @@ fieldset.ad-card legend{font:500 17px var(--f-head);padding:0 6px;color:var(--in
 .ad-queue td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
 .ad-pill{display:inline-block;padding:2px 10px;border-radius:12px;font-size:13px;background:var(--band);border:1px solid var(--line)}
 .ad-pill.ad-review{background:var(--contrast-bg);color:var(--contrast);border-color:transparent;font-weight:500}
+.ad-pill.ad-error{background:var(--contrast-bg);color:var(--contrast);border-color:transparent;font-weight:500}
 .ad-pill.ad-done{background:var(--ok-bg);color:var(--ok);border-color:transparent;font-weight:500}
 .ad-bar{height:8px;border-radius:4px;background:var(--trk);min-width:90px;overflow:hidden}.ad-bar i{display:block;height:100%;background:var(--teal-bg);transition:width .4s}
 .ad-acts{white-space:nowrap}.ad-acts .ad-btn+.ad-btn{margin-left:6px}

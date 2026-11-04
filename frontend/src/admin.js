@@ -1,12 +1,16 @@
-// Admin screen: submit new content for the pipeline. Demo only: nothing is uploaded or sent anywhere.
-// The "request" shown on the right is the shape the team's pipeline would receive; the queue progress is simulated.
+// Admin screen: submit new content for the pipeline. With the API configured (window.SA_API_URL), a pasted or
+// read-from-file passage is sent to POST /api/v1/text-to-speech and opens in the player when it's done. Everything
+// else (ReadWorks IDs, bulk CSVs, translation, cards, Word Stops, review) is still a demo: the "request" shown on
+// the right is the shape the team's pipeline would receive, and the queue progress is simulated.
 import { detect, aiSuggest } from './assist.js'
+import { createProduct } from './api.js'
 import { RW_KNOWN } from './vocab_db.js'
 import { loadRatings, clearRatings } from './rate.js'
 
 const STORE = 'sa-admin-queue'
 const BANDS = [['k2', 'K-2'], ['35', '3-5'], ['68', '6-8'], ['912', '9-12']]
 const STAGE_MS = 1400
+const API_MAX_CHARS = 3000 // POST /api/v1/text-to-speech limit (lambda/text_to_speech_post/handler.py)
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 const words = s => (s.trim() ? s.trim().split(/\s+/).length : 0)
@@ -166,6 +170,8 @@ export function initAdmin(t) {
   let jsonMeta = null   // details read from an uploaded ReadWorks passage record
   let queue = []
   try { queue = JSON.parse(localStorage.getItem(STORE) || '[]') } catch { queue = [] }
+  // An API request still pending when the page closed never got its answer back.
+  for (const e of queue) if (e.api) { e.api = false; e.state = 'error'; e.error = 'Page closed before the API answered' }
   const save = () => { try { localStorage.setItem(STORE, JSON.stringify(queue)) } catch { /* storage can be blocked */ } }
 
   const method = () => $('input[name="adMethod"]:checked').value
@@ -284,6 +290,7 @@ export function initAdmin(t) {
   }
 
   function stageLabel(e) {
+    if (e.state === 'error') return t('stFail')
     if (e.state === 'review') return t('stReview')
     if (e.state === 'done') return t(e.vis === 'published' ? 'stPub' : e.vis === 'staging' ? 'stStage' : 'stDraft')
     return t(e.stages[Math.min(e.at, e.stages.length - 1)])
@@ -295,10 +302,10 @@ export function initAdmin(t) {
     q.innerHTML = `<div class="ad-tw"><table><thead><tr><th>${t('adColPass')}</th><th>${t('adColStatus')}</th><th>${t('adColProg')}</th><th>${t('adColAct')}</th></tr></thead><tbody>${queue.map(e => {
       const total = e.stages.length
       const pct = e.state === 'running' ? Math.round(100 * e.at / total) : 100
-      return `<tr><td><strong>${esc(e.title)}</strong><br><span class="ad-help">${esc(e.langs)} · ${esc(e.band)} · ${esc(e.time)}</span></td>
+      return `<tr><td><strong>${esc(e.title)}</strong><br><span class="ad-help">${esc(e.langs)} · ${esc(e.band)} · ${esc(e.time)}</span>${e.error ? `<br><span class="ad-help">${esc(e.error)}</span>` : ''}</td>
         <td><span class="ad-pill ad-${e.state}">${stageLabel(e)}</span></td>
         <td><div class="ad-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div></td>
-        <td class="ad-acts">${e.state === 'review' ? `<button type="button" class="ad-btn ad-small" data-act="approve" data-id="${e.id}">${t('adApprove')}</button>` : ''}<button type="button" class="ad-btn ad-ghost ad-small" data-act="remove" data-id="${e.id}">${t('adRemove')}</button></td></tr>`
+        <td class="ad-acts">${e.state === 'review' ? `<button type="button" class="ad-btn ad-small" data-act="approve" data-id="${e.id}">${t('adApprove')}</button>` : ''}${e.pid && e.state !== 'running' && e.state !== 'error' ? `<a class="ad-btn ad-small" href="?m=${encodeURIComponent(e.pid)}">${t('adOpen')}</a>` : ''}<button type="button" class="ad-btn ad-ghost ad-small" data-act="remove" data-id="${e.id}">${t('adRemove')}</button></td></tr>`
     }).join('')}</tbody></table></div>`
   }
   // ---- form assist: fill in what the text already tells us, and optionally ask AI ----
@@ -419,26 +426,44 @@ export function initAdmin(t) {
     let changed = false
     for (const e of queue) {
       if (e.state !== 'running') continue
+      if (e.api && e.at >= e.stages.length - 1) continue // the last stage waits for the API's answer
       e.at += 1; changed = true
       if (e.at >= e.stages.length) e.state = e.review === 'required' ? 'review' : 'done'
     }
     if (changed) { save(); renderQueue() }
   }, STAGE_MS)
 
-  function submit() {
+  // Pasted text, or text read from a single file, can go to POST /api/v1/text-to-speech; the other methods have no API yet.
+  const apiText = () => (method() === 'paste' || (method() === 'file' && files.length <= 1) ? sourceText().trim() : '')
+
+  async function submit() {
     if (missing().length) return
     const p = payload()
+    const text = apiText()
+    if (text.length > API_MAX_CHARS && window.SA_API_URL) { $('#adMsg').textContent = t('adTooLong', API_MAX_CHARS); return }
     const n = Math.max(1, itemCount())
     const title = p.passage.title || (p.input.readworksId ? 'ReadWorks ' + p.input.readworksId.slice(0, 8) : p.input.bulkFile || 'Untitled')
-    queue.unshift({
+    const entry = {
       id: Date.now().toString(36), title: n > 1 && method() !== 'paste' ? `${title} (+${n - 1})` : title,
       langs: [p.passage.language === 'es-US' ? 'ES' : 'EN', ...(p.pipeline.spanishVersion ? ['+ES draft'] : [])].join(' '),
       band: p.passage.gradeBand ? BANDS.find(b => b[0] === p.passage.gradeBand)[1] : '—',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       stages: stagesFor(p), at: 0, state: 'running', review: p.review.mode, vis: p.review.afterApproval,
-    })
+      api: !!(text && window.SA_API_URL),
+    }
+    queue.unshift(entry)
     save(); $('#adMsg').textContent = ''; render()
     $('#adQH').scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+    if (!entry.api) return
+
+    // Voices come from etl/voices.json on the server; "audio" on means every configured voice, as the request shows.
+    const res = await createProduct({ text, title: title.slice(0, 200), languageCode: p.passage.language || 'en-US', allVoices: on('adAud') })
+    const e = queue.find(x => x.id === entry.id)
+    if (!e) return // removed while it was running
+    e.api = false
+    if (res && res.ok) { e.pid = res.record.id; e.at = e.stages.length; e.state = e.review === 'required' ? 'review' : 'done' }
+    else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
+    save(); renderQueue()
   }
 
   // ---- events ----
