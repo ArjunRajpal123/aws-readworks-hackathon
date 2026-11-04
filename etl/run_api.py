@@ -8,7 +8,11 @@ a drop-in replacement for audio.synthesize()) to build the same
 frontend/public/sa/ output as run_local.py, so the player needs no changes.
 
 Usage:
+    python run_api.py inputs/e1-p1.json
     python run_api.py inputs/e1-p1.json --api-url https://xxxx.execute-api.us-west-2.amazonaws.com
+
+With no --api-url, resolves it from the rg-readworks-bb-api stack's ApiUrl
+output (same pattern as run_aws.py's resolve_outputs()).
 """
 
 from __future__ import annotations
@@ -19,14 +23,28 @@ import json
 import sys
 from pathlib import Path
 
+import boto3
+
 import api_client
 from pipeline import PassageInput, run
 from storage import LocalStorage
 
 DEFAULT_SA_DIR = str(Path(__file__).resolve().parent.parent / "frontend" / "public" / "sa")
+DEFAULT_API_STACK = "rg-readworks-bb-api"
+API_ROUTE_SUFFIX = "/api/v1/text-to-speech"
 
 # Polly LanguageCode per 2-letter lang, matching the voices in audio.VOICE_BY_LANG.
 LANGUAGE_CODE_BY_LANG = {"en": "en-US", "es": "es-US"}
+
+
+def resolve_api_base_url(region: str, stack: str = DEFAULT_API_STACK) -> str:
+    """ApiStack's "ApiUrl" output already includes API_ROUTE_SUFFIX; strip
+    it back off since api_client.synthesize() appends it itself.
+    """
+    cfn = boto3.Session(region_name=region).client("cloudformation")
+    outputs = cfn.describe_stacks(StackName=stack)["Stacks"][0].get("Outputs", [])
+    api_url = next(o["OutputValue"] for o in outputs if o["OutputKey"] == "ApiUrl")
+    return api_url[: -len(API_ROUTE_SUFFIX)] if api_url.endswith(API_ROUTE_SUFFIX) else api_url
 
 
 def main(argv=None) -> int:
@@ -36,15 +54,21 @@ def main(argv=None) -> int:
     ap.add_argument("input", help="passage input JSON: {id, lang, title, text}")
     ap.add_argument(
         "--api-url",
-        required=True,
-        help="API Gateway base URL, e.g. https://xxxx.execute-api.us-west-2.amazonaws.com",
+        default=None,
+        help="API Gateway base URL, e.g. https://xxxx.execute-api.us-west-2.amazonaws.com "
+        "(default: resolved from the rg-readworks-bb-api stack's ApiUrl output)",
     )
+    ap.add_argument("--api-stack", default=DEFAULT_API_STACK)
+    ap.add_argument("--region", default="us-west-2")
     ap.add_argument(
         "--sa-dir",
         default=DEFAULT_SA_DIR,
         help="output sa/ directory (default: frontend/public/sa)",
     )
     args = ap.parse_args(argv)
+
+    api_url = args.api_url or resolve_api_base_url(args.region, args.api_stack)
+    print(f"API base URL: {api_url}")
 
     data = json.loads(Path(args.input).read_text(encoding="utf-8"))
     passage = PassageInput(
@@ -56,7 +80,7 @@ def main(argv=None) -> int:
 
     lang2 = (passage.lang or "en").lower()[:2]
     language_code = LANGUAGE_CODE_BY_LANG.get(lang2, LANGUAGE_CODE_BY_LANG["en"])
-    synthesize_fn = functools.partial(api_client.synthesize, args.api_url, language_code)
+    synthesize_fn = functools.partial(api_client.synthesize, api_url, language_code)
     storage = LocalStorage(args.sa_dir)
 
     result = run(passage, synthesize_fn, storage)
