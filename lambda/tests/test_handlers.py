@@ -21,7 +21,12 @@ def fake_aws(monkeypatch):
     monkeypatch.setattr(pipeline_runtime, "_cache",
                         {"polly": polly, "storage": storage})
     monkeypatch.setattr(reference_store, "load_record", lambda rid: storage.records.get(rid))
-    monkeypatch.setattr(get_mod, "load_record", lambda rid: storage.records.get(rid))
+
+    def fake_get_product(rid):
+        obj = storage.objects.get(f"product/{rid}.soundAlong.json")
+        return json.loads(obj[0]) if obj else None
+
+    monkeypatch.setattr(get_mod, "get_product", fake_get_product)
     return polly, storage
 
 

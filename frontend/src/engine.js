@@ -6,6 +6,7 @@ import { createQuestions } from './questions.js'
 import { createDialogs } from './rate.js'
 import { createTour } from './tour.js'
 import { addPipelineMode } from './pipeline_mode.js'
+import { fetchProduct } from './api.js'
 import { SPK, MUTE, GLOW, JAR, BADGE, ICON, CARDS, MODES, ACCENTS } from './data.js'
 
 // Imperative player ported from WordStops_v8; drives the markup rendered by App.vue.
@@ -60,21 +61,21 @@ const clean=t=>t.replace(/[“”]/g,'');
 function stopAll(){run++;qs&&qs.stop();clearInterval(timer);timer=null;if(synth)synth.cancel();Object.values(SA).forEach(a=>a&&a.audio.pause());playing=false;updatePlay()}
 function updatePlay(){$('#play').textContent=playing?'❚❚':'▶';$('#play').setAttribute('aria-label',playing?t('pause'):t('play'));if('mediaSession' in navigator)navigator.mediaSession.playbackState=playing?'playing':'paused'}
 const rateNow=()=>parseFloat($('#speed').value)*(mode.voice||1);
-// Polly audio: files produced by the pipeline (product JSON, gzipped timing, MP3), served from sa/ in dev.
+// Polly audio: files produced by the pipeline (product JSON, gzipped timing, MP3), fetched via GET /api/v1/text-to-speech (see src/api.js).
 const SA={};
 if(import.meta.env.DEV)window.__SA=SA; // dev only: lets tests read the audio state
 const lastAtOrBefore=(arr,t)=>{let lo=0,hi=arr.length-1,a=-1;while(lo<=hi){const m=(lo+hi)>>1;if(arr[m]<=t){a=m;lo=m+1}else hi=m-1}return a};
 async function loadAudio(mid){if(SA[mid]!==undefined)return;SA[mid]=null;
- try{const base='sa/';
-  const prod=await (await fetch(`${base}product/${mid}.soundAlong.json`)).json();
+ try{
+  const prod=await fetchProduct(mid);if(!prod)return;
   const want=curVoice(),okT=x=>x.qa&&x.qa.status!=='failed';
   const tr=prod.tracks.find(x=>x.voiceId===want&&okT(x))||prod.tracks.find(x=>x.default&&okT(x))||prod.tracks.find(okT);if(!tr)return;
-  const gz=await fetch(`${base}${tr.timingKey}`);
+  const gz=await fetch(prod.urls[tr.id].timing);
   // S3 sends Content-Encoding: gzip, so the browser usually inflates it already; fall back to doing it here if not.
   const raw=await gz.arrayBuffer();let tm;
   try{tm=JSON.parse(new TextDecoder().decode(raw))}catch{tm=await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('gzip'))).json()}
   if(tm.textHash!==prod.textHash)return;
-  const audio=new Audio(`${base}${tr.audioKey}`);audio.preload='auto';
+  const audio=new Audio(prod.urls[tr.id].audio);audio.preload='auto';
   SA[mid]={audio,start:tm.start,end:tm.end,n:tm.n,dur:tm.durationMs,voice:tr.voiceId,want,sentOnly:tr.granularity!=='word',sent:prod.structure.sentenceStarts};
   if(mode&&aid()===mid){showSource();computeChunks()}}catch(e){SA[mid]=null}}
 function showSource(){const lg=document.querySelector('.legend');if(!lg)return;let tag=$('#srcTag');if(!tag){tag=document.createElement('span');tag.id='srcTag';lg.appendChild(tag)}
@@ -358,7 +359,7 @@ $('#voice').onchange=()=>{const L=voiceLang();try{localStorage.setItem('ws-voice
 const tour=createTour({t,isAdmin:()=>document.body.classList.contains('admin'),before:()=>{if(!document.body.classList.contains('admin')){setView('p');setSide(false);stopAll()}}});
 $('#howBtn').onclick=()=>tour.start();
 $('#adminBtn').onclick=()=>setAdmin(!document.body.classList.contains('admin'));
-// ?m=<id> that isn't built in: try a pipeline/API product record (sa/product/<id>.soundAlong.json).
+// ?m=<id> that isn't built in: try a pipeline/API product record (GET /api/v1/text-to-speech, src/api.js).
 if(q&&!MODES.some(m=>m.id===q))addPipelineMode(MODES,q).then(m=>load(m?m.id:start));else load(start);
 if(location.hash==='#admin')setAdmin(true);
 }

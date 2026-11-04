@@ -91,6 +91,9 @@ export function functionCode(functionDir: string): lambda.Code {
  * docs/baseref.txt for the contract.
  */
 export class ApiStack extends cdk.Stack {
+  /** `/api/v1/text-to-speech` endpoint URL — FrontendStack wires this into the player at deploy time. */
+  public readonly apiUrl: string;
+
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
 
@@ -133,7 +136,8 @@ export class ApiStack extends cdk.Stack {
     // Narrower than grantReadData: no Query/Scan/BatchGet.
     referenceTable.grant(postFn, "dynamodb:GetItem");
     referenceTable.encryptionKey?.grantDecrypt(postFn);
-    referenceTable.grantReadData(getFn);
+    // GET reads the product record straight from S3 (sa/product/<id>.soundAlong.json),
+    // not DynamoDB, so it needs no table grant.
 
     // SynthesizeSpeech has no resource-level permissions, only "*".
     postFn.addToRolePolicy(
@@ -175,8 +179,7 @@ export class ApiStack extends cdk.Stack {
       integration: new HttpLambdaIntegration("GetIntegration", getFn),
     });
 
-    new cdk.CfnOutput(this, "ApiUrl", {
-      value: `${httpApi.apiEndpoint}/api/v1/text-to-speech`,
-    });
+    this.apiUrl = `${httpApi.apiEndpoint}/api/v1/text-to-speech`;
+    new cdk.CfnOutput(this, "ApiUrl", { value: this.apiUrl });
   }
 }

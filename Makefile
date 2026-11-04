@@ -8,13 +8,14 @@ STACK   ?=
 
 UV_PY  := uv run python
 AWSOPT  = $(if $(PROFILE),--profile $(PROFILE)) $(if $(TRACK),--track $(TRACK))
+CDKOPT  = $(if $(PROFILE),--profile $(PROFILE))
 
 .DEFAULT_GOAL := help
 .PHONY: help install test test-etl test-lambda \
         etl-extract etl-local etl-aws \
         fe-install fe-dev fe-build fe-preview \
         cdk-install cdk-synth cdk-diff cdk-deploy cdk-destroy \
-        clean
+        deploy clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | \
@@ -61,17 +62,21 @@ fe-build: ## Production build of the frontend
 cdk-install: ## Install CDK dependencies
 	cd infra/cdk && npm ci
 
-cdk-synth: ## cdk synth
-	cd infra/cdk && npx cdk synth
+cdk-synth: ## cdk synth [PROFILE=]
+	cd infra/cdk && npx cdk synth $(CDKOPT)
 
-cdk-diff: ## cdk diff
-	cd infra/cdk && npx cdk diff
+cdk-diff: ## cdk diff [PROFILE=]
+	cd infra/cdk && npx cdk diff $(CDKOPT)
 
-cdk-deploy: ## cdk deploy --all
-	cd infra/cdk && npx cdk deploy --all
+cdk-deploy: ## cdk deploy --all (needs Docker, for FrontendStack's image) [PROFILE=]
+	cd infra/cdk && npx cdk deploy --all $(CDKOPT)
 
-cdk-destroy: ## cdk destroy --all
-	cd infra/cdk && npx cdk destroy --all
+cdk-destroy: ## cdk destroy --all [PROFILE=]
+	cd infra/cdk && npx cdk destroy --all $(CDKOPT)
+
+# ---------- Deploy everything ----------
+
+deploy: install test cdk-deploy ## Install deps, run tests, then cdk deploy --all [PROFILE=]
 
 # ---------- Housekeeping ----------
 
