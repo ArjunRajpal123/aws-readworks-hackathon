@@ -1,17 +1,21 @@
 // "How to use" walkthrough: dims the page, outlines one feature at a time, and explains it in a small card.
 // Steps whose feature is not on screen (for example Questions on a passage with no questions) are skipped.
 const STUDENT = [
-  { sel: '#passageSel' }, { sel: '#tabs' }, { sel: '.lngwrap' }, { sel: '#audioPill' }, { sel: '.scrubwrap' },
+  { sel: '#profBtn' }, { sel: '#passageSel' }, { sel: '#tabs' }, { sel: '.lngwrap' }, { sel: '#stopsBtn' }, { sel: '#audioPill' }, { sel: '.scrubwrap' },
   { sel: 'label[for="support"]' }, { sel: 'label[for="voice"]' }, { sel: '#page .w' },
-  { sel: '#stopBox', narrow: '#sideTab' }, { sel: '#viewTabs' }, { sel: '#rateBtn' }, { sel: '#a11yBtn' }, { sel: '#themeBtn' },
+  { sel: '#stopBox', narrow: '#sideTab' }, { sel: '.tsize' }, { sel: '#nextBtn' }, { sel: '#viewTabs' }, { sel: '#rateBtn' }, { sel: '#navTools' }, { sel: '#famBtn' },
 ]
 const ADMIN = [
   { sel: '#admin .ad-seg' }, { sel: '#adText', alt: '#adFileText' }, { sel: '#adAIWrap' }, { sel: '#adForm > fieldset:nth-of-type(2)' },
   { sel: '#adForm > fieldset:nth-of-type(3)' }, { sel: '#adForm > fieldset:nth-of-type(4)' }, { sel: '.ad-sticky' },
   { sel: '#adSubmit' }, { sel: '.ad-queue' }, { sel: '#adFb' }, { sel: '#adminBtn' },
 ]
+const FAMILY = [
+  { sel: '.fm-seg', alt: '.fm-pick' }, { sel: '#fmClassTips', alt: '.fm-stats' }, { sel: '#fmStudents', alt: '.fm-subtabs' }, { sel: '.fm-wchip.hard', alt: '.fm-subtabs' }, { sel: '#famBtn' },
+]
+const LISTS = { student: [STUDENT, 'tourS'], admin: [ADMIN, 'tourA'], fam: [FAMILY, 'tourF'] }
 
-export function createTour({ t, isAdmin, before }) {
+export function createTour({ t, view, before }) {
   let steps = [], idx = 0, active = false, opener = null, raf = 0
   const ov = document.createElement('div'); ov.className = 'tour-ov'; ov.hidden = true
   const hl = document.createElement('div'); hl.className = 'tour-hl'
@@ -27,7 +31,7 @@ export function createTour({ t, isAdmin, before }) {
     return null
   }
   function collect() {
-    const defs = isAdmin() ? ADMIN : STUDENT
+    const defs = LISTS[view()][0]
     return defs.map((d, k) => ({ k, d })).filter(s => pick(s.d))
   }
 
@@ -57,7 +61,7 @@ export function createTour({ t, isAdmin, before }) {
   function show() {
     const s = steps[idx], el = pick(s.d)
     if (!el) { if (idx < steps.length - 1) { idx++; show() } else stop(); return }
-    const txt = t(isAdmin() ? 'tourA' : 'tourS')[s.k] || ['', '']
+    const txt = t(LISTS[view()][1])[s.k] || ['', '']
     const first = idx === 0, last = idx === steps.length - 1
     card.innerHTML = `<div class="tour-n">${t('tourStep', idx + 1, steps.length)}</div><h2 id="tourT">${txt[0]}</h2><p id="tourB">${txt[1]}</p>
       <div class="tour-btns"><button type="button" class="chipbtn" id="tourSkip">${t('tourSkip')}</button><span class="tour-sp"></span>
@@ -65,7 +69,7 @@ export function createTour({ t, isAdmin, before }) {
     card.querySelector('#tourSkip').onclick = stop
     card.querySelector('#tourBack').onclick = back
     card.querySelector('#tourNext').onclick = next
-    const pl = document.querySelector('.player')
+    const pl = document.querySelector('#audioPill')
     if (narrow() && pl && pl.contains(el)) el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' })
     else {
       el.scrollIntoView({ block: narrow() ? 'start' : 'center', behavior: 'auto' })

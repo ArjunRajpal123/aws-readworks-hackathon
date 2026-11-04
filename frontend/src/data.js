@@ -1,3 +1,4 @@
+import { addGrade } from './grade_modes.js'
 import { addSpanish } from './data_es.js'
 import { addRW } from './data_rw.js'
 import { addFull } from './data_full.js'
@@ -99,7 +100,7 @@ export const MODES=[
     choices:[{t:'Able to be seen or noticed',ok:true},{t:'Far away and hidden'},{t:'Old and falling apart'}],
     right:'Yes. The list of things they can now see is the clue.',wrong:'Look at what comes right after: what can they see now?',clue:'Example clue (what comes into view)',
     notes:[{p:0,k:'Example clue',html:'After the word, Austen lists what comes into view: <b>garden, house, hedge</b>. “Everything declared they were arriving.”'}]},
-   {word:'rejoice',type:'write',q:'In your own words, what are they doing? What in the text makes you think so?',clue:'Inference clue (across sentences)',
+   {word:'rejoice',type:'choice',q:'The party arrives to nods and smiles. What does rejoice mean?',choices:[{t:'Feel and show great happiness',ok:true},{t:'Feel worried and tired'},{t:'Quietly ask for permission'}],right:'Yes. Nods and smiles come before it, and liveliest pleasure after it. Together they point to happiness.',wrong:'Look at the nods and smiles. Do they sound worried?',clue:'Inference clue (across sentences)',
     notes:[{p:0,k:'Inference clue',html:'No sentence defines it. Before: <b>nods and smiles</b>. After: <b>liveliest pleasure</b>. Put them together.'}]},
    {word:'alter',type:'choice',q:'His civility was “just what it had been.” What does altered mean?',
     choices:[{t:'Changed',ok:true},{t:'Improved a lot'},{t:'Noticed by others'}],
@@ -112,3 +113,4 @@ export const ACCENTS=[['#007693','#e3f2f6','Teal'],['#6b4bb0','#efe9fa','Purple'
 addSpanish(CARDS, MODES)
 addRW(MODES)
 addFull(MODES)
+addGrade(MODES, CARDS)
