@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e8q2-en",
+  "lang": "en",
+  "title": "Field Trip (E8q2, en)",
+  "text": "One problem is that Jeremy is upset that he’s missing his field trip. How does his father solve this problem?\n\nA. He shows Jeremy how to use a telescope at home.\n\nB. He arranges a night visit to an observatory at Columbia University.\n\nC. He asks Mr. Connolly to postpone the trip.\n\nD. He drives Jeremy to the Rose Center later in the day to meet his class.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E8",
+    "readworksUuid": "eeff0e15-58d8-45b1-8161-93ef6ab4ad49",
+    "abridged": true,
+    "question": "E8q2",
+    "readworksQid": 10526
+  }
+}

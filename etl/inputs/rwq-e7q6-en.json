@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e7q6-en",
+  "lang": "en",
+  "title": "Save the World (E7q6, en)",
+  "text": "Read these sentences from the text.\n\n\"If you use plastic forks, knives, or spoons during meals, wash them and then use them again the next day. You will have less garbage, and you won't need to spend as much money on utensils.\"\n\nWhy might the author have used \"you\" here instead of \"she,\" \"he,\" or another word?\n\nA. to encourage the reader to reuse plastic forks, knives, and spoons\n\nB. to confuse the reader\n\nC. to criticize the reader\n\nD. to blame the reader for the amount of waste on the planet",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E7",
+    "readworksUuid": "40fa3460-ebba-456a-a59a-10d7bdc09b65",
+    "abridged": true,
+    "question": "E7q6",
+    "readworksQid": 24269
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e4q8-en",
+  "lang": "en",
+  "title": "Experiments (E4q8, en)",
+  "text": "According to the passage, what do Joey’s experiments usually consist of? Give one example.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E4",
+    "readworksUuid": "7c0ac02b-78d6-44ba-b843-df81b31938e1",
+    "abridged": true,
+    "question": "E4q8",
+    "readworksQid": 10450
+  }
+}

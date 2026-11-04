@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e7q10-en",
+  "lang": "en",
+  "title": "Save the World (E7q10, en)",
+  "text": "Read this header from the text.\n\n\"A little change can make a big difference.\"\n\nThink about what this statement might mean about recycling and going green. Using evidence from the text, argue for or against the statement that a little change can make a big difference.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E7",
+    "readworksUuid": "40fa3460-ebba-456a-a59a-10d7bdc09b65",
+    "abridged": true,
+    "question": "E7q10",
+    "readworksQid": 24273
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e3q3-en",
+  "lang": "en",
+  "title": "Immigration (E3q3, en)",
+  "text": "Read the following sentences from the text.\n\n“Throughout history, immigration to the United States has continued to rise and fall due to world events and the passage of different United States laws. For example, there was a shortage of laborers during World War II, so the United States started the Bracero Program. This program allowed Mexican immigrants to come to the United States to work for a period of time. After World War II, many European immigrants fled homes ruined by war and arrived in the United States.”\n\nWhat conclusion can you draw from this evidence?\n\nA. People did not immigrate before World War II.\n\nB. The Great Depression did not affect people in Europe.\n\nC. People only immigrate to flee war.\n\nD. World War II impacted the number of immigrants in the U.S.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E3",
+    "readworksUuid": "7e973877-3a60-47b3-afc4-8b4a7a2f5289",
+    "abridged": true,
+    "question": "E3q3",
+    "readworksQid": 245797
+  }
+}

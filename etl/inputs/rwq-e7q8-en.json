@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e7q8-en",
+  "lang": "en",
+  "title": "Save the World (E7q8, en)",
+  "text": "According to the text, what is one easy way to go green?",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E7",
+    "readworksUuid": "40fa3460-ebba-456a-a59a-10d7bdc09b65",
+    "abridged": true,
+    "question": "E7q8",
+    "readworksQid": 24271
+  }
+}

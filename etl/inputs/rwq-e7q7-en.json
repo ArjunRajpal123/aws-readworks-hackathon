@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e7q7-en",
+  "lang": "en",
+  "title": "Save the World (E7q7, en)",
+  "text": "Read these sentences from the text.\n\n\"In 1999, recycling kept more than 64 tons of material from ending up in landfills. But there is still more that can be done.\"\n\nWhat word or words could replace the word \"but\" without changing the meaning of the second sentence?\n\nA. As a result,\n\nB. However,\n\nC. At last,\n\nD. Instead,",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E7",
+    "readworksUuid": "40fa3460-ebba-456a-a59a-10d7bdc09b65",
+    "abridged": true,
+    "question": "E7q7",
+    "readworksQid": 24270
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e3q7-en",
+  "lang": "en",
+  "title": "Immigration (E3q7, en)",
+  "text": "Choose the answer that best completes the sentence.\n\nImmigrants have made valuable contributions to the United States. _________, they have introduced new food, art, and cultures and helped businesses grow.\n\nA. However\n\nB. For example\n\nC. Next\n\nD. Finally",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E3",
+    "readworksUuid": "7e973877-3a60-47b3-afc4-8b4a7a2f5289",
+    "abridged": true,
+    "question": "E3q7",
+    "readworksQid": 245801
+  }
+}

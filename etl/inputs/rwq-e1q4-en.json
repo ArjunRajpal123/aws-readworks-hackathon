@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e1q4-en",
+  "lang": "en",
+  "title": "The Most Important Question (E1q4, en)",
+  "text": "Why does the zebra tell the meerkat and the monkey that they have nothing to worry about?\n\nA. The hippopotamus eats plants rather than small animals like the meerkat and monkey.\n\nB. The hippopotamus is busy drinking water so they have time to escape.\n\nC. The zebra is trying to trick the meerkat and the monkey.\n\nD. The meerkat and the monkey are at the top of the food chain.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E1",
+    "readworksUuid": "1bc604a7-d7af-4631-a220-b4ec77a3bb73",
+    "abridged": true,
+    "question": "E1q4",
+    "readworksQid": 10266
+  }
+}

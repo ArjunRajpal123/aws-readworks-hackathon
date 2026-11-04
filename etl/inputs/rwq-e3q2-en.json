@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e3q2-en",
+  "lang": "en",
+  "title": "Immigration (E3q2, en)",
+  "text": "There were strong anti-immigration sentiments in the United States by the late 1800s. What was one effect of this anti-immigration sentiment?\n\nA. Most immigrants moved to New York because it was more welcoming.\n\nB. It became easier for immigrants to start businesses.\n\nC. The United States government passed laws to limit immigration.\n\nD. The economy was poorly affected and the Great Depression started.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E3",
+    "readworksUuid": "7e973877-3a60-47b3-afc4-8b4a7a2f5289",
+    "abridged": true,
+    "question": "E3q2",
+    "readworksQid": 245796
+  }
+}

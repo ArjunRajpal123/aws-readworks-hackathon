@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e3q10-en",
+  "lang": "en",
+  "title": "Immigration (E3q10, en)",
+  "text": "Why might millions of immigrants still choose to immigrate to the United States even though they might face discrimination and tough new laws? Use evidence from the text to support your answer.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E3",
+    "readworksUuid": "7e973877-3a60-47b3-afc4-8b4a7a2f5289",
+    "abridged": true,
+    "question": "E3q10",
+    "readworksQid": 245804
+  }
+}

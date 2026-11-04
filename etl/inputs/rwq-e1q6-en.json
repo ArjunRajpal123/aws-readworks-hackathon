@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e1q6-en",
+  "lang": "en",
+  "title": "The Most Important Question (E1q6, en)",
+  "text": "Read the following sentences.\n\nOne day a hippopotamus came to the pond and bent to drink some water right where the giraffes usually drank. None of the other animals had ever seen him before. They were frightened. He was really big and did not seem to care about the rules of the pond.\n\nAs used in the passage, what does the word “frightened” mean?\n\nA. happy\n\nB. scared\n\nC. thirsty\n\nD. annoyed",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E1",
+    "readworksUuid": "1bc604a7-d7af-4631-a220-b4ec77a3bb73",
+    "abridged": true,
+    "question": "E1q6",
+    "readworksQid": 10268
+  }
+}

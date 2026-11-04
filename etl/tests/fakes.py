@@ -39,14 +39,19 @@ def fake_marks(text: str) -> str:
 
 
 class FakePolly:
-    def __init__(self):
+    """`audio_per_word`: MP3 length follows the word count (300 ms per word,
+    like the marks, plus 1 s) instead of a fixed 24 s, for long passages."""
+
+    def __init__(self, audio_per_word: bool = False):
         self.calls = []
+        self.audio_per_word = audio_per_word
 
     def synthesize_speech(self, **kw):
         self.calls.append(kw)
         chars = len(re.sub(r"<[^>]*>", "", kw["Text"]))
         if kw["OutputFormat"] == "mp3":
-            body = fake_mp3()
+            words = sum(1 for l in fake_marks(kw["Text"]).splitlines() if '"word"' in l)
+            body = fake_mp3(words * 300 // 24 + 42) if self.audio_per_word else fake_mp3()
         else:
             body = fake_marks(kw["Text"]).encode("utf-8")
         return {"AudioStream": io.BytesIO(body), "RequestCharacters": chars}

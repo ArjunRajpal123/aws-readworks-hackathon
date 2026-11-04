@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e5q7-en",
+  "lang": "en",
+  "title": "Slow and Steady (E5q7, en)",
+  "text": "Choose the answer below that best completes the sentence.\n\n_____ South America and Africa are now more than 1,500 miles apart, scientists believe they were once much closer together.\n\nA. Meanwhile\n\nB. Although\n\nC. Including\n\nD. Especially",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E5",
+    "readworksUuid": "4012bc7e-1e10-4df1-a285-99856d4148b5",
+    "abridged": true,
+    "question": "E5q7",
+    "readworksQid": 11688
+  }
+}

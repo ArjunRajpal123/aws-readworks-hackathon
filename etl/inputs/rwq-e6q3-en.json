@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e6q3-en",
+  "lang": "en",
+  "title": "Breaking (E6q3, en)",
+  "text": "In order to become a better reporter, Oliver practices writing a lot of articles. What evidence from the passage best supports this conclusion?\n\nA. “I’m a hard-nosed reporter. I ask all the tough questions. I intimidate crooks. I warm over the coldest sources. I get the impossible interviews.”\n\nB. “That was back in the second grade. I’ve practiced a lot since then, and I know how to find stories instead of making them up. I can spell better, too.”\n\nC. “I wrote in crayon on white paper and drew lines for columns, and when I showed it to my mom, she laughed and said ‘how cute.’”\n\nD. “And that’s great, Oliver. I want you to do that. You just can’t do it in class when you’re supposed to be paying attention to the lessons at hand.”",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E6",
+    "readworksUuid": "3632d2cb-d424-4c87-96e6-f851b4b9e185",
+    "abridged": true,
+    "question": "E6q3",
+    "readworksQid": 9433
+  }
+}

@@ -12,7 +12,7 @@ export function addFull(MODES) {
       for (const es of [false, true]) {
         const base = MODES.find(m => m.id === band + (es ? 'es' : ''))
         MODES.push({
-          id: `rwf-${pid}-${band}${es ? 'es' : ''}`, band, rwf: pid, audio: 'F' + pid.slice(1),
+          id: `rwf-${pid}-${band}${es ? 'es' : ''}`, band, rwf: pid, audio: `rwf-${pid.toLowerCase()}-en`, // pipeline product (scripts/export_inputs.mjs); English text for both UI languages
           lang: es ? 'es-US' : 'en-US', tab: base.tab, sub: base.sub, voice: base.voice, reward: base.reward, stopTitle: base.stopTitle, how: base.how,
           title: it.title,
           details: es

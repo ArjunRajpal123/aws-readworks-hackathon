@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e3q8-en",
+  "lang": "en",
+  "title": "Immigration (E3q8, en)",
+  "text": "What are two reasons immigrants might feel forced to leave their home countries?",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E3",
+    "readworksUuid": "7e973877-3a60-47b3-afc4-8b4a7a2f5289",
+    "abridged": true,
+    "question": "E3q8",
+    "readworksQid": 245802
+  }
+}

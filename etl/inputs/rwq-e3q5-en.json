@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e3q5-en",
+  "lang": "en",
+  "title": "Immigration (E3q5, en)",
+  "text": "What is the text mainly about?\n\nA. A labor shortage during World War II caused the United States to start the Bracero Program, which allowed immigrants from Mexico to work in the United States for a period of time.\n\nB. Immigration to the United States has been shaped by world events and changing laws, but despite the challenges and unfair treatment, immigrants have contributed greatly to the country.\n\nC. The Page Act of 1875 was the first U.S. immigration law to ban certain groups of people from moving to the United States and one reason people supported it was because it banned convicts.\n\nD. Millions of people from Ireland immigrated to the United States from 1820-1870 because they were trying to escape a famine in Ireland and find better opportunities somewhere else.",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E3",
+    "readworksUuid": "7e973877-3a60-47b3-afc4-8b4a7a2f5289",
+    "abridged": true,
+    "question": "E3q5",
+    "readworksQid": 245799
+  }
+}

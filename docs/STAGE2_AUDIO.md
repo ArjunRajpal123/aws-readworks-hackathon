@@ -65,8 +65,16 @@ The Vue player loaded them as "Amazon Polly neural (Ruth)" with live highlightin
 2. **Robustness:**
    - skip passages whose `textHash` and `configVersion` are unchanged
    - versioned audio folders, so a failed run never overwrites live audio
-   - async synthesis for text over 3,000 characters
+   - ~~async synthesis for text over 3,000 characters~~ done in 0.4.0 another way, see below
 3. **Deploy** (with the team): S3/EventBridge trigger, retries and a DLQ, writing to the existing `StorageStack` bucket and reference table.
+
+## Long passages (sa-pipeline-0.4.0)
+
+Text over Polly's synchronous cap (3,000 spoken / 6,000 total characters) is split into parts at paragraph boundaries, or at sentence boundaries inside a paragraph that is too long. Each part stays under 2,800 / 5,600 characters and gets the same SSML settings. Each part is synthesized with the same two calls (audio + marks). The MP3 frames are joined and each part's word times are offset by the audio before it. One product record, one MP3 and one timing file per voice, as before. `settings.parts` / summary `parts` say how many. `input.ssml` holds every part, each headed `<!-- part k: tokens a-b -->`, and every mark in `marks.jsonl` has a `part` field (byte offsets are into that part's input). Short passages take exactly the old one-call path.
+
+This keeps the synchronous API (works locally and in Lambda, no S3 output bucket or polling). Real run, Nov 4: the longest full passage (E8, 1,373 words, 3 parts, about 8 minutes) passed for both voices with every word individually timed.
+
+Known: Polly counts quoted dialogue such as *"…go away!" a meerkat whispered* as two sentences where the tokenizer has one, so `pollySentences` can exceed `ssmlSentences` on dialogue-heavy text (E1 full: 28 vs 26). Word timing is unaffected.
 
 ## Integration with the API and AWS (sa-pipeline-0.3.1)
 - **One pipeline.** `POST /api/v1/text-to-speech` now runs `pipeline.run()` (the ETL modules are bundled into the Lambda by `ApiStack`). The API's own Joanna / plain-text Polly code and its `tts/` layout are gone. API, `run_local.py` and `run_aws.py` all produce the same files and record. Contract: [`baseref.txt`](baseref.txt).

@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e6q8-en",
+  "lang": "en",
+  "title": "Breaking (E6q8, en)",
+  "text": "What is the name of the newspaper that Oliver writes for?",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E6",
+    "readworksUuid": "3632d2cb-d424-4c87-96e6-f851b4b9e185",
+    "abridged": true,
+    "question": "E6q8",
+    "readworksQid": 9438
+  }
+}

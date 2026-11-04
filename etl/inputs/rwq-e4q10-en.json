@@ -1,0 +1,14 @@
+{
+  "id": "rwq-e4q10-en",
+  "lang": "en",
+  "title": "Experiments (E4q10, en)",
+  "text": "How are Joey’s experiments and DeSean’s experiment alike?",
+  "source": {
+    "file": "frontend/src/data_q.js",
+    "passage": "E4",
+    "readworksUuid": "7c0ac02b-78d6-44ba-b843-df81b31938e1",
+    "abridged": true,
+    "question": "E4q10",
+    "readworksQid": 10452
+  }
+}
