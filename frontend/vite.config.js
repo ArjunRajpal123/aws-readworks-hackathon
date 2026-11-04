@@ -16,5 +16,7 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     allowedHosts: true,
+    // generated audio and downloaded passage data are not source files
+    watch: { ignored: ['**/infra/**', '**/public/sa/**', '**/ref/**'] },
   },
 })
