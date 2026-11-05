@@ -11,7 +11,7 @@ import { createFamily } from './family.js'
 import { addWords } from './store.js'
 import { byBand, byPid, byMode, modeFor } from './catalog.js'
 import { art } from './art.js'
-import { getProfile, setProfile, addSession, setSessionQuiz, upNext, bandOf } from './people.js'
+import { getProfile, setProfile, addSession, setSessionQuiz, upNext, bandOf, hydratePeople } from './people.js'
 import { createNext } from './next.js'
 import { createProfile } from './profile.js'
 import { initNav } from './nav.js'
@@ -439,6 +439,8 @@ $('#howBtn').onclick=()=>tour.start();
 $('#optBtn').onclick=()=>setOpts(document.body.classList.contains('opts-closed'));
 $('#famBtn').onclick=()=>setFam(true);$('#navContent').onclick=()=>{setAdmin(false);setFam(false);window.scrollTo(0,0)};
 $('#adminBtn').onclick=()=>setAdmin(true);initNav();
+// Hydrate the roster/sessions/assignments/practice from the cloud (fires 'sa-people' when ready, which re-renders).
+hydratePeople();
 // ?m=<id> that isn't built in: try a pipeline/API product record (GET /api/v1/text-to-speech, src/api.js).
 if(q&&!MODES.some(m=>m.id===q))addPipelineMode(MODES,q).then(m=>load(m?m.id:start));else load(start);
 if(location.hash==='#admin')setAdmin(true);else if(location.hash==='#family')setFam(true);

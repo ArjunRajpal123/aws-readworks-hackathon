@@ -1,30 +1,45 @@
-// Linked demo cast: teachers, classes, students and parents across all four grade bands, plus what each one has read.
+// Linked cast: teachers, classes, students and parents across all four grade bands, plus what each one has read.
 // The same records feed the student view (Up next), the parent view and the teacher view.
-// Sample history is generated the same way every time; real reading done in this browser is added on top and kept in localStorage.
+//
+// Roster, reading sessions, assignments and word practice are cloud-backed via the data API
+// (src/data_api.js -> /api/v1/data). On startup we hydrate a synchronous in-memory cache so the
+// existing render paths keep their synchronous accessors; writes go to the cloud and update the
+// cache optimistically. The ROSTER_SEED / per-student sample history below are the local-dev
+// fallback (no API configured) and the source the post-deploy seeding script loads into DynamoDB.
 import { CATALOG, byPid, byBand, gradeNum, stepUp } from './catalog.js'
+import {
+  hasDataApi, getRoster, getSessions, getAssignments, getPractice,
+  postSession, postAssignment, deleteAssignment, postPractice,
+} from './data_api.js'
 
-export const CLASSES = [
+export const CLASSES_SEED = [
   { id: 'c2', name: 'Room 4', grade: 2, band: 'k2', teacher: 't-rivera' },
   { id: 'c4', name: 'Room 12', grade: 4, band: '35', teacher: 't-okafor' },
   { id: 'c7', name: 'Room 207', grade: 7, band: '68', teacher: 't-alvarez' },
   { id: 'c10', name: 'Room 310', grade: 10, band: '912', teacher: 't-bennett' },
 ]
-export const TEACHERS = [
+export const TEACHERS_SEED = [
   { id: 't-rivera', name: 'Ms. Rivera', cls: 'c2' }, { id: 't-okafor', name: 'Mr. Okafor', cls: 'c4' },
   { id: 't-alvarez', name: 'Ms. Alvarez', cls: 'c7' }, { id: 't-bennett', name: 'Mr. Bennett', cls: 'c10' },
 ]
 const S = (id, name, cls, arch) => ({ id: 's-' + id, name, cls, arch })
-export const STUDENTS = [
+export const STUDENTS_SEED = [
   S('maya', 'Maya Chen', 'c2', 'steady'), S('noah', 'Noah Brooks', 'c2', 'skimmer'), S('ava', 'Ava Patel', 'c2', 'strong'), S('leo', 'Leo Garcia', 'c2', 'struggling'), S('zoe', 'Zoe Adams', 'c2', 'inactive'), S('eli', 'Eli Johnson', 'c2', 'steady'),
   S('sofia', 'Sofia Reyes', 'c4', 'strong'), S('jamal', 'Jamal Carter', 'c4', 'skimmer'), S('lily', 'Lily Nguyen', 'c4', 'steady'), S('owen', 'Owen Kim', 'c4', 'struggling'), S('grace', 'Grace Murphy', 'c4', 'steady'), S('marcus', 'Marcus Hill', 'c4', 'inactive'),
   S('daniel', 'Daniel Chen', 'c7', 'steady'), S('isabella', 'Isabella Rossi', 'c7', 'strong'), S('tyler', 'Tyler Moore', 'c7', 'skimmer'), S('amara', 'Amara Okoye', 'c7', 'steady'), S('caleb', 'Caleb Foster', 'c7', 'struggling'), S('nina', 'Nina Petrov', 'c7', 'inactive'),
   S('hannah', 'Hannah Lee', 'c10', 'strong'), S('diego', 'Diego Morales', 'c10', 'steady'), S('chloe', 'Chloe Turner', 'c10', 'skimmer'), S('ethan', 'Ethan Wallace', 'c10', 'struggling'), S('jada', 'Jada Washington', 'c10', 'steady'), S('mason', 'Mason Clark', 'c10', 'inactive'),
 ]
-export const PARENTS = [
+export const PARENTS_SEED = [
   { id: 'p-chen', name: 'Priya Chen', kids: ['s-maya', 's-daniel'] }, { id: 'p-brooks', name: 'Marcus Brooks', kids: ['s-noah'] },
   { id: 'p-reyes', name: 'Elena Reyes', kids: ['s-sofia'] }, { id: 'p-carter', name: 'Denise Carter', kids: ['s-jamal'] },
   { id: 'p-lee', name: 'David Lee', kids: ['s-hannah'] }, { id: 'p-morales', name: 'Rosa Morales', kids: ['s-diego'] },
 ]
+
+// Live roster: starts as the seed, replaced in place by the cloud roster on hydration.
+export let CLASSES = CLASSES_SEED.slice()
+export let TEACHERS = TEACHERS_SEED.slice()
+export let STUDENTS = STUDENTS_SEED.slice()
+export let PARENTS = PARENTS_SEED.slice()
 export const student = id => STUDENTS.find(s => s.id === id)
 export const klass = id => CLASSES.find(c => c.id === id)
 export const teacherOf = cls => TEACHERS.find(t => t.id === klass(cls).teacher)
@@ -45,6 +60,39 @@ export function getProfile() {
   return { role: 'guest', id: 'guest', name: 'Guest' }
 }
 export const setProfile = id => write('sa-profile', id || null)
+
+// ---- cloud hydration -------------------------------------------------------
+// A synchronous cache the render paths read. Seed/local-dev uses the sample
+// generators below; once the data API answers, these caches hold cloud data.
+let hydrated = false
+const cloudSessions = new Map()   // studentId -> [session]
+const cloudAssign = new Map()     // studentId -> [assignment]
+const cloudPractice = new Map()   // studentId -> { word -> {k,m,at} }
+
+export const isHydrated = () => hydrated
+
+// Called once at startup (engine.js init). Pulls the roster and, for each
+// student, their sessions/assignments/practice into the caches, then fires
+// `sa-people` so the open view re-renders with real data. No-op (keeps the
+// sample roster) when no data API is configured.
+export async function hydratePeople() {
+  if (!hasDataApi() || hydrated) { hydrated = true; return }
+  const roster = await getRoster()
+  if (roster && (roster.students || []).length) {
+    if (roster.classes.length) CLASSES = roster.classes
+    if (roster.teachers.length) TEACHERS = roster.teachers
+    STUDENTS = roster.students
+    if (roster.parents.length) PARENTS = roster.parents
+  }
+  await Promise.all(STUDENTS.map(async st => {
+    const [ses, asg, prac] = await Promise.all([getSessions(st.id), getAssignments(st.id), getPractice(st.id)])
+    if (ses) cloudSessions.set(st.id, ses)
+    if (asg) cloudAssign.set(st.id, asg)
+    if (prac) { const m = {}; for (const p of prac) m[p.word] = { k: p.k || 0, m: p.m || 0, at: p.at }; cloudPractice.set(st.id, m) }
+  }))
+  hydrated = true
+  window.dispatchEvent(new Event('sa-people'))
+}
 
 // ---- sample history ----
 function rng(seed) {
@@ -84,15 +132,42 @@ function sample(st) {
   return out
 }
 
-// ---- real reading done in this browser ----
+// ---- reading sessions ----
+// With the data API: sessions live in the cloud (cloudSessions cache); a new
+// read is POSTed and added to the cache optimistically. Without it: kept in
+// localStorage on top of the per-student sample history, as before.
 export const loadSessions = () => read('sa-sessions', [])
-export function addSession(rec) { write('sa-sessions', [...loadSessions(), { id: 'r' + Date.now(), ...rec }].slice(-300)) }
+export function addSession(rec) {
+  if (hasDataApi()) {
+    const list = cloudSessions.get(rec.student) || []
+    const optimistic = { id: 'r' + Date.now(), ...rec }
+    cloudSessions.set(rec.student, [optimistic, ...list])
+    postSession(rec).then(saved => {
+      if (!saved) return
+      const cur = cloudSessions.get(rec.student) || []
+      cloudSessions.set(rec.student, cur.map(s => (s === optimistic ? saved : s)))
+      window.dispatchEvent(new Event('sa-people'))
+    })
+    window.dispatchEvent(new Event('sa-people'))
+    return
+  }
+  write('sa-sessions', [...loadSessions(), { id: 'r' + Date.now(), ...rec }].slice(-300))
+}
 export function setSessionQuiz(student, pid, pct) {
+  if (hasDataApi()) {
+    // The session was just POSTed; reflect the quiz score in the cache. (The
+    // reading POST already carried its stars; the score is a local refinement.)
+    const list = cloudSessions.get(student) || []
+    for (const s of list) if (s.pid === pid && s.q == null) { s.q = pct; s.stars = Math.max(s.stars || 1, 1 + ((s.words || []).length >= 2 ? 1 : 0) + (pct >= 80 ? 1 : 0)); break }
+    window.dispatchEvent(new Event('sa-people'))
+    return
+  }
   const all = loadSessions()
   for (let i = all.length - 1; i >= 0; i--) if (all[i].student === student && all[i].pid === pid) { all[i].q = pct; all[i].stars = Math.max(all[i].stars, 1 + (all[i].words.length >= 2 ? 1 : 0) + (pct >= 80 ? 1 : 0)); break }
   write('sa-sessions', all)
 }
 export function sessionsFor(studentId) {
+  if (hasDataApi()) return (cloudSessions.get(studentId) || []).slice().sort((a, b) => (a.at < b.at ? 1 : -1))
   const st = student(studentId)
   const real = loadSessions().filter(s => s.student === studentId)
   return [...(st ? sample(st) : []), ...real].sort((a, b) => (a.at < b.at ? 1 : -1))
@@ -101,8 +176,31 @@ export const clearSessions = () => write('sa-sessions', [])
 
 // ---- assignments (pushed by a teacher or parent) ----
 export const loadAssign = () => read('sa-assign', [])
-export function assign({ pid, to, by, byName, due }) { write('sa-assign', [...loadAssign(), { id: 'a' + Date.now() + Math.floor(Math.random() * 99), pid, to, by, byName, at: new Date().toISOString(), due: due || new Date(Date.now() + 5 * DAY).toISOString() }]) }
-export function unassign(id) { write('sa-assign', loadAssign().filter(a => a.id !== id)) }
+export function assign({ pid, to, by, byName, due }) {
+  const rec = { pid, to, by, byName, at: new Date().toISOString(), due: due || new Date(Date.now() + 5 * DAY).toISOString() }
+  if (hasDataApi()) {
+    const optimistic = { id: 'a' + Date.now() + Math.floor(Math.random() * 99), ...rec }
+    cloudAssign.set(to, [...(cloudAssign.get(to) || []), optimistic])
+    postAssignment(rec).then(saved => {
+      if (!saved) return
+      const cur = cloudAssign.get(to) || []
+      cloudAssign.set(to, cur.map(a => (a === optimistic ? saved : a)))
+      window.dispatchEvent(new Event('sa-people'))
+    })
+    window.dispatchEvent(new Event('sa-people'))
+    return
+  }
+  write('sa-assign', [...loadAssign(), { id: 'a' + Date.now() + Math.floor(Math.random() * 99), ...rec }])
+}
+export function unassign(id) {
+  if (hasDataApi()) {
+    for (const [k, list] of cloudAssign) cloudAssign.set(k, list.filter(a => a.id !== id))
+    deleteAssignment(id)
+    window.dispatchEvent(new Event('sa-people'))
+    return
+  }
+  write('sa-assign', loadAssign().filter(a => a.id !== id))
+}
 function seeded(st) {
   const r = rng('as' + st.id), list = byBand(bandOf(st)), t = teacherOf(st.cls)
   const done = new Set(sample(st).map(s => s.pid))
@@ -113,21 +211,37 @@ function seeded(st) {
 // Everything assigned to one student, with whether it has been read since it was assigned.
 export function assignmentsFor(studentId) {
   const st = student(studentId), ses = sessionsFor(studentId)
-  const mine = [...(st ? seeded(st) : []), ...loadAssign().filter(a => a.to === studentId || (st && a.to === 'c:' + st.cls))]
+  const mine = hasDataApi()
+    ? (cloudAssign.get(studentId) || [])
+    : [...(st ? seeded(st) : []), ...loadAssign().filter(a => a.to === studentId || (st && a.to === 'c:' + st.cls))]
   return mine.map(a => ({ ...a, done: ses.some(s => s.pid === a.pid && s.at >= a.at) })).sort((a, b) => (a.due < b.due ? -1 : 1))
 }
 export const upNext = id => assignmentsFor(id).filter(a => !a.done)
 
 // ---- words ----
 export const loadPractice = () => read('sa-practice', {})
+// Practice tallies per student: {studentId: {word: {k, m, at}}}. Cloud when configured.
+function practiceMap(studentId) {
+  return hasDataApi() ? (cloudPractice.get(studentId) || {}) : (loadPractice()[studentId] || {})
+}
 export function recordPractice(studentId, word, knew) {
-  const p = loadPractice(); const m = (p[studentId] = p[studentId] || {}); const w = (m[word.toLowerCase()] = m[word.toLowerCase()] || { k: 0, m: 0 })
+  const key = word.toLowerCase()
+  if (hasDataApi()) {
+    const m = cloudPractice.get(studentId) || {}
+    const w = m[key] || { k: 0, m: 0 }
+    if (knew) w.k++; else w.m++
+    w.at = new Date().toISOString(); m[key] = w; cloudPractice.set(studentId, m)
+    postPractice(studentId, key, !!knew)
+    window.dispatchEvent(new Event('sa-people'))
+    return
+  }
+  const p = loadPractice(); const m = (p[studentId] = p[studentId] || {}); const w = (m[key] = m[key] || { k: 0, m: 0 })
   if (knew) w.k++; else w.m++
   w.at = new Date().toISOString(); write('sa-practice', p)
 }
 const daysSince = iso => (Date.now() - new Date(iso).getTime()) / DAY
 export function wordStats(studentId) {
-  const map = new Map(), pr = loadPractice()[studentId] || {}
+  const map = new Map(), pr = practiceMap(studentId)
   for (const s of sessionsFor(studentId)) {
     const e = byPid(s.pid); if (!e) continue
     for (const w of s.words) {
