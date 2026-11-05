@@ -1,35 +1,10 @@
 {
   "id": "rws-e9-en",
   "lang": "en",
-  "title": "Lizzie Escapes (E9, en)",
+  "title": "Lizzie Escapes",
   "text": "Lizzie shrugged.\n\nLizzie had tried to argue that a pair of flip-flops and the collected novels of Henry James were all you really needed for three weeks in upstate New York, but her mom wasn’t having it and had made her re-pack.\n\nShe’d graduated from 7th grade two weeks earlier and since then had been showing up at the library at a quarter to nine in the morning, fifteen minutes before it opened.\n\n“Mr. Scottadino did not sell your basket for poker money,” said Lizzie’s mom, absently checking her makeup in the rearview mirror.",
   "source": {
-    "workbook": "RW_Sentences.xlsx",
-    "sheet": "Sentences",
-    "rowId": "E9",
-    "sourceUrl": "https://www.readworks.org/article/Lizzie-Escapes/6b5dc923-b7a2-475b-8a26-6dde0ef73e50",
-    "machineTranslated": false,
-    "segments": [
-      {
-        "paragraph": 0,
-        "column": "Short simple sentence",
-        "case": "short"
-      },
-      {
-        "paragraph": 1,
-        "column": "Complex longer sentence",
-        "case": "complex"
-      },
-      {
-        "paragraph": 2,
-        "column": "Sentence with a number",
-        "case": "number"
-      },
-      {
-        "paragraph": 3,
-        "column": "Sentence with Mr./Mrs. (English only)",
-        "case": "title_abbrev"
-      }
-    ]
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode rw-E9-k2"
   }
 }

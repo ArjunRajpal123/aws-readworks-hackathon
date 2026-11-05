@@ -1,35 +1,10 @@
 {
   "id": "rws-e3-en",
   "lang": "en",
-  "title": "Immigration (E3, en)",
+  "title": "Immigration",
   "text": "Immigration sharply declined.\n\nBy this time, anti-immigration sentiments in the U.S. became so strong that a growing number of people demanded laws to make it harder for foreigners to become U.S. citizens.\n\nIn 1882, Congress also passed the Chinese Exclusion Act.\n\nFrom about 1820 to 1870, millions of people made the voyage to the United States, mostly from northern and western Europe.",
   "source": {
-    "workbook": "RW_Sentences.xlsx",
-    "sheet": "Sentences",
-    "rowId": "E3",
-    "sourceUrl": "https://www.readworks.org/article/Immigration/7e973877-3a60-47b3-afc4-8b4a7a2f5289",
-    "machineTranslated": false,
-    "segments": [
-      {
-        "paragraph": 0,
-        "column": "Short simple sentence",
-        "case": "short"
-      },
-      {
-        "paragraph": 1,
-        "column": "Complex longer sentence",
-        "case": "complex"
-      },
-      {
-        "paragraph": 2,
-        "column": "Sentence with a number",
-        "case": "number"
-      },
-      {
-        "paragraph": 3,
-        "column": "Sentence with a date/year",
-        "case": "date"
-      }
-    ]
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode rw-E3-k2"
   }
 }

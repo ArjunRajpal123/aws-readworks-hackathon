@@ -73,11 +73,12 @@ def presigned_url(key):
     )
 
 
-def with_urls(product):
+def with_urls(product, track_ids=None):
     """Copy of the product record plus `urls`: {trackId: {audio, timing}}.
 
     `urls` is response-only (never stored): the URLs expire after
     TTS_URL_TTL_SECONDS. Records without `tracks` are returned unchanged.
+    track_ids limits `urls` to those tracks (default: every track).
     """
     tracks = product.get("tracks") or []
     if not tracks:
@@ -89,5 +90,6 @@ def with_urls(product):
             "timing": presigned_url(t["timingKey"]),
         }
         for t in tracks
+        if track_ids is None or t["id"] in track_ids
     }
     return out

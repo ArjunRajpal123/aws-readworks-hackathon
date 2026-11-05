@@ -16,11 +16,19 @@ function localUrls(prod) {
 
 // Fetches a Sound Along product record by passage id, normalized so
 // prod.urls[trackId] = {audio, timing} always points to a fetchable URL.
+// voiceId (optional) asks the API to pick that voice's track (or the default):
+// the record then has selectedTrack, and urls only for that track. lang
+// (optional, 'en-US' / 'es-US') is the language the id is in; the id already
+// says it, so this mostly makes the request readable in logs. Local sa/ files
+// have every track, so the caller picks.
 // Returns null on a missing id, a non-2xx response, or a network error.
-export async function fetchProduct(id) {
+export async function fetchProduct(id, voiceId, lang) {
   try {
     if (API) {
-      const r = await fetch(`${API}?id=${encodeURIComponent(id)}`)
+      const q = new URLSearchParams({ id })
+      if (lang) q.set('lang', lang)
+      if (voiceId) q.set('voiceId', voiceId)
+      const r = await fetch(`${API}?${q}`)
       if (!r.ok) return null
       return await r.json()
     }
@@ -31,5 +39,23 @@ export async function fetchProduct(id) {
     return prod
   } catch {
     return null
+  }
+}
+
+// Generates a new passage with POST /api/v1/text-to-speech (Polly audio, word
+// timing and the product record, stored where GET and the player read them).
+// body: {text, title?, languageCode?, allVoices?}; see
+// lambda/text_to_speech_post/handler.py. Returns {ok: true, record} or
+// {ok: false, error}. With no API configured there is nothing to call:
+// returns null so the caller can fall back.
+export async function createProduct(body) {
+  if (!API) return null
+  try {
+    const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok) return { ok: false, error: j.error || `HTTP ${r.status}` }
+    return { ok: true, record: j }
+  } catch (e) {
+    return { ok: false, error: e.message || 'Network error' }
   }
 }

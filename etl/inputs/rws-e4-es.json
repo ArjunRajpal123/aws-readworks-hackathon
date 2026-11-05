@@ -1,30 +1,10 @@
 {
   "id": "rws-e4-es",
   "lang": "es",
-  "title": "Experiments (E4, es)",
+  "title": "Experiments",
   "text": "Todos culparon a Joey.\n\nA veces una parte se disolvía y otra no, como la vez que metió un pastel de arándanos machacado en su vaso de leche.\n\nEl de DeSean pesó ¼ de libra.",
   "source": {
-    "workbook": "RW_Sentences.xlsx",
-    "sheet": "Spanish_MT",
-    "rowId": "E4",
-    "sourceUrl": "https://www.readworks.org/article/Experiments/7c0ac02b-78d6-44ba-b843-df81b31938e1",
-    "machineTranslated": true,
-    "segments": [
-      {
-        "paragraph": 0,
-        "column": "Short simple sentence",
-        "case": "short"
-      },
-      {
-        "paragraph": 1,
-        "column": "Complex longer sentence",
-        "case": "complex"
-      },
-      {
-        "paragraph": 2,
-        "column": "Sentence with a number",
-        "case": "number"
-      }
-    ]
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode rw-E4-k2es"
   }
 }

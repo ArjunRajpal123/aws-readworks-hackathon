@@ -102,9 +102,10 @@ if(import.meta.env.DEV){window.__SA=SA;window.__done=()=>{finAt=0;maybeDone()}} 
 const lastAtOrBefore=(arr,t)=>{let lo=0,hi=arr.length-1,a=-1;while(lo<=hi){const m=(lo+hi)>>1;if(arr[m]<=t){a=m;lo=m+1}else hi=m-1}return a};
 async function loadAudio(mid){if(SA[mid]!==undefined)return;SA[mid]=null;
  try{
-  const prod=await fetchProduct(mid);if(!prod)return;
   const want=curVoice(),okT=x=>x.qa&&x.qa.status!=='failed';
-  const tr=prod.tracks.find(x=>x.voiceId===want&&okT(x))||prod.tracks.find(x=>x.default&&okT(x))||prod.tracks.find(okT);if(!tr)return;
+  const prod=await fetchProduct(mid,want,voiceLang());if(!prod)return;
+  // The API picks the track for the chosen voice (selectedTrack); local sa/ records are picked here the same way.
+  const tr=prod.selectedTrack?prod.tracks.find(x=>x.id===prod.selectedTrack):prod.tracks.find(x=>x.voiceId===want&&okT(x))||prod.tracks.find(x=>x.default&&okT(x))||prod.tracks.find(okT);if(!tr)return;
   const gz=await fetch(prod.urls[tr.id].timing);
   // S3 sends Content-Encoding: gzip, so the browser usually inflates it already; fall back to doing it here if not.
   const raw=await gz.arrayBuffer();let tm;

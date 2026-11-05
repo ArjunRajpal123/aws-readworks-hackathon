@@ -1,35 +1,10 @@
 {
   "id": "rws-e3-es",
   "lang": "es",
-  "title": "Immigration (E3, es)",
+  "title": "Immigration",
   "text": "La inmigración disminuyó drásticamente.\n\nPara entonces, el sentimiento contrario a la inmigración en EE. UU. se volvió tan fuerte que cada vez más personas exigían leyes que hicieran más difícil que los extranjeros se convirtieran en ciudadanos estadounidenses.\n\nEn 1882, el Congreso también aprobó la Ley de Exclusión de Chinos.\n\nDesde aproximadamente 1820 hasta 1870, millones de personas hicieron el viaje a Estados Unidos, la mayoría desde el norte y el oeste de Europa.",
   "source": {
-    "workbook": "RW_Sentences.xlsx",
-    "sheet": "Spanish_MT",
-    "rowId": "E3",
-    "sourceUrl": "https://www.readworks.org/article/Immigration/7e973877-3a60-47b3-afc4-8b4a7a2f5289",
-    "machineTranslated": true,
-    "segments": [
-      {
-        "paragraph": 0,
-        "column": "Short simple sentence",
-        "case": "short"
-      },
-      {
-        "paragraph": 1,
-        "column": "Complex longer sentence",
-        "case": "complex"
-      },
-      {
-        "paragraph": 2,
-        "column": "Sentence with a number",
-        "case": "number"
-      },
-      {
-        "paragraph": 3,
-        "column": "Sentence with a date/year",
-        "case": "date"
-      }
-    ]
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode rw-E3-k2es"
   }
 }

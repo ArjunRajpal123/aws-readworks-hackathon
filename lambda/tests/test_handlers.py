@@ -120,6 +120,59 @@ def test_get_returns_stored_product_with_fresh_urls(fake_aws):
     assert "sa/audio/g1/tts-1.timing.json.gz" in body["urls"]["tts-1"]["timing"]
 
 
+def _get(params):
+    resp = get_mod.handler({"queryStringParameters": params}, None)
+    return resp["statusCode"], json.loads(resp["body"])
+
+
+def test_get_voice_id_selects_that_track_only(fake_aws):
+    _post({"text": "Ana smiled.", "id": "g2", "allVoices": True})
+    status, body = _get({"id": "g2", "voiceId": "stephen"})
+    assert status == 200
+    stephen = next(t for t in body["tracks"] if t["voiceId"] == "Stephen")
+    assert body["selectedTrack"] == stephen["id"]
+    assert list(body["urls"]) == [stephen["id"]]
+    assert len(body["tracks"]) > 1  # the record itself is unchanged
+
+
+def test_get_unknown_voice_falls_back_to_default(fake_aws):
+    _post({"text": "Ana smiled.", "id": "g3"})
+    status, body = _get({"id": "g3", "voiceId": "Nobody"})
+    assert status == 200 and body["selectedTrack"] == "tts-1"
+    assert list(body["urls"]) == ["tts-1"]
+
+
+def test_get_without_voice_id_signs_every_track(fake_aws):
+    _post({"text": "Ana smiled.", "id": "g4", "allVoices": True})
+    status, body = _get({"id": "g4"})
+    assert status == 200 and "selectedTrack" not in body
+    assert sorted(body["urls"]) == sorted(t["id"] for t in body["tracks"])
+
+
+def test_get_lang_returns_the_other_language_version(fake_aws):
+    _post({"text": "Ana smiled.", "id": "p1"})
+    _post({"text": "Ana sonrió.", "id": "p1es", "languageCode": "es-US"})
+    _post({"text": "Ana smiled.", "id": "s1-en"})
+    _post({"text": "Ana sonrió.", "id": "s1-es", "lang": "es"})
+
+    status, body = _get({"id": "p1", "lang": "es", "voiceId": "Pedro"})
+    assert status == 200 and body["id"] == "p1es" and body["lang"] == "es"
+    assert body["selectedTrack"] == "tts-1"  # Pedro not generated: default (Lupe)
+    status, body = _get({"id": "p1es", "languageCode": "en-US"})
+    assert status == 200 and body["id"] == "p1"
+    status, body = _get({"id": "s1-en", "lang": "es"})
+    assert status == 200 and body["id"] == "s1-es"
+    status, body = _get({"id": "s1-en", "lang": "en"})  # already that language
+    assert status == 200 and body["id"] == "s1-en"
+
+
+def test_get_lang_errors(fake_aws):
+    _post({"text": "Ana smiled.", "id": "only-en"})
+    status, body = _get({"id": "only-en", "lang": "es"})
+    assert status == 404 and "only-es" in body["error"]
+    assert _get({"id": "only-en", "lang": "fr"})[0] == 400
+
+
 def test_get_errors(fake_aws):
     assert get_mod.handler({"queryStringParameters": None}, None)["statusCode"] == 400
     assert get_mod.handler({"queryStringParameters": {"id": "missing"}}, None)["statusCode"] == 404

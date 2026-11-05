@@ -1,35 +1,10 @@
 {
   "id": "rws-e6-en",
   "lang": "en",
-  "title": "Breaking (E6, en)",
+  "title": "Breaking",
   "text": "I left the office without so much as detention!\n\nA lot of the time, I just wrote what my editor, the fifth-grade English teacher, assigned me.\n\nI was eight years old and a brand-new reporter.\n\nOn Thursday, October 17th, a different sound hit the playground of Mars Hill Elementary.",
   "source": {
-    "workbook": "RW_Sentences.xlsx",
-    "sheet": "Sentences",
-    "rowId": "E6",
-    "sourceUrl": "https://www.readworks.org/article/Breaking/3632d2cb-d424-4c87-96e6-f851b4b9e185",
-    "machineTranslated": false,
-    "segments": [
-      {
-        "paragraph": 0,
-        "column": "Short simple sentence",
-        "case": "short"
-      },
-      {
-        "paragraph": 1,
-        "column": "Complex longer sentence",
-        "case": "complex"
-      },
-      {
-        "paragraph": 2,
-        "column": "Sentence with a number",
-        "case": "number"
-      },
-      {
-        "paragraph": 3,
-        "column": "Sentence with a date/year",
-        "case": "date"
-      }
-    ]
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode rw-E6-k2"
   }
 }

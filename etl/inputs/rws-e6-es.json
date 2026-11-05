@@ -1,35 +1,10 @@
 {
   "id": "rws-e6-es",
   "lang": "es",
-  "title": "Breaking (E6, es)",
+  "title": "Breaking",
   "text": "¡Salí de la oficina sin siquiera un castigo!\n\nMuchas veces, yo simplemente escribía lo que me asignaba mi editor, quien daba inglés en quinto grado.\n\nTenía ocho años y acababa de estrenarme en el periodismo.\n\nEl jueves 17 de octubre, un sonido distinto resonó en el patio de recreo de la Escuela Primaria Mars Hill.",
   "source": {
-    "workbook": "RW_Sentences.xlsx",
-    "sheet": "Spanish_MT",
-    "rowId": "E6",
-    "sourceUrl": "https://www.readworks.org/article/Breaking/3632d2cb-d424-4c87-96e6-f851b4b9e185",
-    "machineTranslated": true,
-    "segments": [
-      {
-        "paragraph": 0,
-        "column": "Short simple sentence",
-        "case": "short"
-      },
-      {
-        "paragraph": 1,
-        "column": "Complex longer sentence",
-        "case": "complex"
-      },
-      {
-        "paragraph": 2,
-        "column": "Sentence with a number",
-        "case": "number"
-      },
-      {
-        "paragraph": 3,
-        "column": "Sentence with a date/year",
-        "case": "date"
-      }
-    ]
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode rw-E6-k2es"
   }
 }
