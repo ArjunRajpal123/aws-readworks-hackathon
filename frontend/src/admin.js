@@ -224,7 +224,7 @@ export function initAdmin(t) {
     const est = estimate()
     const stages = { tokenize: true }
     if (on('adAud')) stages.audio = { engine: 'polly-neural', languages: audioLangs(), voices: { 'en-US': ['Danielle', 'Stephen'], 'es-US': ['Lupe', 'Pedro'] } }
-    if (on('adTrans')) stages.spanishVersion = { mode: 'ai-draft', reviewRequired: true }
+    if (on('adTrans')) stages.otherLanguage = { mode: 'ai-draft', reviewRequired: true }
     if (on('adCards')) {
       const words = [...(det && det.vocab ? det.vocab.map(v => ({ word: v.word, source: 'database' })) : []), ...aiVocab.map(w => ({ word: w, source: 'ai-suggested', needsReview: true }))]
       stages.vocabularyCards = { languages: ['en-US', 'es-US'], ...(words.length ? { words } : {}) }
@@ -263,7 +263,7 @@ export function initAdmin(t) {
   function stagesFor(p) {
     const s = ['stQueued', 'stTok']
     if (p.pipeline.audio) s.push('stAud')
-    if (p.pipeline.spanishVersion) s.push('stTrans')
+    if (p.pipeline.otherLanguage) s.push('stTrans')
     if (p.pipeline.vocabularyCards) s.push('stCards')
     if (p.pipeline.wordStops) s.push('stStops')
     if (p.questions && p.questions.source !== 'none') s.push('stQs')
@@ -296,6 +296,13 @@ export function initAdmin(t) {
     if (e.state === 'done') return t(e.vis === 'published' ? 'stPub' : e.vis === 'staging' ? 'stStage' : 'stDraft')
     return t(e.stages[Math.min(e.at, e.stages.length - 1)])
   }
+  // "EN · ES ✓": the source language, then the generated other language and how it went.
+  function langLine(e) {
+    if (e.langs) return e.langs // rows saved before both-language passages
+    const other = e.src === 'es' ? 'en' : 'es'
+    const mark = { pending: ' …', done: ' ✓', error: ' ✗' }[e.other] || ''
+    return e.src.toUpperCase() + (e.both ? ' + ' + other.toUpperCase() + mark : '')
+  }
   function renderQueue() {
     const q = $('#adQueue')
     $('#adClear').hidden = queue.length === 0
@@ -303,7 +310,7 @@ export function initAdmin(t) {
     q.innerHTML = `<div class="ad-tw"><table><thead><tr><th>${t('adColPass')}</th><th>${t('adColStatus')}</th><th>${t('adColProg')}</th><th>${t('adColAct')}</th></tr></thead><tbody>${queue.map(e => {
       const total = e.stages.length
       const pct = e.state === 'running' ? Math.round(100 * e.at / total) : 100
-      return `<tr><td><strong>${esc(e.title)}</strong><br><span class="ad-help">${esc(e.langs)} · ${esc(e.band)} · ${esc(e.time)}</span>${e.error ? `<br><span class="ad-help">${esc(e.error)}</span>` : ''}</td>
+      return `<tr><td><strong>${esc(e.title)}</strong><br><span class="ad-help">${esc(langLine(e))} · ${esc(e.band)} · ${esc(e.time)}</span>${e.error ? `<br><span class="ad-help">${esc(e.error)}</span>` : ''}</td>
         <td><span class="ad-pill ad-${e.state}">${stageLabel(e)}</span></td>
         <td><div class="ad-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div></td>
         <td class="ad-acts">${e.state === 'review' ? `<button type="button" class="ad-btn ad-small" data-act="approve" data-id="${e.id}">${t('adApprove')}</button>` : ''}${e.pid && e.state !== 'running' && e.state !== 'error' ? `<a class="ad-btn ad-small" href="?m=${encodeURIComponent(e.pid)}">${t('adOpen')}</a>` : ''}<button type="button" class="ad-btn ad-ghost ad-small" data-act="remove" data-id="${e.id}">${t('adRemove')}</button></td></tr>`
@@ -338,7 +345,6 @@ export function initAdmin(t) {
       setField('adRWId', k.uuid, 'det'); setField('adRights', 'readworks', 'det'); setField('adGrade', k.grade, 'det'); setField('adBand', '35', 'det')
     }
     if (jsonMeta) { setField('adTitle', jsonMeta.title, 'det'); setField('adAuthor', jsonMeta.author, 'det'); setField('adRWId', jsonMeta.uuid, 'det'); setField('adLexile', jsonMeta.lexile, 'det') }
-    if (!touched.has('adTrans')) $('#adTrans').checked = det.lang === 'en-US'
   }
   function runDetect() {
     if (method() === 'rw') {
@@ -461,7 +467,7 @@ export function initAdmin(t) {
     const title = p.passage.title || (p.input.readworksId ? 'ReadWorks ' + p.input.readworksId.slice(0, 8) : p.input.bulkFile || 'Untitled')
     const entry = {
       id: Date.now().toString(36), title: n > 1 && method() !== 'paste' ? `${title} (+${n - 1})` : title,
-      langs: [p.passage.language === 'es-US' ? 'ES' : 'EN', ...(p.pipeline.spanishVersion ? ['+ES draft'] : [])].join(' '),
+      src: p.passage.language === 'es-US' ? 'es' : 'en', both: !!p.pipeline.otherLanguage,
       band: p.passage.gradeBand ? BANDS.find(b => b[0] === p.passage.gradeBand)[1] : '—',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       stages: stagesFor(p), at: 0, state: 'running', review: p.review.mode, vis: p.review.afterApproval,
@@ -473,8 +479,11 @@ export function initAdmin(t) {
 
     // Voices come from etl/voices.json on the server; "audio" on means every configured voice, as the request shows.
     // The pipeline runs synchronously, so the 201 response is the real result -- the queue reflects it, nothing is simulated.
+    // Both languages share a base id (<base>-en / <base>-es) so the player's
+    // language toggle and GET ?lang= resolve each one's sibling.
     const srcLang = p.passage.language || 'en-US'
-    const res = await createProduct({ text, title: title.slice(0, 200), languageCode: srcLang, allVoices: on('adAud') })
+    const base = 'p-' + entry.id
+    const res = await createProduct({ text, id: `${base}-${srcLang.slice(0, 2)}`, title: title.slice(0, 200), languageCode: srcLang, allVoices: on('adAud') })
     const e = queue.find(x => x.id === entry.id)
     if (!e) return // removed while it was running
     e.api = false
@@ -483,8 +492,8 @@ export function initAdmin(t) {
       await publishReview(e)
       // Vocabulary cards and Word Stops (real Bedrock drafts) when requested.
       if (on('adCards') || on('adStops')) { e.gen = 'pending'; save(); renderQueue(); await makeCardsAndStops(e, text, srcLang) }
-      // Spanish version: translate the English text and generate the es sibling (<id>-es, es-US voices).
-      if (on('adTrans') && srcLang.startsWith('en')) { e.es = 'pending'; save(); renderQueue(); await makeSpanish(e, text, res.record.id) }
+      // Other language: translate and generate the sibling (en <-> es) through the same pipeline.
+      if (on('adTrans')) { e.other = 'pending'; save(); renderQueue(); await makeOtherLanguage(e, text, srcLang, base) }
     } else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
     save(); renderQueue()
   }
@@ -500,16 +509,21 @@ export function initAdmin(t) {
     entry.cards = cards.length; entry.stops = stops.length; entry.gen = 'done'
   }
 
-  // Translate the English passage and generate its Spanish sibling through the
-  // same pipeline (real Amazon Translate + Polly es-US voices). Best-effort:
-  // a failure is noted on the row but does not fail the English passage.
-  async function makeSpanish(entry, enText, enId) {
-    const tr = await translate(enText, 'en', 'es')
-    if (!tr || !tr.text) { entry.es = 'error'; return }
-    const esId = /-en$/.test(enId) ? enId.replace(/-en$/, '-es') : `${enId}-es`
-    const res = await createProduct({ text: tr.text, id: esId, title: (entry.title + ' (ES)').slice(0, 200), languageCode: 'es-US', allVoices: on('adAud') })
-    entry.es = res && res.ok ? 'done' : 'error'
-    if (res && res.ok) await postReview({ pid: esId, state: entry.review === 'required' ? 'review' : 'published' })
+  // Translate the passage into the other language (en <-> es) and generate that
+  // sibling through the same pipeline (Amazon Translate + Polly voices for that
+  // language), with its own cards and Word Stops. Best-effort: a failure is
+  // noted on the row but does not fail the source passage.
+  async function makeOtherLanguage(entry, srcText, srcLang, base) {
+    const src = srcLang.slice(0, 2), dst = src === 'es' ? 'en' : 'es'
+    const tr = await translate(srcText, src, dst)
+    if (!tr || !tr.text) { entry.other = 'error'; return }
+    const title = await translate(entry.title, src, dst)
+    const id = `${base}-${dst}`
+    const res = await createProduct({ text: tr.text, id, title: ((title && title.text) || entry.title).slice(0, 200), languageCode: dst === 'es' ? 'es-US' : 'en-US', allVoices: on('adAud') })
+    entry.other = res && res.ok ? 'done' : 'error'
+    if (!res || !res.ok) return
+    await postReview({ pid: id, state: entry.review === 'required' ? 'review' : 'published' })
+    if (on('adCards') || on('adStops')) await makeCardsAndStops(entry, tr.text, dst === 'es' ? 'es-US' : 'en-US')
   }
 
   // ---- events ----

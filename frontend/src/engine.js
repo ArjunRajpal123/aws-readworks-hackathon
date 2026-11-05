@@ -7,7 +7,7 @@ import { addPipelineMode, ensureSibling } from './pipeline_mode.js'
 import { createInfo } from './info.js'
 import { createFamily } from './family.js'
 import { addWords } from './store.js'
-import { byBand, byPid, byMode, modeFor, MODES, CARDS, hydrateContent, hydrateBandModes, loadMode, hasMode } from './content.js'
+import { byBand, byPid, byMode, modeFor, MODES, CARDS, hydrateContent, hydrateBandModes, loadMode, hasMode, titleOf } from './content.js'
 import { art } from './art.js'
 import { getProfile, setProfile, addSession, setSessionQuiz, upNext, bandOf, hydratePeople } from './people.js'
 import { createNext } from './next.js'
@@ -52,7 +52,8 @@ function showResume(){const p=savedPos(),b=document.getElementById('resumeBar');
  document.getElementById('resumeMsg').textContent=t('resumeMsg',Math.round(100*p.i/tokens.length));document.getElementById('resumeGo').textContent=t('resumeBtn');document.getElementById('resumeNo').textContent=t('resumeNo');b.dataset.i=p.i;b.hidden=false}
 // Voices students can choose (Amazon Polly neural). A passage's soundAlong record lists one track per voice; if the chosen voice has no track yet, the default track plays and the page says so.
 const VOICES={'en-US':[['Danielle','F'],['Stephen','M']],'es-US':[['Lupe','F'],['Pedro','M']]};
-const voiceLang=()=>mode&&(mode.rwf||mode.gen)?'en-US':(mode&&mode.lang==='es-US'?'es-US':'en-US');
+// The audio id's -en/-es suffix names its language; otherwise the mode's own language.
+const voiceLang=()=>{if(!mode)return 'en-US';const m=/-(en|es)$/.exec(aid());return (m?m[1]==='es':mode.lang==='es-US')?'es-US':'en-US'};
 function curVoice(){const L=voiceLang();let v=null;try{v=localStorage.getItem('ws-voice-'+L)}catch(e){}return VOICES[L].some(x=>x[0]===v)?v:VOICES[L][0][0]}
 function fillVoice(){const sel=$('#voice');if(!sel)return;const L=voiceLang();sel.innerHTML=VOICES[L].map(([n,g])=>`<option value="${n}">${n} (${t(g==='F'?'voiceF':'voiceM')})</option>`).join('');sel.value=curVoice()}
 function updateViewTabs(){const has=!!(mode&&mode.questions);$('#viewTabs').hidden=!has;if(has)$('#vtQn').textContent='('+mode.questions.length+')'}
@@ -339,7 +340,7 @@ function applyProfile(p){updateProfBtn();updateNext();
  else if(p.role==='teacher'){setFam(true);fam.show({tab:'teacher',cls:p.te.cls,stu:null})}
  else if(document.body.classList.contains('fam'))fam.show({})}
 function fillPassages(){const sel=$('#passageSel');if(!sel)return;const es=uiLang==='es';
- sel.innerHTML=byBand(B()).map(p=>`<option value="${p.modes.en}">${p.title} · ${es?(/^\d+$/.test(p.grade)?'Grado ':'Grados '):(/^\d+$/.test(p.grade)?'Grade ':'Grades ')}${p.grade}${p.lexile?' · '+p.lexile:''}</option>`).join('');
+ sel.innerHTML=byBand(B()).map(p=>`<option value="${p.modes.en}">${titleOf(p,es)} · ${es?(/^\d+$/.test(p.grade)?'Grado ':'Grados '):(/^\d+$/.test(p.grade)?'Grade ':'Grades ')}${p.grade}${p.lexile?' · '+p.lexile:''}</option>`).join('');
  const ce=curEntry();if(ce)sel.value=ce.modes.en}
 let admin=null;
 function navActive(){const a=document.body.classList.contains('admin'),f=document.body.classList.contains('fam');[['#navContent',!a&&!f],['#famBtn',f],['#adminBtn',a]].forEach(([q,on])=>{const b=$(q);if(!b)return;b.classList.toggle('on',on);on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')})}

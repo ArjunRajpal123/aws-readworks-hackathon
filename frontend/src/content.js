@@ -96,3 +96,23 @@ export function stepUp(pid) {
 }
 
 export const hasMode = id => modeById.has(id)
+
+// ---- language: each catalog entry carries es: {title, vocab:[{w, def, ex, en}]}
+// (lambda/scripts/localize_content.py). Words are stored in English (the `en`
+// key of a Spanish vocab item) and shown in whichever language is active.
+export const titleOf = (e, es) => (es && e.es && e.es.title) || e.title
+export function vocabWord(w, es) {
+  const lw = String(w).toLowerCase()
+  for (const e of CATALOG) {
+    const esv = (e.es && e.es.vocab) || []
+    let v = e.vocab.find(x => x.w.toLowerCase() === lw)
+    let s = v ? esv.find(x => x.en === v.w) : esv.find(x => x.w.toLowerCase() === lw)
+    if (!v && s) v = e.vocab.find(x => x.w === s.en)
+    if (!v && !s) continue
+    const key = v ? v.w : s.w
+    const shown = es && s ? s : v || s
+    return { w: shown.w, def: shown.def, ex: shown.ex, title: titleOf(e, es), key, e }
+  }
+  return null
+}
+export const wordLabel = (w, es) => { const v = vocabWord(w, es); return v ? v.w : w }

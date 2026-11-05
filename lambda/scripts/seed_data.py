@@ -12,7 +12,9 @@ Run against the deployed table (resolve the name from the storage stack):
     uv run --with boto3 python lambda/scripts/seed_data.py --apply
     uv run --with boto3 python lambda/scripts/seed_data.py --apply --extra   # + a second school
 
-Without --apply it prints what it would write (dry run).
+Without --apply it prints what it would write (dry run). Session ids are
+stable (seed-<student>-<n>); --reset first deletes the seeded students'
+existing history, e.g. rows left by older versions of this script.
 """
 from __future__ import annotations
 
@@ -30,9 +32,10 @@ from common import data_store  # noqa: E402
 
 DEFAULT_STACK = "rg-readworks-bb-storage"
 
-# Mirrors frontend/src/people.js seed cast. Band -> a few stable catalog pids
-# the sample history points at (built-in b-* passages always resolve; g-*
-# ones resolve when that grade passage ships. byPid skips any that don't.)
+# Mirrors frontend/src/people.js seed cast. The sample history reads passages
+# and vocab words from the seeded catalog (catalog#index, seed_content.py), so
+# every session points at a real passage and every word has a card in both
+# English and Spanish. Seed content first.
 CLASSES = [
     {"id": "c2", "name": "Room 4", "grade": 2, "band": "k2", "teacher": "t-rivera"},
     {"id": "c4", "name": "Room 12", "grade": 4, "band": "35", "teacher": "t-okafor"},
@@ -93,12 +96,6 @@ EXTRA_PARENTS = [
     {"id": "p-tanaka", "name": "Yuki Tanaka", "kids": ["s-kenji"]},
 ]
 
-BAND_PIDS = {
-    "k2": ["b-k2", "g-k1", "g-k2", "g-11", "g-12"],
-    "35": ["b-35", "rwf-e1", "rwf-e3", "g-31", "g-41", "g-51"],
-    "68": ["g-61", "g-71", "g-81", "g-62", "g-72"],
-    "912": ["b-912", "g-91", "g-101", "g-111", "g-121"],
-}
 ARCH = {
     "steady": {"n": (7, 9), "ratio": (0.9, 1.35), "q": (68, 90), "gap": (0, 3)},
     "strong": {"n": (9, 11), "ratio": (0.95, 1.25), "q": (85, 100), "gap": (0, 2)},
@@ -107,26 +104,29 @@ ARCH = {
     "inactive": {"n": (3, 4), "ratio": (0.9, 1.3), "q": (60, 85), "gap": (12, 20)},
 }
 DAY = 86400.0
-WORDS = {
-    "k2": ["habitat", "shelter", "burrow", "predator", "season"],
-    "35": ["immigration", "citizen", "journey", "arrive", "custom"],
-    "68": ["evidence", "argument", "source", "claim", "context"],
-    "912": ["perspective", "inference", "theme", "rhetoric", "analyze"],
-}
-
-
 def band_of(cls_id, classes):
     c = next((c for c in classes if c["id"] == cls_id), None)
     return c["band"] if c else "35"
 
 
-def sample_history(st, classes):
+def load_catalog():
+    cat = data_store.get_raw("catalog", "index")
+    if not cat or not cat.get("entries"):
+        sys.exit("catalog#index is empty: run seed_content.py first")
+    by_band = {}
+    for e in cat["entries"]:
+        by_band.setdefault(e["band"], []).append(e)
+    return by_band
+
+
+def sample_history(st, classes, catalog):
     """Deterministic per-student sessions + assignments + practice (seeded by id)."""
     rng = random.Random(st["id"])
     a = ARCH[st["arch"]]
     band = band_of(st["cls"], classes)
-    pids = BAND_PIDS[band]
-    words = WORDS[band]
+    entries = sorted(catalog.get(band, []), key=lambda e: e["pid"])
+    pids = [e["pid"] for e in entries]
+    vocab = {e["pid"]: [v["w"] for v in e.get("vocab", [])] for e in entries}
     n = rng.randint(*a["n"])
     ago = rng.uniform(*a["gap"])
     sessions, practiced = [], {}
@@ -134,11 +134,13 @@ def sample_history(st, classes):
     rng.shuffle(order)
     for i in range(n):
         pid = order[i % len(order)]
+        sid = f"seed-{st['id']}-{i}"
         at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - ago * DAY))
+        words = vocab[pid]
         got = rng.sample(words, k=rng.randint(0, min(3, len(words))))
         q = round(rng.uniform(*a["q"]))
         stars = 1 + (1 if len(got) >= 2 else 0) + (1 if q >= 80 else 0)
-        sessions.append({"student": st["id"], "pid": pid, "at": at, "minutes": round(rng.uniform(1, 6), 1),
+        sessions.append({"_id": sid, "student": st["id"], "pid": pid, "at": at, "minutes": round(rng.uniform(1, 6), 1),
                          "words": got, "q": q, "source": rng.choice(["assigned", "independent"]), "stars": stars})
         for w in got:
             p = practiced.setdefault(w, {"student": st["id"], "word": w, "k": 0, "m": 0})
@@ -156,13 +158,28 @@ def sample_history(st, classes):
     return sessions, assigns, list(practiced.values())
 
 
-def seed(table_name, extra, apply):
+def reset(student_ids, apply):
+    """Drop existing sample history (sessions, practice, assignments) for these students."""
+    n = 0
+    for kind, field in (("session", "student"), ("practice", "student"), ("assign", "to")):
+        for item in data_store.list_type(kind):
+            if item.get(field) in student_ids:
+                n += 1
+                if apply:
+                    data_store.delete(kind, item["id"])
+    print(f"  reset    {n} history items")
+
+
+def seed(table_name, extra, apply, do_reset=False):
     data_store._table = boto3.resource("dynamodb").Table(table_name)
     classes = CLASSES + (EXTRA_CLASSES if extra else [])
     teachers = TEACHERS + (EXTRA_TEACHERS if extra else [])
     students = STUDENTS + (EXTRA_STUDENTS if extra else [])
     parents = PARENTS + (EXTRA_PARENTS if extra else [])
 
+    catalog = load_catalog()
+    if do_reset:
+        reset({st["id"] for st in students}, apply)
     counts = {"class": 0, "teacher": 0, "student": 0, "parent": 0, "session": 0, "assign": 0, "practice": 0}
 
     def w(kind, item_id, body):
@@ -178,9 +195,9 @@ def seed(table_name, extra, apply):
         w("parent", p["id"], {k: v for k, v in p.items() if k != "id"})
     for st in students:
         w("student", st["id"], {k: v for k, v in st.items() if k != "id"})
-        sessions, assigns, practice = sample_history(st, classes)
+        sessions, assigns, practice = sample_history(st, classes, catalog)
         for s in sessions:
-            w("session", f"{s['student']}#{s['at']}#{data_store.new_id()}", s)
+            w("session", s.pop("_id"), s)
         for a in assigns:
             w("assign", f"seed-{st['id']}", a)
         for p in practice:
@@ -197,6 +214,8 @@ def main(argv=None):
     ap.add_argument("--stack", default=DEFAULT_STACK)
     ap.add_argument("--region", default="us-west-2")
     ap.add_argument("--extra", action="store_true", help="also seed a second school")
+    ap.add_argument("--reset", action="store_true",
+                    help="first delete the seeded students' existing sessions/practice/assignments")
     ap.add_argument("--apply", action="store_true", help="write to DynamoDB (default: dry run)")
     args = ap.parse_args(argv)
 
@@ -207,7 +226,7 @@ def main(argv=None):
         outs = cfn.describe_stacks(StackName=args.stack)["Stacks"][0]["Outputs"]
         table = next(o["OutputValue"] for o in outs if o["OutputKey"] == "ReferenceTableName")
     os.environ["TTS_REFERENCE_TABLE"] = table
-    seed(table, args.extra, args.apply)
+    seed(table, args.extra, args.apply, args.reset)
     return 0
 
 
