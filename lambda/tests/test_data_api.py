@@ -112,6 +112,23 @@ def test_review_state(table):
     assert call("POST", "review", {"pid": "35", "state": "bogus"})[0] == 400
 
 
+def test_translate(table, monkeypatch):
+    from common import translate as tr
+    monkeypatch.setattr(tr, "_client", type("C", (), {
+        "translate_text": lambda self, **kw: {"TranslatedText": "[es] " + kw["Text"]}})())
+    s, b = call("POST", "translate", {"text": "Hello world", "target": "es"})
+    assert s == 200 and b["text"] == "[es] Hello world"
+    assert call("POST", "translate", {"text": "  "})[0] == 400
+
+
+def test_translate_same_language_is_passthrough(table, monkeypatch):
+    from common import translate as tr
+    # en->en should not call the service at all.
+    monkeypatch.setattr(tr, "_client", None)
+    s, b = call("POST", "translate", {"text": "Hola", "source": "es", "target": "es"})
+    assert s == 200 and b["text"] == "Hola"
+
+
 def test_unknown_resource_404(table):
     assert call("GET", "nope")[0] == 404
     assert call("PUT", "roster")[0] == 404  # method not routed

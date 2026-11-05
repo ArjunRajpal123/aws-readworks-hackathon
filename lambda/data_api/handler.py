@@ -28,6 +28,10 @@ segment; the method decides the action.
     GET  /api/v1/data/review?pid=<id>
     POST /api/v1/data/review  {pid, state, by?, notes?}
 
+  Translate (Spanish version): translates text so the caller can then POST it
+  to /text-to-speech as a normal passage (same pipeline, es-US voices).
+    POST /api/v1/data/translate  {text, source?, target?}  -> {text}
+
 CORS and preflight are handled by the HTTP API (infra/cdk ApiStack).
 """
 
@@ -35,6 +39,7 @@ import json
 
 from common import data_store as db
 from common.responses import error_response, json_response
+from common.translate import translate_text
 
 
 def _resource(event):
@@ -209,8 +214,21 @@ def post_review(event):
     return json_response(201, rec)
 
 
+# ---- translate ------------------------------------------------------------
+def post_translate(event):
+    b = _body(event)
+    if b is None or not b.get("text") or not str(b["text"]).strip():
+        return error_response(400, "text is required")
+    try:
+        out = translate_text(str(b["text"]), b.get("source", "en"), b.get("target", "es"))
+    except ValueError as exc:
+        return error_response(400, str(exc))
+    return json_response(200, {"text": out})
+
+
 ROUTES = {
     ("roster", "GET"): get_roster,
+    ("translate", "POST"): post_translate,
     ("sessions", "GET"): get_sessions,
     ("sessions", "POST"): post_session,
     ("assignments", "GET"): get_assignments,

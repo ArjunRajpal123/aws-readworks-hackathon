@@ -144,6 +144,14 @@ export class ApiStack extends cdk.Stack {
     });
     referenceTable.grantReadWriteData(dataFn);
     referenceTable.encryptionKey?.grantEncryptDecrypt(dataFn);
+    // The /translate resource turns an English passage into Spanish text
+    // (Amazon Translate has no resource-level permissions, only "*").
+    dataFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["translate:TranslateText"],
+        resources: ["*"],
+      })
+    );
 
     // grantReadWrite/grantRead also grant the needed KMS actions on the
     // bucket's and table's customer-managed keys.

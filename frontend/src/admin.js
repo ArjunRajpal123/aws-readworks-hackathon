@@ -4,6 +4,7 @@
 // the right is the shape the team's pipeline would receive, and the queue progress is simulated.
 import { detect, aiSuggest } from './assist.js'
 import { createProduct } from './api.js'
+import { postReview, translate } from './data_api.js'
 import { RW_KNOWN } from './vocab_db.js'
 import { loadRatings, clearRatings } from './rate.js'
 
@@ -438,6 +439,14 @@ export function initAdmin(t) {
   // Pasted text, or text read from a single file, can go to POST /api/v1/text-to-speech; the other methods have no API yet.
   const apiText = () => (method() === 'paste' || (method() === 'file' && files.length <= 1) ? sourceText().trim() : '')
 
+  // Record the review state for a freshly generated passage: "review" when a
+  // reviewer must sign off, "published" when the admin chose auto-publish.
+  async function publishReview(e) {
+    if (!e.pid) return
+    const state = e.review === 'required' ? 'review' : 'published'
+    await postReview({ pid: e.pid, state, by: val('adRevers') || undefined, notes: val('adNotes') || undefined })
+  }
+
   async function submit() {
     if (missing().length) return
     const p = payload()
@@ -464,13 +473,30 @@ export function initAdmin(t) {
 
     // Voices come from etl/voices.json on the server; "audio" on means every configured voice, as the request shows.
     // The pipeline runs synchronously, so the 201 response is the real result -- the queue reflects it, nothing is simulated.
-    const res = await createProduct({ text, title: title.slice(0, 200), languageCode: p.passage.language || 'en-US', allVoices: on('adAud') })
+    const srcLang = p.passage.language || 'en-US'
+    const res = await createProduct({ text, title: title.slice(0, 200), languageCode: srcLang, allVoices: on('adAud') })
     const e = queue.find(x => x.id === entry.id)
     if (!e) return // removed while it was running
     e.api = false
-    if (res && res.ok) { e.pid = res.record.id; e.at = e.stages.length; e.state = e.review === 'required' ? 'review' : 'done'; await publishReview(e) }
-    else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
+    if (res && res.ok) {
+      e.pid = res.record.id; e.at = e.stages.length; e.state = e.review === 'required' ? 'review' : 'done'
+      await publishReview(e)
+      // Spanish version: translate the English text and generate the es sibling (<id>-es, es-US voices).
+      if (on('adTrans') && srcLang.startsWith('en')) { e.es = 'pending'; save(); renderQueue(); await makeSpanish(e, text, res.record.id) }
+    } else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
     save(); renderQueue()
+  }
+
+  // Translate the English passage and generate its Spanish sibling through the
+  // same pipeline (real Amazon Translate + Polly es-US voices). Best-effort:
+  // a failure is noted on the row but does not fail the English passage.
+  async function makeSpanish(entry, enText, enId) {
+    const tr = await translate(enText, 'en', 'es')
+    if (!tr || !tr.text) { entry.es = 'error'; return }
+    const esId = /-en$/.test(enId) ? enId.replace(/-en$/, '-es') : `${enId}-es`
+    const res = await createProduct({ text: tr.text, id: esId, title: (entry.title + ' (ES)').slice(0, 200), languageCode: 'es-US', allVoices: on('adAud') })
+    entry.es = res && res.ok ? 'done' : 'error'
+    if (res && res.ok) await postReview({ pid: esId, state: entry.review === 'required' ? 'review' : 'published' })
   }
 
   // ---- events ----
@@ -523,11 +549,14 @@ export function initAdmin(t) {
     setTimeout(() => { b.textContent = t('adCopy') }, 1500)
   })
   $('#adClear').addEventListener('click', () => { queue = []; save(); render() })
-  $('#adQueue').addEventListener('click', e => {
+  $('#adQueue').addEventListener('click', async e => {
     const b = e.target.closest('button[data-act]'); if (!b) return
     const i = queue.findIndex(x => x.id === b.dataset.id); if (i < 0) return
-    if (b.dataset.act === 'remove') queue.splice(i, 1)
-    else { queue[i].state = 'done' }
+    if (b.dataset.act === 'remove') { queue.splice(i, 1); save(); renderQueue(); return }
+    // Approve: record the real publish decision, then mark the row done.
+    const entry = queue[i]
+    if (entry.pid) await postReview({ pid: entry.pid, state: 'published', by: val('adRevers') || undefined })
+    entry.state = 'done'; entry.vis = 'published'
     save(); renderQueue()
   })
   // sub-options follow their parent toggle

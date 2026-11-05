@@ -47,3 +47,6 @@ export const postRating = rec => req('POST', 'ratings', { body: rec })
 // review / publish state
 export const getReview = pid => req('GET', 'review', { query: { pid } })
 export const postReview = rec => req('POST', 'review', { body: rec })
+
+// translate (Spanish version): returns {text} or null
+export const translate = (text, source = 'en', target = 'es') => req('POST', 'translate', { body: { text, source, target } })
