@@ -37,7 +37,7 @@ export function createFamily({ t, getLang, getProfile, onRead }) {
     const a = tip.act
     let btn = ''
     if (a && a.type === 'practice') btn = '<button type="button" class="chipbtn" data-practice="' + esc(a.words.join('|')) + '" data-stu="' + (stu ? stu.id : '') + '">' + esc(t('fPractice')) + '</button>'
-    if (a && a.type === 'assign' && a.pid) btn = '<button type="button" class="chipbtn" data-assign="' + a.pid + '" data-stu="' + (stu ? stu.id : '') + '">' + esc(t('fAssignThis', byPid(a.pid).title)) + '</button>'
+    if (a && a.type === 'assign' && a.pid && byPid(a.pid)) btn = '<button type="button" class="chipbtn" data-assign="' + a.pid + '" data-stu="' + (stu ? stu.id : '') + '">' + esc(t('fAssignThis', byPid(a.pid).title)) + '</button>'
     return '<li class="fm-tip"><span class="fm-bulb" aria-hidden="true">💡</span><div><p>' + esc(tipText(role, tip, stu)) + '</p>' + btn + '</div></li>'
   }
 
@@ -128,7 +128,7 @@ export function createFamily({ t, getLang, getProfile, onRead }) {
       + '<section class="fm-card"><h3>' + esc(t('fClassWords')) + '</h3><p class="fm-sub">' + esc(t('fClassWordsSub')) + '</p>'
       + (c.hardWords.length ? '<div class="fm-chips">' + c.hardWords.map(w => '<button type="button" class="fm-wchip hard" data-word="' + esc(w.w) + '" data-stu="">' + esc(w.w) + ' <b>' + w.n + '</b></button>').join('') + '</div><div class="fm-btns"><button type="button" class="chipbtn" data-practice="' + esc(c.hardWords.map(w => w.w).join('|')) + '" data-stu="">' + esc(t('fWarmup')) + '</button></div>' : '<p class="fm-note">' + esc(t('fNoWords')) + '</p>') + '</section>'
       + '<section class="fm-card"><h3>' + esc(t('fPassageTable')) + '</h3><div class="fm-scroll"><table class="fm-table"><thead><tr><th scope="col">' + esc(t('fPassage')) + '</th><th scope="col">' + esc(t('fReads')) + '</th><th scope="col">' + esc(t('fAvgTime')) + '</th><th scope="col">' + esc(t('fQuestions')) + '</th><th scope="col"><span class="fm-sr">' + esc(t('fAssign')) + '</span></th></tr></thead><tbody>'
-      + c.passageRows.map(p => { const e = byPid(p.pid); return '<tr><th scope="row">' + esc(e.title) + '<span class="fm-sub"> · ' + esc(gradeLbl(e)) + '</span></th><td>' + p.reads + '</td><td>' + esc(fmtMin(p.minutes)) + '</td><td>' + (p.q == null ? '—' : p.q + '%') + '</td><td><button type="button" class="chipbtn" data-assign="' + p.pid + '" data-cls="' + cls.id + '">' + esc(t('fAssignShort')) + '</button></td></tr>' }).join('') + '</tbody></table></div></section>'
+      + c.passageRows.map(p => { const e = byPid(p.pid); if (!e) return ''; return '<tr><th scope="row">' + esc(e.title) + '<span class="fm-sub"> · ' + esc(gradeLbl(e)) + '</span></th><td>' + p.reads + '</td><td>' + esc(fmtMin(p.minutes)) + '</td><td>' + (p.q == null ? '—' : p.q + '%') + '</td><td><button type="button" class="chipbtn" data-assign="' + p.pid + '" data-cls="' + cls.id + '">' + esc(t('fAssignShort')) + '</button></td></tr>' }).join('') + '</tbody></table></div></section>'
   }
   function teacherBody() {
     const cs = myClasses()

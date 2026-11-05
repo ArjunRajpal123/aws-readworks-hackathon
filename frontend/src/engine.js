@@ -5,7 +5,7 @@ import { FULL_LIST } from './data_full.js'
 import { createQuestions } from './questions.js'
 import { createDialogs } from './rate.js'
 import { createTour } from './tour.js'
-import { addPipelineMode } from './pipeline_mode.js'
+import { addPipelineMode, ensureSibling } from './pipeline_mode.js'
 import { createInfo } from './info.js'
 import { createFamily } from './family.js'
 import { addWords } from './store.js'
@@ -395,9 +395,14 @@ $('#back5').onclick=()=>skip(-5);$('#fwd5').onclick=()=>skip(5);
 document.addEventListener('keydown',e=>{if(e.target.closest('textarea,input,select'))return;if(e.key==='ArrowLeft'){e.shiftKey?prevSent():skip(-5)}else if(e.key==='ArrowRight'){e.shiftKey?nextSent():skip(5)}});
 $('#gameBtn').onclick=()=>{gameOn=!gameOn;syncGame();try{localStorage.setItem('ws-game',gameOn?'1':'0')}catch(e){}load(mode.id)};
 function syncGame(){const b=$('#gameBtn');b.textContent=t('gameBtn',gameOn);b.title=t('gameTitle');b.classList.toggle('off',!gameOn);b.setAttribute('aria-pressed',gameOn)}syncGame();
-function syncLang(){const has=curEntry()?true:MODES.some(x=>x.id===B()+'es');document.querySelectorAll('.lng').forEach(b=>{const on=(b.dataset.l==='es')===(mode.lang==='es-US');b.setAttribute('aria-pressed',on);if(b.dataset.l==='es'){b.disabled=!has;b.title=has?'':'No Spanish text for this passage yet'}})}
+function syncLang(){const has=(mode&&mode.pipeline)?!!(mode.sib||mode.sibId):(curEntry()?true:MODES.some(x=>x.id===B()+'es'));document.querySelectorAll('.lng').forEach(b=>{const on=(b.dataset.l==='es')===(mode.lang==='es-US');b.setAttribute('aria-pressed',on);if(b.dataset.l==='es'){b.disabled=!has;b.title=has?'':'No Spanish text for this passage yet'}})}
 $('#passageSel').onchange=()=>{const e=byMode($('#passageSel').value);if(e)load(modeFor(e,uiLang==='es'))};
-document.querySelectorAll('.lng').forEach(b=>b.onclick=()=>{uiLang=b.dataset.l;const e=curEntry();load(e?modeFor(e,uiLang==='es'):(uiLang==='es'?B()+'es':B()))});
+document.querySelectorAll('.lng').forEach(b=>b.onclick=async()=>{uiLang=b.dataset.l;const e=curEntry();
+ // Pipeline passage: swap to the other language's text when the chosen language differs.
+ if(mode&&mode.pipeline){const wantEs=uiLang==='es',isEs=mode.lang==='es-US';
+  if(wantEs!==isEs){const sib=await ensureSibling(MODES,mode);if(sib){load(sib);return}}
+  syncLang();applyStatic();return}
+ load(e?modeFor(e,uiLang==='es'):(uiLang==='es'?B()+'es':B()))});
 $('#stopsBtn').onclick=()=>{stopsOn=!stopsOn;const b=$('#stopsBtn');b.textContent=t('stopsBtn',stopsOn);b.classList.toggle('off',!stopsOn);b.setAttribute('aria-pressed',stopsOn);load(mode.id)};
 $('#voiceBtn').innerHTML=SPK;
 $('#voiceBtn').onclick=()=>{voiceOn=!voiceOn;const b=$('#voiceBtn');b.innerHTML=voiceOn?SPK:MUTE;b.setAttribute('aria-pressed',voiceOn);b.setAttribute('aria-label',voiceOn?t('voiceOn'):t('voiceOff'));if(!voiceOn&&synth)synth.cancel();Object.values(SA).forEach(a=>{if(a)a.audio.muted=!voiceOn})};
@@ -433,7 +438,12 @@ pfd=createProfile({t,onPick:applyProfile});
 $('#nextBtn').onclick=()=>nxt.open();$('#profBtn').onclick=()=>pfd.open();
 addEventListener('sa-people',()=>{updateNext();updateProfBtn()});
 $('#vtP').onclick=()=>setView('p');$('#vtQ').onclick=()=>setView('q');$('#rateBtn').onclick=()=>dlg.openRate();
-$('#voice').onchange=()=>{const L=voiceLang();try{localStorage.setItem('ws-voice-'+L,$('#voice').value)}catch(e){}stopAll();qs&&qs.stop();SA[aid()]=undefined;loadAudio(aid());showSource()};
+$('#voice').onchange=async()=>{const L=voiceLang();try{localStorage.setItem('ws-voice-'+L,$('#voice').value)}catch(e){}
+ // Remember where we were and whether we were playing, then reload the chosen
+ // voice's track and resume from the same word so the new voice takes over.
+ const at=cur>=0?cur:resumeAt;const was=playing;stopAll();qs&&qs.stop();
+ SA[aid()]=undefined;await loadAudio(aid());showSource();
+ if(was)playFrom(at||0)};
 const tour=createTour({t,view:()=>document.body.classList.contains('admin')?'admin':document.body.classList.contains('fam')?'fam':'student',before:()=>{if(!document.body.classList.contains('admin')&&!document.body.classList.contains('fam')){setOpts(true);setView('p');setSide(false);stopAll()}}});
 $('#howBtn').onclick=()=>tour.start();
 $('#optBtn').onclick=()=>setOpts(document.body.classList.contains('opts-closed'));
