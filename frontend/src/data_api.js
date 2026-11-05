@@ -60,6 +60,9 @@ export const postPractice = (student, word, knew) => req('POST', 'practice', { b
 export const getRatings = () => req('GET', 'ratings')
 export const postRating = rec => req('POST', 'ratings', { body: rec })
 
+// approved generated passages for the player's passage list -> {entries: [...]}
+export const getPublished = () => req('GET', 'published')
+
 // review / publish state
 export const getReview = pid => req('GET', 'review', { query: { pid } })
 export const postReview = rec => req('POST', 'review', { body: rec })
@@ -67,6 +70,18 @@ export const postReview = rec => req('POST', 'review', { body: rec })
 // translate (Spanish version): returns {text} or null
 export const translate = (text, source = 'en', target = 'es') => req('POST', 'translate', { body: { text, source, target } })
 
+// autofill passage metadata (Bedrock): title, grade, band, genre, topic, notes,
+// reviewer attribution, workflow defaults -> {fields}
+export const genAutofill = (text, lang) => req('POST', 'autofill', { body: { text, lang } })
 // generation (Bedrock): vocabulary cards and Word Stops drafted from a passage
 export const genCards = (text, lang = 'en') => req('POST', 'cards', { body: { text, lang } })
 export const genStops = (text, vocab, lang = 'en') => req('POST', 'stops', { body: { text, vocab, lang } })
+// localize English cards to the sibling language, matched to the translated
+// passage surface form -> {cards}. Used for the Spanish sibling's vocab.
+export const localizeCards = (text, cards, lang = 'es') => req('POST', 'localize', { body: { text, cards, lang } })
+// per-passage vocab cards the player underlines: save / read by passage id
+export const putPassageCards = (pid, cards) => req('POST', 'pcards', { body: { pid, cards } })
+export const getPassageCards = pid => req('GET', 'pcards', { query: { pid } })
+// delete a passage and ALL its artifacts (both -en/-es siblings): product
+// records, S3 audio, vocab cards and review state. id may be base or a sibling.
+export const deletePassage = id => req('DELETE', 'passage', { query: { id } })

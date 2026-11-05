@@ -6,7 +6,7 @@
 // existing render paths keep their synchronous accessors; writes go to the cloud and update the
 // cache optimistically. The ROSTER_SEED / per-student sample history below are the local-dev
 // fallback (no API configured) and the source the post-deploy seeding script loads into DynamoDB.
-import { CATALOG, byPid, byBand, gradeNum, stepUp } from './content.js'
+import { CATALOG, byPid, byBand, gradeNum, stepUp, vocabWord } from './content.js'
 import {
   hasDataApi, getRoster, getSessions, getAssignments, getPractice,
   postSession, postAssignment, deleteAssignment, postPractice,
@@ -244,7 +244,9 @@ export function wordStats(studentId) {
   const map = new Map(), pr = practiceMap(studentId)
   for (const s of sessionsFor(studentId)) {
     const e = byPid(s.pid); if (!e) continue
-    for (const w of s.words) {
+    for (const sw of s.words) {
+      // A word read in Spanish counts toward the same English word.
+      const found = vocabWord(sw, false), w = found ? found.key : sw
       const v = e.vocab.find(x => x.w.toLowerCase() === w.toLowerCase())
       const k = w.toLowerCase(), cur = map.get(k) || { w, def: v ? v.def : '', ex: v ? v.ex : '', count: 0, last: s.at, pids: [] }
       cur.count++; if (s.at > cur.last) cur.last = s.at; if (!cur.pids.includes(s.pid)) cur.pids.push(s.pid); map.set(k, cur)
@@ -294,17 +296,17 @@ export function studentTips(studentId, who) {
   const st = student(studentId), m = summary(studentId), tips = [], band = st ? bandOf(st) : 'k2'
   const next = (() => { const read = new Set(m.sessions.map(s => s.pid)); return byBand(band).find(e => !read.has(e.pid)) || byBand(band)[0] })()
   if (m.due.length) tips.push({ k: 'words', a: [m.due.slice(0, 4).map(w => w.w)], act: { type: 'practice', words: m.due.slice(0, 6).map(w => w.w) } })
-  if (m.lastDays != null && m.lastDays >= 10) tips.push({ k: 'inactive', a: [m.lastDays, next && next.title], act: next && { type: 'assign', pid: next.pid } })
+  if (m.lastDays != null && m.lastDays >= 10) tips.push({ k: 'inactive', a: [m.lastDays, next], act: next && { type: 'assign', pid: next.pid } })
   else if (m.ratio != null && m.ratio < 0.65 && m.q != null && m.q < 70) tips.push({ k: 'skim', a: [], act: next && { type: 'assign', pid: next.pid } })
   else if (m.ratio != null && m.ratio > 1.5 && m.q != null && m.q < 65) {
     const lower = CATALOG.filter(e => gradeNum(e) < gradeNum(byBand(band)[0] || e)).sort((a, b) => gradeNum(b) - gradeNum(a))[0]
-    tips.push({ k: 'slow', a: [lower ? lower.title : null], act: lower && { type: 'assign', pid: lower.pid } })
+    tips.push({ k: 'slow', a: [lower || null], act: lower && { type: 'assign', pid: lower.pid } })
   } else if (m.q != null && m.q >= 85 && m.sessions.length >= 4) {
     const up = byBand(band).length ? stepUp(m.sessions[0].pid) : null
-    tips.push({ k: 'strong', a: [up && up.title], act: up && { type: 'assign', pid: up.pid } })
+    tips.push({ k: 'strong', a: [up], act: up && { type: 'assign', pid: up.pid } })
   }
   if (m.sessions.length && m.wordsCovered / Math.max(1, m.sessions.length) < 1.5 && m.lastDays != null && m.lastDays < 10) tips.push({ k: 'fewwords', a: [] })
-  if (who === 'parent' && m.sessions.length) { const e = byPid(m.sessions[0].pid); if (e) tips.push({ k: 'talk', a: [e.title] }) }
+  if (who === 'parent' && m.sessions.length) { const e = byPid(m.sessions[0].pid); if (e) tips.push({ k: 'talk', a: [e] }) }
   if (!tips.length) tips.push({ k: 'good', a: [] })
   return tips
 }
@@ -314,7 +316,7 @@ export function classTips(cls) {
   if (c.hardWords.length) tips.push({ k: 'cwords', a: [c.hardWords.slice(0, 4).map(w => w.w)] })
   if (quiet.length) tips.push({ k: 'cquiet', a: [quiet.length, quiet.slice(0, 3).map(x => firstName(x.s))] })
   const low = c.passageRows.filter(p => p.q != null && p.q < 65 && p.reads >= 2).sort((a, b) => a.q - b.q)[0]
-  if (low) tips.push({ k: 'clow', a: [byPid(low.pid).title, low.q] })
+  if (low) tips.push({ k: 'clow', a: [byPid(low.pid), low.q] })
   const skim = c.sums.filter(x => x.m.ratio != null && x.m.ratio < 0.65 && x.m.q != null && x.m.q < 70)
   if (skim.length) tips.push({ k: 'cskim', a: [skim.length, skim.slice(0, 3).map(x => firstName(x.s))] })
   const strong = c.sums.filter(x => x.m.q != null && x.m.q >= 85 && x.m.sessions.length >= 4)

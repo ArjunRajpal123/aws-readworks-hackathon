@@ -173,6 +173,115 @@ def test_cards_and_stops_require_text(table):
     assert call("POST", "stops", {"vocab": ["x"]})[0] == 400
 
 
-def test_unknown_resource_404(table):
+def test_pcards_roundtrip(table):
+    # Save per-passage vocab cards, then read them back.
+    s, b = call("POST", "pcards", {"pid": "p-x-en", "cards": [
+        {"word": "glow", "def": "to shine", "ex": "The lights glow."},
+        {"word": "", "def": "dropped"},  # no word -> dropped
+    ]})
+    assert s == 201 and [c["word"] for c in b["cards"]] == ["glow"]
+    s, b = call("GET", "pcards", qs={"pid": "p-x-en"})
+    assert s == 200 and b["cards"][0]["word"] == "glow"
+
+
+def test_pcards_unknown_returns_empty(table):
+    s, b = call("GET", "pcards", qs={"pid": "nope"})
+    assert s == 200 and b["cards"] == []
+
+
+def test_localize_matches_passage(table, monkeypatch):
+    from common import generate as gen
+    reply = json.dumps([{"word": "brillan", "def": "dar luz", "ex": "Las luces brillan."}])
+    monkeypatch.setattr(gen, "_client", type("B", (), {"converse": lambda self, **kw: {
+        "output": {"message": {"content": [{"text": reply}]}}, "stopReason": "end_turn"}})())
+    s, b = call("POST", "localize", {
+        "text": "Las luces doradas brillan suavemente en la casa.",
+        "cards": [{"word": "glow", "def": "to shine"}], "lang": "es"})
+    assert s == 200 and [c["word"] for c in b["cards"]] == ["brillan"]
+
+
+class FakeS3:
+    def __init__(self):
+        self.deleted = []
+
+    def list_objects_v2(self, Bucket, Prefix, ContinuationToken=None):
+        # Pretend one object exists per prefix.
+        return {"Contents": [{"Key": Prefix.rstrip("/") + "/obj"}]}
+
+    def delete_objects(self, Bucket, Delete):
+        self.deleted += [o["Key"] for o in Delete["Objects"]]
+
+
+def test_delete_passage_removes_records_cards_review_and_s3(table, monkeypatch):
+    import os
+    monkeypatch.setenv("TTS_MEDIA_BUCKET", "test-bucket")
+    fake_s3 = FakeS3()
+    monkeypatch.setattr(h, "_s3", fake_s3)
+    monkeypatch.setattr(h, "_s3_client", lambda: fake_s3)
+    # Seed both siblings: product records (bare id), pcards and review (typed).
+    for pid in ("p-demo-en", "p-demo-es"):
+        table.items[pid] = {"id": pid, "lang": pid[-2:], "tracks": [{"voiceId": "Danielle"}]}
+        data_store.put("pcards", pid, {"pid": pid, "cards": [{"word": "x"}]})
+        data_store.put("review", pid, {"pid": pid, "state": "review"})
+
+    s, b = call("DELETE", "passage", qs={"id": "p-demo-en"})
+    assert s == 200
+    assert set(b["products"]) == {"p-demo-en", "p-demo-es"}
+    assert b["s3Objects"] == 4  # 2 prefixes x 2 siblings
+    # Everything is gone.
+    for pid in ("p-demo-en", "p-demo-es"):
+        assert pid not in table.items
+        assert data_store.get("pcards", pid) is None
+        assert data_store.get("review", pid) is None
+
+
+def test_delete_passage_accepts_base_or_sibling(table, monkeypatch):
+    monkeypatch.setenv("TTS_MEDIA_BUCKET", "test-bucket")
+    fake_s3 = FakeS3()
+    monkeypatch.setattr(h, "_s3", fake_s3)
+    monkeypatch.setattr(h, "_s3_client", lambda: fake_s3)
+    table.items["p-x-es"] = {"id": "p-x-es", "lang": "es", "tracks": [{"voiceId": "Lupe"}]}
+    # Pass the -es sibling; it should normalize to the base and still delete it.
+    s, b = call("DELETE", "passage", qs={"id": "p-x-es"})
+    assert s == 200 and "p-x-es" in b["products"]
+
+
+def test_delete_passage_404_when_nothing(table):
+    assert call("DELETE", "passage", qs={"id": "p-nope"})[0] == 404
+
+
+def test_delete_passage_requires_id(table):
+    assert call("DELETE", "passage")[0] == 400
+
+
+def test_autofill_returns_fields_and_defaults(table, monkeypatch):
+    from common import generate as gen
+    reply = json.dumps({"title": "Day of the Dead Altar", "language": "en-US",
+                        "gradeBand": "68", "grade": 6, "genre": "nonfiction",
+                        "topic": "Day of the Dead", "notes": "A traditional altar."})
+    monkeypatch.setattr(gen, "_client", type("B", (), {"converse": lambda self, **kw: {
+        "output": {"message": {"content": [{"text": reply}]}}, "stopReason": "end_turn"}})())
+    s, b = call("POST", "autofill", {"text": "Bright marigolds pave a fragrant path across the altar.", "lang": "en-US"})
+    assert s == 200
+    f = b["fields"]
+    assert f["title"] == "Day of the Dead Altar"
+    assert f["gradeBand"] == "68" and f["grade"] == "6" and f["genre"] == "nonfiction"
+    assert f["topic"] == "Day of the Dead"
+    # server-derived preferences
+    assert f["reviewer"].startswith("Created by")
+    assert f["spanishReviewer"].startswith("Created by")
+    assert f["afterApproval"] == "draft" and f["batchLabel"].startswith("ai-") and f["reviewBy"]
+
+
+def test_autofill_rejects_passage_about_title(table, monkeypatch):
+    from common import generate as gen
+    reply = json.dumps({"title": "Passage about bright", "topic": "marigolds", "genre": "fiction"})
+    monkeypatch.setattr(gen, "_client", type("B", (), {"converse": lambda self, **kw: {
+        "output": {"message": {"content": [{"text": reply}]}}, "stopReason": "end_turn"}})())
+    _, b = call("POST", "autofill", {"text": "Bright marigolds pave a path across the altar at night."})
+    # The lazy "Passage about ..." title is rejected; topic/genre still kept.
+    assert "title" not in b["fields"]
+    assert b["fields"]["topic"] == "marigolds"
+
     assert call("GET", "nope")[0] == 404
     assert call("PUT", "roster")[0] == 404  # method not routed

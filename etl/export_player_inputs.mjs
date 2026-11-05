@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // Export every passage and question the player shows into ETL input JSON, using
-// the ids the player fetches audio by (sa/product/<id>.soundAlong.json):
+// the ids the player fetches audio by (sa/product/<id>.soundAlong.json).
+// The passages come from the content export the cloud is seeded from
+// (frontend/scripts/export_content.mjs, then lambda/scripts/localize_content.py):
 //   demo passages     mode.id                 k2, k2es, 35, ...
 //   sentence sets     rws-<rw id>-<en|es>     rws-e1-en, rws-e1-es, ...   (data_rw.js)
 //   full passages     rwf-<rw id>-en          rwf-e1-en ... rwf-e9-en     (data_full.js)
@@ -15,22 +17,18 @@
 // Writes one JSON object per line to stdout. Pipe it into the uploader, which
 // checks and sends each one to S3 incoming/:
 //
-//   node etl/export_player_inputs.mjs | .venv-etl/bin/python etl/upload_incoming.py -          # dry run
-//   node etl/export_player_inputs.mjs | .venv-etl/bin/python etl/upload_incoming.py - --yes    # upload
+//   node etl/export_player_inputs.mjs --content sa-content.json | uv run python etl/upload_incoming.py -          # dry run
+//   node etl/export_player_inputs.mjs --content sa-content.json | uv run python etl/upload_incoming.py - --yes    # upload
 //
 // Or write one input file per id for a local run (etl/run_local.py):
 //
-//   node etl/export_player_inputs.mjs --out-dir etl/inputs [--only rwf-,rwq-,g-]
-import { writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
-
-const HERE = dirname(fileURLToPath(import.meta.url))
-const SRC = join(HERE, '..', 'frontend', 'src')
-
-const { MODES } = await import(pathToFileURL(join(SRC, 'data.js')).href)
+//   node etl/export_player_inputs.mjs --content sa-content.json --out-dir etl/inputs [--only rwf-,rwq-,g-]
+import { readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 const arg = name => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : null }
+if (!arg('--content')) { console.error('usage: export_player_inputs.mjs --content <export.json> [--out-dir dir] [--only prefixes]'); process.exit(2) }
+const { modes: MODES } = JSON.parse(readFileSync(arg('--content'), 'utf8'))
 const OUT_DIR = arg('--out-dir')
 const ONLY = (arg('--only') || '').split(',').filter(Boolean)
 

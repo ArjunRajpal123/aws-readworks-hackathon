@@ -97,30 +97,46 @@ export function detect(text, fileName) {
   return { lang, confidence, words: nWords, sentences, grade, band, vocab: matchVocab(words), known: matchKnown(text), titleGuess }
 }
 
-// What an AI service would suggest. Replace by setting window.SA_AI_ENDPOINT (POST {text, language} -> {fields, vocabulary}).
+// Form fields are derived locally (fast, free) from the text; the VOCABULARY
+// comes from real Bedrock cards via the data API (POST /api/v1/data/cards),
+// which is the live AI path. The old window.SA_AI_ENDPOINT (/api/v1/assist)
+// was removed when we adopted the data API, so we no longer call it.
 export async function aiSuggest(text, det) {
-  const endpoint = typeof window !== 'undefined' && window.SA_AI_ENDPOINT
-  if (endpoint) {
-    const r = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, language: det && det.lang }) })
-    const j = await r.json()
-    const ids = { title: 'adTitle', author: 'adAuthor', genre: 'adGenre', topic: 'adTopic', gradeBand: 'adBand', grade: 'adGrade', language: 'adSrcLang', lexile: 'adLexile' }
-    const fields = {}
-    for (const [k, v] of Object.entries(j.fields || {})) fields[ids[k] || k] = v
-    return { mode: 'service', fields, vocabulary: j.vocabulary || [] }
+  const lang = det && det.lang === 'es-US' ? 'es-US' : 'en-US'
+  // Map the data API's field names -> admin form input ids.
+  const idMap = {
+    title: 'adTitle', language: 'adSrcLang', gradeBand: 'adBand', grade: 'adGrade',
+    genre: 'adGenre', topic: 'adTopic', notes: 'adNotes', reviewer: 'adRevers',
+    spanishReviewer: 'adRevEs', batchLabel: 'adBatch', afterApproval: 'adVis', reviewBy: 'adDue',
   }
-  await new Promise(r => setTimeout(r, 700))
-  const words = wordsOf(text)
-  const stop = det && det.lang === 'es-US' ? ES_STOP : EN_STOP
-  const freq = new Map()
-  for (const w of words) { const lw = w.toLowerCase(); if (lw.length >= 5 && !stop.has(lw)) freq.set(lw, (freq.get(lw) || 0) + 1) }
-  const top = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0])
-  const quotes = (text.match(/["“”«»]/g) || []).length
-  const pronouns = (text.match(/\b(he|she|they|él|ella|ellos|ellas)\b/gi) || []).length
-  const genre = quotes >= 6 || pronouns / Math.max(1, words.length) > 0.03 ? 'fiction' : 'nonfiction'
-  const known = new Set(DB.keys())
-  const candidates = [...new Set(words.map(w => w.toLowerCase()).filter(w => w.length >= 8 && !stop.has(w) && !known.has(w)))].slice(0, 6)
-  const fields = { adGenre: genre }
-  if (top.length) fields.adTopic = top.slice(0, 2).map(w => w[0].toUpperCase() + w.slice(1)).join(', ')
-  if (top.length) fields.adTitle = (det && det.lang === 'es-US' ? 'Texto sobre ' : 'Passage about ') + top[0]
-  return { mode: 'simulated', fields, vocabulary: candidates }
+  let fields = {}, vocabulary, mode = 'simulated'
+  try {
+    const { hasDataApi, genAutofill, genCards } = await import('./data_api.js')
+    if (hasDataApi()) {
+      // Real AI metadata (title/grade/genre/topic/notes + reviewer attribution
+      // + workflow defaults) and real Bedrock vocabulary, in parallel.
+      const [af, cr] = await Promise.all([
+        genAutofill(text, lang),
+        genCards(text, lang === 'es-US' ? 'es' : 'en'),
+      ])
+      if (af && af.fields) { for (const [k, v] of Object.entries(af.fields)) fields[idMap[k] || k] = v; mode = 'service' }
+      if (cr && Array.isArray(cr.cards)) vocabulary = cr.cards.map(c => c.word).filter(Boolean)
+    }
+  } catch { /* fall back below */ }
+
+  // Local fallback only when the API is unavailable.
+  if (mode !== 'service') {
+    const words = wordsOf(text)
+    const stop = lang === 'es-US' ? ES_STOP : EN_STOP
+    const freq = new Map()
+    for (const w of words) { const lw = w.toLowerCase(); if (lw.length >= 5 && !stop.has(lw)) freq.set(lw, (freq.get(lw) || 0) + 1) }
+    const top = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2).map(e => e[0])
+    fields.adGenre = (text.match(/["“”«»]/g) || []).length >= 6 ? 'fiction' : 'nonfiction'
+    if (top.length) fields.adTopic = top.map(w => w[0].toUpperCase() + w.slice(1)).join(', ')
+    if (!vocabulary) {
+      const known = new Set(DB.keys())
+      vocabulary = [...new Set(words.map(w => w.toLowerCase()).filter(w => w.length >= 8 && !stop.has(w) && !known.has(w)))].slice(0, 6)
+    }
+  }
+  return { mode, fields, vocabulary: vocabulary || [] }
 }

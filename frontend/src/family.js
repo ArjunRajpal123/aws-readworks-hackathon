@@ -1,7 +1,7 @@
 // Teacher and parent views. Teachers see a class, click into a student, and get class-level and student-level suggestions.
 // Parents see their children, what was read, the words covered, and words to go over again.
 import { art } from './art.js'
-import { CATALOG, byPid, byBand, gradeText, modeFor } from './content.js'
+import { byPid, byBand, gradeText, modeFor, titleOf, vocabWord, wordLabel } from './content.js'
 import { CLASSES, STUDENTS, PARENTS, TEACHERS, student, klass, teacherOf, firstName, studentsIn, parentsOf, bandOf, summary, classSummary, studentTips, classTips, assignmentsFor, assign, unassign, loadAssign, recordPractice, fmtMin } from './people.js'
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
@@ -28,7 +28,10 @@ export function createFamily({ t, getLang, getProfile, onRead }) {
   const myFamilies = () => { const p = prof(); return p.role === 'parent' ? [p.pa] : PARENTS }
 
   // ---- suggestion text ----
-  const list = a => (Array.isArray(a) ? a.join(', ') : a)
+  const title = e => titleOf(e, es())
+  const word = w => wordLabel(w, es())
+  // Tip args: word/name lists, passage entries (shown by title) or plain values.
+  const list = a => (Array.isArray(a) ? a.map(word).join(', ') : a && a.pid ? title(a) : a)
   function tipText(role, tip, stu) {
     const n = stu ? firstName(stu) : ''
     return t((role === 'parent' ? 'pt_' : 'tt_') + tip.k, n, ...tip.a.map(list))
@@ -37,7 +40,7 @@ export function createFamily({ t, getLang, getProfile, onRead }) {
     const a = tip.act
     let btn = ''
     if (a && a.type === 'practice') btn = '<button type="button" class="chipbtn" data-practice="' + esc(a.words.join('|')) + '" data-stu="' + (stu ? stu.id : '') + '">' + esc(t('fPractice')) + '</button>'
-    if (a && a.type === 'assign' && a.pid && byPid(a.pid)) btn = '<button type="button" class="chipbtn" data-assign="' + a.pid + '" data-stu="' + (stu ? stu.id : '') + '">' + esc(t('fAssignThis', byPid(a.pid).title)) + '</button>'
+    if (a && a.type === 'assign' && a.pid && byPid(a.pid)) btn = '<button type="button" class="chipbtn" data-assign="' + a.pid + '" data-stu="' + (stu ? stu.id : '') + '">' + esc(t('fAssignThis', title(byPid(a.pid)))) + '</button>'
     return '<li class="fm-tip"><span class="fm-bulb" aria-hidden="true">💡</span><div><p>' + esc(tipText(role, tip, stu)) + '</p>' + btn + '</div></li>'
   }
 
@@ -49,9 +52,9 @@ export function createFamily({ t, getLang, getProfile, onRead }) {
     const open = st.open === s.id
     const ratio = s.minutes / e.minutes
     const pace = ratio < 0.6 ? 'fast' : ratio > 1.6 ? 'slow' : 'ok'
-    const words = s.words.map(w => '<button type="button" class="fm-wchip" data-word="' + esc(w) + '" data-stu="' + s.student + '">' + esc(w) + '</button>').join('')
+    const words = s.words.map(w => '<button type="button" class="fm-wchip" data-word="' + esc(w) + '" data-stu="' + s.student + '">' + esc(word(w)) + '</button>').join('')
     return '<li class="fm-sess' + (open ? ' open' : '') + '"><button type="button" class="fm-srow" data-sess="' + s.id + '" aria-expanded="' + open + '">'
-      + thumb(e) + '<span class="fm-sinfo"><b>' + esc(e.title) + '</b><span class="fm-sub">' + esc(gradeLbl(e)) + ' · ' + esc(dt(s.at)) + '</span></span>'
+      + thumb(e) + '<span class="fm-sinfo"><b>' + esc(title(e)) + '</b><span class="fm-sub">' + esc(gradeLbl(e)) + ' · ' + esc(dt(s.at)) + '</span></span>'
       + '<span class="fm-scell"><b>' + esc(fmtMin(s.minutes)) + '</b><span class="fm-sub pace-' + pace + '">' + esc(t('fPace_' + pace, e.minutes)) + '</span></span>'
       + '<span class="fm-scell"><b>' + (s.q == null ? '—' : s.q + '%') + '</b><span class="fm-sub">' + esc(t('fQuestions')) + '</span></span>'
       + '<span class="fm-scell">' + stars(s.stars) + '<span class="fm-sub">' + s.words.length + ' ' + esc(t('fWordsN')) + '</span></span>'
@@ -68,14 +71,14 @@ export function createFamily({ t, getLang, getProfile, onRead }) {
     const chip = (k, n) => '<button type="button" class="fm-fchip" data-wf="' + k + '" aria-pressed="' + (f === k) + '">' + esc(t('fWf_' + k)) + ' (' + n + ')</button>'
     return '<div class="fm-filters">' + chip('all', m.words.length) + chip('due', m.due.length) + chip('strong', m.words.filter(w => w.strength >= 3).length) + '</div>'
       + (m.due.length ? '<div class="fm-btns"><button type="button" class="tbtn" data-practice="' + esc(m.due.slice(0, 8).map(w => w.w).join('|')) + '" data-stu="' + stu.id + '">' + esc(t('fPracticeN', Math.min(8, m.due.length))) + '</button></div>' : '')
-      + (ws.length ? '<ul class="fm-wgrid">' + ws.map(w => '<li><button type="button" class="fm-wtile' + (w.due ? ' due' : '') + '" data-word="' + esc(w.w) + '" data-stu="' + stu.id + '"><b>' + esc(w.w) + '</b>' + meter(w.strength) + '<span class="fm-sub">' + esc(t('fSeen', w.count)) + ' · ' + esc(dd(w.last)) + '</span></button></li>').join('') + '</ul>' : '<p class="fm-note">' + esc(t('fNoWords')) + '</p>')
+      + (ws.length ? '<ul class="fm-wgrid">' + ws.map(w => '<li><button type="button" class="fm-wtile' + (w.due ? ' due' : '') + '" data-word="' + esc(w.w) + '" data-stu="' + stu.id + '"><b>' + esc(word(w.w)) + '</b>' + meter(w.strength) + '<span class="fm-sub">' + esc(t('fSeen', w.count)) + ' · ' + esc(dd(w.last)) + '</span></button></li>').join('') + '</ul>' : '<p class="fm-note">' + esc(t('fNoWords')) + '</p>')
   }
 
   function assignedPane(stu, role) {
     const as = assignmentsFor(stu.id)
     const me = prof()
     const row = a => { const e = byPid(a.pid); if (!e) return ''
-      return '<li class="fm-asg' + (a.done ? ' done' : '') + '">' + thumb(e) + '<span class="fm-sinfo"><b>' + esc(e.title) + '</b><span class="fm-sub">' + esc(t('fBy', a.byName)) + ' · ' + esc(a.done ? t('fDone') : dueText(a.due)) + '</span></span>'
+      return '<li class="fm-asg' + (a.done ? ' done' : '') + '">' + thumb(e) + '<span class="fm-sinfo"><b>' + esc(title(e)) + '</b><span class="fm-sub">' + esc(t('fBy', a.byName)) + ' · ' + esc(a.done ? t('fDone') : dueText(a.due)) + '</span></span>'
         + (a.done ? '<span class="fm-pill ok">✓ ' + esc(t('fDone')) + '</span>' : '<span class="fm-pill">' + esc(t('fToDo')) + '</span>')
         + (!a.seed && !a.done && (a.by === me.id) ? '<button type="button" class="chipbtn" data-unassign="' + a.id + '">' + esc(t('fRemove')) + '</button>' : '') + '</li>' }
     return '<div class="fm-btns"><button type="button" class="tbtn" data-assign="" data-stu="' + stu.id + '">' + esc(t(role === 'parent' ? 'fSendReading' : 'fAssign')) + '</button></div>'
@@ -126,9 +129,9 @@ export function createFamily({ t, getLang, getProfile, onRead }) {
       + rows.map(({ s, m }) => '<tr tabindex="0" data-stu="' + s.id + '"><th scope="row"><button type="button" class="fm-name" data-open-stu="' + s.id + '">' + esc(s.name) + '</button></th><td>' + m.passages + '</td><td>' + esc(ago(m.lastDays)) + '</td><td>' + (m.ratio == null ? '—' : Math.round(m.ratio * 100) + '%') + '</td><td>' + (m.q == null ? '—' : m.q + '%') + '</td><td>' + m.wordsCovered + '</td><td>' + flags(m) + '</td></tr>').join('')
       + '</tbody></table></div></section>'
       + '<section class="fm-card"><h3>' + esc(t('fClassWords')) + '</h3><p class="fm-sub">' + esc(t('fClassWordsSub')) + '</p>'
-      + (c.hardWords.length ? '<div class="fm-chips">' + c.hardWords.map(w => '<button type="button" class="fm-wchip hard" data-word="' + esc(w.w) + '" data-stu="">' + esc(w.w) + ' <b>' + w.n + '</b></button>').join('') + '</div><div class="fm-btns"><button type="button" class="chipbtn" data-practice="' + esc(c.hardWords.map(w => w.w).join('|')) + '" data-stu="">' + esc(t('fWarmup')) + '</button></div>' : '<p class="fm-note">' + esc(t('fNoWords')) + '</p>') + '</section>'
+      + (c.hardWords.length ? '<div class="fm-chips">' + c.hardWords.map(w => '<button type="button" class="fm-wchip hard" data-word="' + esc(w.w) + '" data-stu="">' + esc(word(w.w)) + ' <b>' + w.n + '</b></button>').join('') + '</div><div class="fm-btns"><button type="button" class="chipbtn" data-practice="' + esc(c.hardWords.map(w => w.w).join('|')) + '" data-stu="">' + esc(t('fWarmup')) + '</button></div>' : '<p class="fm-note">' + esc(t('fNoWords')) + '</p>') + '</section>'
       + '<section class="fm-card"><h3>' + esc(t('fPassageTable')) + '</h3><div class="fm-scroll"><table class="fm-table"><thead><tr><th scope="col">' + esc(t('fPassage')) + '</th><th scope="col">' + esc(t('fReads')) + '</th><th scope="col">' + esc(t('fAvgTime')) + '</th><th scope="col">' + esc(t('fQuestions')) + '</th><th scope="col"><span class="fm-sr">' + esc(t('fAssign')) + '</span></th></tr></thead><tbody>'
-      + c.passageRows.map(p => { const e = byPid(p.pid); if (!e) return ''; return '<tr><th scope="row">' + esc(e.title) + '<span class="fm-sub"> · ' + esc(gradeLbl(e)) + '</span></th><td>' + p.reads + '</td><td>' + esc(fmtMin(p.minutes)) + '</td><td>' + (p.q == null ? '—' : p.q + '%') + '</td><td><button type="button" class="chipbtn" data-assign="' + p.pid + '" data-cls="' + cls.id + '">' + esc(t('fAssignShort')) + '</button></td></tr>' }).join('') + '</tbody></table></div></section>'
+      + c.passageRows.map(p => { const e = byPid(p.pid); if (!e) return ''; return '<tr><th scope="row">' + esc(title(e)) + '<span class="fm-sub"> · ' + esc(gradeLbl(e)) + '</span></th><td>' + p.reads + '</td><td>' + esc(fmtMin(p.minutes)) + '</td><td>' + (p.q == null ? '—' : p.q + '%') + '</td><td><button type="button" class="chipbtn" data-assign="' + p.pid + '" data-cls="' + cls.id + '">' + esc(t('fAssignShort')) + '</button></td></tr>' }).join('') + '</tbody></table></div></section>'
   }
   function teacherBody() {
     const cs = myClasses()
@@ -148,7 +151,7 @@ export function createFamily({ t, getLang, getProfile, onRead }) {
     const famPick = fs.length > 1 ? '<label class="fm-who">' + esc(t('fFamily')) + ' <select id="fmFam">' + fs.map(f => '<option value="' + f.id + '"' + (f.id === st.fam ? ' selected' : '') + '>' + esc(f.name) + '</option>').join('') + '</select></label>' : ''
     const kidPick = kids.length > 1 ? '<div class="fm-pick" role="tablist" aria-label="' + esc(t('fPickChild')) + '">' + kids.map(k => '<button type="button" role="tab" data-kid="' + k.id + '" aria-selected="' + (st.stu === k.id) + '">' + esc(firstName(k)) + '</button>').join('') + '</div>' : ''
     const next = m.open[0]
-    const nextCard = next ? (() => { const e = byPid(next.pid); return '<section class="fm-card fm-nextcard">' + thumb(e) + '<div class="fm-sinfo"><span class="fm-sub">' + esc(t('fNextUp', firstName(kid))) + '</span><b>' + esc(e.title) + '</b><span class="fm-sub">' + esc(t('fBy', next.byName)) + ' · ' + esc(dueText(next.due)) + '</span></div><button type="button" class="tbtn" data-read="' + e.pid + '" data-asfor="' + kid.id + '">' + esc(t('fStartReading')) + '</button></section>' })() : ''
+    const nextCard = next ? (() => { const e = byPid(next.pid); return '<section class="fm-card fm-nextcard">' + thumb(e) + '<div class="fm-sinfo"><span class="fm-sub">' + esc(t('fNextUp', firstName(kid))) + '</span><b>' + esc(title(e)) + '</b><span class="fm-sub">' + esc(t('fBy', next.byName)) + ' · ' + esc(dueText(next.due)) + '</span></div><button type="button" class="tbtn" data-read="' + e.pid + '" data-asfor="' + kid.id + '">' + esc(t('fStartReading')) + '</button></section>' })() : ''
     return '<div class="fm-bar">' + famPick + '</div><p class="fm-sub fm-fam">' + esc(t('fFamilyLine', fam.name)) + '</p>' + kidPick + nextCard + studentView(kid, 'parent')
       + '<section class="fm-card"><h3>' + esc(t('pVoice')) + '</h3><p>' + esc(t('pVoiceB')) + '</p><h3>' + esc(t('pPriv')) + '</h3><p>' + esc(t('pPrivB')) + '</p></section>'
   }
@@ -158,15 +161,14 @@ export function createFamily({ t, getLang, getProfile, onRead }) {
   dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close() })
   const xbtn = () => '<button type="button" class="dlg-x" aria-label="' + esc(t('infoClose')) + '" data-close="1">×</button>'
   function wordDlg(w, stuId) {
-    let info = null
-    for (const e of CATALOG) { const v = e.vocab.find(x => x.w.toLowerCase() === w.toLowerCase()); if (v) { info = { ...v, e }; break } }
+    const info = vocabWord(w, es())
     const m = stuId ? summary(stuId).words.find(x => x.w.toLowerCase() === w.toLowerCase()) : null
-    dlg.innerHTML = xbtn() + '<h2>' + esc(w) + '</h2>' + (info ? '<p>' + esc(info.def) + '</p>' + (info.ex ? '<p class="fm-ex">“' + esc(info.ex) + '”</p>' : '') + '<p class="fm-sub">' + esc(t('fFromPassage', info.e.title)) + '</p>' : '')
+    dlg.innerHTML = xbtn() + '<h2>' + esc(info ? info.w : w) + '</h2>' + (info ? '<p>' + esc(info.def) + '</p>' + (info.ex ? '<p class="fm-ex">“' + esc(info.ex) + '”</p>' : '') + '<p class="fm-sub">' + esc(t('fFromPassage', info.title)) + '</p>' : '')
       + (m ? '<p>' + meter(m.strength) + ' <span class="fm-sub">' + esc(t('fSeen', m.count)) + ' · ' + esc(t('fLastSeen', dd(m.last))) + '</span></p>' : '')
     dlg.showModal()
   }
   function practiceDlg(words, stuId) {
-    const cards = words.map(w => { for (const e of CATALOG) { const v = e.vocab.find(x => x.w.toLowerCase() === w.toLowerCase()); if (v) return { w: v.w, def: v.def, ex: v.ex, title: e.title } } return { w, def: '', ex: '', title: '' } })
+    const cards = words.map(w => vocabWord(w, es()) || { w, key: w, def: '', ex: '', title: '' })
     let i = 0, knew = 0
     const draw = (shown) => {
       if (i >= cards.length) { dlg.innerHTML = xbtn() + '<h2>' + esc(t('fPracDone')) + '</h2><p>' + esc(stuId ? t('fPracResult', knew, cards.length) : t('fPracClass', cards.length)) + '</p><div class="dlg-actions"><button type="button" class="tbtn" data-close="1">' + esc(t('fClose')) + '</button></div>'; return }
@@ -180,7 +182,7 @@ export function createFamily({ t, getLang, getProfile, onRead }) {
       if (e.target === dlg || e.target.closest('[data-close]')) { dlg.close(); return }
       if (e.target.closest('[data-reveal]')) { draw(true); return }
       const k = e.target.closest('[data-knew]')
-      if (k) { if (stuId && k.dataset.knew !== 'x') { const ok = k.dataset.knew === '1'; if (ok) knew++; recordPractice(stuId, cards[i].w, ok) } i++; draw(false) }
+      if (k) { if (stuId && k.dataset.knew !== 'x') { const ok = k.dataset.knew === '1'; if (ok) knew++; recordPractice(stuId, cards[i].key, ok) } i++; draw(false) }
     }
     draw(false); dlg.showModal()
   }
@@ -198,11 +200,11 @@ export function createFamily({ t, getLang, getProfile, onRead }) {
       if (e.target.closest('#fmAsgGo')) {
         const sel = document.getElementById('fmAsgPid').value, to = document.getElementById('fmAsgTo').value, days = +document.getElementById('fmAsgDue').value
         assign({ pid: sel, to, ...by, due: new Date(Date.now() + days * DAY).toISOString() })
-        dlg.innerHTML = xbtn() + '<h2>' + esc(t('fAsgSent')) + '</h2><p>' + esc(t('fAsgSentB', byPid(sel).title)) + '</p><div class="dlg-actions"><button type="button" class="tbtn" data-close="1">OK</button></div>'
+        dlg.innerHTML = xbtn() + '<h2>' + esc(t('fAsgSent')) + '</h2><p>' + esc(t('fAsgSentB', title(byPid(sel)))) + '</p><div class="dlg-actions"><button type="button" class="tbtn" data-close="1">OK</button></div>'
       }
     }
     dlg.innerHTML = xbtn() + '<h2>' + esc(t(role === 'parent' ? 'fSendReading' : 'fAssign')) + '</h2>'
-      + '<label class="dlg-c" for="fmAsgPid">' + esc(t('fAsgPassage')) + '</label><select id="fmAsgPid">' + options.map(b => '<optgroup label="' + esc(t('fBand_' + b)) + '">' + byBand(b).map(e => '<option value="' + e.pid + '"' + (e.pid === pid ? ' selected' : '') + '>' + esc(e.title + ' · ' + gradeLbl(e)) + '</option>').join('') + '</optgroup>').join('') + '</select>'
+      + '<label class="dlg-c" for="fmAsgPid">' + esc(t('fAsgPassage')) + '</label><select id="fmAsgPid">' + options.map(b => '<optgroup label="' + esc(t('fBand_' + b)) + '">' + byBand(b).map(e => '<option value="' + e.pid + '"' + (e.pid === pid ? ' selected' : '') + '>' + esc(title(e) + ' · ' + gradeLbl(e)) + '</option>').join('') + '</optgroup>').join('') + '</select>'
       + '<label class="dlg-c" for="fmAsgTo">' + esc(t('fAsgTo')) + '</label><select id="fmAsgTo">' + toOpts + '</select>'
       + '<label class="dlg-c" for="fmAsgDue">' + esc(t('fAsgDue')) + '</label><select id="fmAsgDue"><option value="1">' + esc(t('fDueTomorrow')) + '</option><option value="3">' + esc(t('fDueIn', 3)) + '</option><option value="7" selected>' + esc(t('fDueIn', 7)) + '</option></select>'
       + '<div class="dlg-actions"><button type="button" class="tbtn" id="fmAsgGo">' + esc(t(role === 'parent' ? 'fSendReading' : 'fAssign')) + '</button><button type="button" class="chipbtn" data-close="1">' + esc(t('rateCancel')) + '</button></div>'

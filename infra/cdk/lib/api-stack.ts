@@ -133,18 +133,37 @@ export class ApiStack extends cdk.Stack {
 
     // App data API (roster, sessions, assignments, practice, ratings, review).
     // No pipeline bundle; just common/ + the shared table.
+    // Child-safety guardrail for the data API's Bedrock calls (cards/stops/
+    // card localization). Created out of band; passed at deploy time via
+    // context or env (empty = no guardrail, e.g. local).
+    const guardrailId =
+      (this.node.tryGetContext("genGuardrailId") as string) ||
+      process.env.SA_GUARDRAIL_ID ||
+      "";
+    const guardrailVersion =
+      (this.node.tryGetContext("genGuardrailVersion") as string) ||
+      process.env.SA_GUARDRAIL_VERSION ||
+      "";
     const dataFn = new lambda.Function(this, "DataApiFn", {
       functionName: resourceName(config, "lambda", "data"),
       runtime: lambda.Runtime.PYTHON_3_13,
       handler: "handler.handler",
       code: functionCode(path.join(LAMBDA_ROOT, "data_api"), false),
-      environment: ttsEnv,
+      environment: {
+        ...ttsEnv,
+        SA_GUARDRAIL_ID: guardrailId,
+        SA_GUARDRAIL_VERSION: guardrailVersion,
+      },
       // Bedrock card/Word-Stop generation can take several seconds.
       timeout: cdk.Duration.seconds(25),
       memorySize: 256,
     });
     referenceTable.grantReadWriteData(dataFn);
     referenceTable.encryptionKey?.grantEncryptDecrypt(dataFn);
+    // The DELETE /passage resource removes a passage's S3 artifacts
+    // (sa/product + sa/audio) along with its records, so it needs list+delete
+    // (and read) on the media bucket. grantReadWrite covers the KMS key too.
+    mediaBucket.grantReadWrite(dataFn);
     // The /translate resource turns an English passage into Spanish text
     // (Amazon Translate has no resource-level permissions, only "*").
     dataFn.addToRolePolicy(
@@ -165,6 +184,17 @@ export class ApiStack extends cdk.Stack {
         ],
       })
     );
+    // Apply the child-safety guardrail on those Bedrock calls.
+    if (guardrailId) {
+      dataFn.addToRolePolicy(
+        new iam.PolicyStatement({
+          actions: ["bedrock:ApplyGuardrail"],
+          resources: [
+            `arn:${cdk.Aws.PARTITION}:bedrock:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:guardrail/${guardrailId}`,
+          ],
+        })
+      );
+    }
 
     // grantReadWrite/grantRead also grant the needed KMS actions on the
     // bucket's and table's customer-managed keys.

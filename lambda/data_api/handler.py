@@ -26,7 +26,9 @@ segment; the method decides the action.
 
   Review / publish state:
     GET  /api/v1/data/review?pid=<id>
-    POST /api/v1/data/review  {pid, state, by?, notes?}
+    POST /api/v1/data/review  {pid, state, by?, notes?, meta?}
+    GET  /api/v1/data/published              -> {entries: [...]} approved generated
+                                                passages (state=published + a band in meta)
 
   Content (migrated built-in passages): the player's catalog, shared vocab
   cards, and one passage/mode by id. Seeded by lambda/scripts/seed_content.py.
@@ -212,17 +214,65 @@ def get_review(event):
     return json_response(200, rec or {"pid": pid, "state": "none"})
 
 
+_BANDS = ("k2", "35", "68", "912")
+_BAND_LABEL = {"k2": "K–2", "35": "3–5", "68": "6–8", "912": "9–12"}
+
+
+def _clean_meta(m):
+    """Catalog metadata a generated passage needs to be listed in the player:
+    where it belongs (grade band) and how to label it. Unknown keys are dropped."""
+    if not isinstance(m, dict):
+        return None
+    out = {}
+    for key, cap in (("title", 200), ("grade", 8), ("genre", 30), ("lexile", 12), ("topic", 60)):
+        v = m.get(key)
+        if isinstance(v, str) and v.strip():
+            out[key] = v.strip()[:cap]
+    if m.get("band") in _BANDS:
+        out["band"] = m["band"]
+    return out or None
+
+
 def post_review(event):
     b = _body(event)
     if b is None or not b.get("pid") or not b.get("state"):
         return error_response(400, "pid and state are required")
     if b["state"] not in ("draft", "review", "published", "rejected"):
         return error_response(400, "state must be draft|review|published|rejected")
-    rec = db.put("review", b["pid"], {
+    # A later review write (e.g. Approve) that doesn't resend the metadata must
+    # not erase what the submit stored, so keep the previous meta in that case.
+    prev = db.get("review", b["pid"]) or {}
+    meta = _clean_meta(b.get("meta")) or prev.get("meta")
+    item = {
         "pid": b["pid"], "state": b["state"], "by": b.get("by"),
         "notes": (b.get("notes") or "")[:1000], "at": db.now_iso(),
-    })
-    return json_response(201, rec)
+    }
+    if meta:
+        item["meta"] = meta
+    return json_response(201, db.put("review", b["pid"], item))
+
+
+def get_published(event):
+    """Approved generated passages, for the player's passage list. A passage is
+    listed once it is `published` AND has a grade band (stored with its review
+    at submit time); the library catalog itself is untouched."""
+    out = []
+    for r in db.list_type("review"):
+        meta = r.get("meta") or {}
+        if r.get("state") != "published" or meta.get("band") not in _BANDS:
+            continue
+        pid = r.get("pid") or r.get("id")
+        grade = str(meta.get("grade", ""))
+        out.append({
+            "pid": pid, "title": meta.get("title") or pid, "band": meta["band"],
+            # The dropdown shows "Grade 4" for a number and "Grades 3–5" otherwise,
+            # so fall back to the band's range when no numeric grade was entered.
+            "grade": grade if grade.isdigit() else _BAND_LABEL[meta["band"]],
+            "genre": meta.get("genre", ""), "lexile": meta.get("lexile", ""),
+            "lang": "es" if pid.endswith("-es") else "en",
+        })
+    out.sort(key=lambda p: p["title"].lower())
+    return json_response(200, {"entries": out})
 
 
 # ---- content (migrated built-in passages) ---------------------------------
@@ -254,6 +304,129 @@ def post_translate(event):
     return json_response(200, {"text": out})
 
 
+# ---- delete a passage and everything generated for it ---------------------
+import os  # noqa: E402
+
+_s3 = None
+
+
+def _s3_client():
+    global _s3
+    if _s3 is None:
+        import boto3
+        _s3 = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "us-west-2"))
+    return _s3
+
+
+def _delete_s3_prefixes(bucket, prefixes):
+    """Delete every object under each prefix. Best-effort count."""
+    s3 = _s3_client()
+    deleted = 0
+    for prefix in prefixes:
+        token = None
+        while True:
+            kw = {"Bucket": bucket, "Prefix": prefix}
+            if token:
+                kw["ContinuationToken"] = token
+            resp = s3.list_objects_v2(**kw)
+            objs = [{"Key": o["Key"]} for o in resp.get("Contents", []) or []]
+            if objs:
+                s3.delete_objects(Bucket=bucket, Delete={"Objects": objs, "Quiet": True})
+                deleted += len(objs)
+            token = resp.get("NextContinuationToken")
+            if not token:
+                break
+    return deleted
+
+
+def delete_passage(event):
+    """Remove a passage and ALL its generated artifacts, for both language
+    siblings of a base id: the product records (S3 sa/product + sa/audio and
+    the DynamoDB item), the per-passage vocab cards, and the review state.
+
+    id may be the base (<base>) or either sibling (<base>-en / <base>-es);
+    both -en and -es are removed so "delete" is complete.
+    """
+    raw = _q(event, "id")
+    if not raw:
+        return error_response(400, "id is required")
+    # Normalize to a base, then expand to both siblings.
+    base = raw[:-3] if raw.endswith(("-en", "-es")) else raw
+    ids = [f"{base}-en", f"{base}-es", base]  # include the bare base just in case
+    ids = list(dict.fromkeys(ids))            # de-dupe, keep order
+
+    bucket = os.environ.get("TTS_MEDIA_BUCKET")
+    removed = {"products": [], "s3Objects": 0, "pcards": [], "review": []}
+    table = db._get_table()
+    for pid in ids:
+        # product record (bare id, no type) — only if it exists
+        got = table.get_item(Key={"id": pid}).get("Item")
+        if got:
+            table.delete_item(Key={"id": pid})
+            removed["products"].append(pid)
+            if bucket:
+                removed["s3Objects"] += _delete_s3_prefixes(
+                    bucket, [f"sa/product/{pid}.soundAlong.json", f"sa/audio/{pid}/"])
+        # typed items: per-passage cards + review state
+        if db.get("pcards", pid) is not None:
+            db.delete("pcards", pid); removed["pcards"].append(pid)
+        if db.get("review", pid) is not None:
+            db.delete("review", pid); removed["review"].append(pid)
+    if not removed["products"] and not removed["pcards"] and not removed["review"]:
+        return error_response(404, f"No passage found for '{raw}'")
+    return json_response(200, {"deleted": base, **removed})
+
+
+# ---- per-passage vocab cards for the player (underlining) -----------------
+# Generated cards saved against a passage id so the player can underline and
+# open them. Keyed by the passage/mode id; the player's pipeline_mode.js reads
+# this to mark vocab tokens.
+def get_pcards(event):
+    pid = _q(event, "pid")
+    if not pid:
+        return error_response(400, "pid is required")
+    rec = db.get("pcards", pid)
+    return json_response(200, rec or {"pid": pid, "cards": []})
+
+
+def post_pcards(event):
+    b = _body(event)
+    if b is None or not b.get("pid"):
+        return error_response(400, "pid is required")
+    cards = b.get("cards") or []
+    if not isinstance(cards, list):
+        return error_response(400, "cards must be an array")
+    # Keep only the fields the player needs.
+    clean = [{"word": str(c.get("word", ""))[:40],
+              "def": str(c.get("def", ""))[:300],
+              "ex": str(c.get("ex", ""))[:300]}
+             for c in cards if isinstance(c, dict) and c.get("word")]
+    rec = db.put("pcards", b["pid"], {"pid": b["pid"], "cards": clean})
+    return json_response(201, rec)
+
+
+# ---- localize cards to the sibling language, matched to the passage --------
+def post_localize(event):
+    b = _body(event)
+    if b is None or not b.get("text") or not str(b["text"]).strip():
+        return error_response(400, "text (the translated passage) is required")
+    cards = b.get("cards") or []
+    if not isinstance(cards, list):
+        return error_response(400, "cards must be an array")
+    out = gen.localize_cards([c for c in cards if isinstance(c, dict)],
+                             str(b["text"]), b.get("lang", "es"))
+    return json_response(200, {"cards": out})
+
+
+# ---- autofill passage metadata (Bedrock) ----------------------------------
+def post_autofill(event):
+    b = _body(event)
+    if b is None or not b.get("text") or not str(b["text"]).strip():
+        return error_response(400, "text is required")
+    fields = gen.autofill_fields(str(b["text"]), b.get("lang"))
+    return json_response(200, {"fields": fields})
+
+
 # ---- generation (Bedrock) -------------------------------------------------
 def post_cards(event):
     b = _body(event)
@@ -281,6 +454,11 @@ ROUTES = {
     ("translate", "POST"): post_translate,
     ("cards", "POST"): post_cards,
     ("stops", "POST"): post_stops,
+    ("autofill", "POST"): post_autofill,
+    ("localize", "POST"): post_localize,
+    ("pcards", "GET"): get_pcards,
+    ("pcards", "POST"): post_pcards,
+    ("passage", "DELETE"): delete_passage,
     ("sessions", "GET"): get_sessions,
     ("sessions", "POST"): post_session,
     ("assignments", "GET"): get_assignments,
@@ -292,4 +470,5 @@ ROUTES = {
     ("ratings", "POST"): post_rating,
     ("review", "GET"): get_review,
     ("review", "POST"): post_review,
+    ("published", "GET"): get_published,
 }

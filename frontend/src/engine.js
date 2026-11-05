@@ -7,7 +7,7 @@ import { addPipelineMode, ensureSibling } from './pipeline_mode.js'
 import { createInfo } from './info.js'
 import { createFamily } from './family.js'
 import { addWords } from './store.js'
-import { byBand, byPid, byMode, modeFor, MODES, CARDS, hydrateContent, hydrateBandModes, loadMode, hasMode } from './content.js'
+import { byBand, byPid, byMode, modeFor, MODES, CARDS, PUBLISHED, hydrateContent, hydrateBandModes, hydratePublished, publishedByBand, loadMode, hasMode, titleOf } from './content.js'
 import { art } from './art.js'
 import { getProfile, setProfile, addSession, setSessionQuiz, upNext, bandOf, hydratePeople } from './people.js'
 import { createNext } from './next.js'
@@ -29,7 +29,7 @@ const STOPW=new Set('the and was were are for with that this they them then than
 function trackTap(i){const tk=tokens[i];if(!tk||tk.key)return;const w=tk.text.replace(/[^\p{L}'’-]/gu,'').toLowerCase();if(w.length>=4&&!STOPW.has(w))tapped.add(w)}
 function collectedWords(){const out=[],seen=new Set();[...explored].forEach(w=>{const k=w.toLowerCase();if(!seen.has(k)){seen.add(k);out.push(w)}});tapped.forEach(w=>{if(!seen.has(w)){seen.add(w);out.push(w)}});return out}
 function finishData(){const words=collectedWords(),n=words.length,stopsTot=mode.stops?mode.stops.length:0,stopsDone=solved.size;
- const vocab=[...new Set(tokens.filter(t=>t.key).map(t=>CARDS[t.key].word))];
+ const vocab=[...new Set(tokens.filter(t=>t.key&&card(t.key)).map(t=>card(t.key).word))];
  return{title:mode.title,words,stars:[true,n>=3,n>=6||(stopsTot>0&&stopsDone>=stopsTot)],need2:Math.max(1,3-n),stops:[stopsDone,stopsTot],next:vocab.filter(w=>!explored.has(w))}}
 const curEntry=()=>mode?byMode(mode.id):null;
 let spentMs=0,lastTouch=Date.now();
@@ -52,7 +52,8 @@ function showResume(){const p=savedPos(),b=document.getElementById('resumeBar');
  document.getElementById('resumeMsg').textContent=t('resumeMsg',Math.round(100*p.i/tokens.length));document.getElementById('resumeGo').textContent=t('resumeBtn');document.getElementById('resumeNo').textContent=t('resumeNo');b.dataset.i=p.i;b.hidden=false}
 // Voices students can choose (Amazon Polly neural). A passage's soundAlong record lists one track per voice; if the chosen voice has no track yet, the default track plays and the page says so.
 const VOICES={'en-US':[['Danielle','F'],['Stephen','M']],'es-US':[['Lupe','F'],['Pedro','M']]};
-const voiceLang=()=>mode&&(mode.rwf||mode.gen)?'en-US':(mode&&mode.lang==='es-US'?'es-US':'en-US');
+// The audio id's -en/-es suffix names its language; otherwise the mode's own language.
+const voiceLang=()=>{if(!mode)return 'en-US';const m=/-(en|es)$/.exec(aid());return (m?m[1]==='es':mode.lang==='es-US')?'es-US':'en-US'};
 function curVoice(){const L=voiceLang();let v=null;try{v=localStorage.getItem('ws-voice-'+L)}catch(e){}return VOICES[L].some(x=>x[0]===v)?v:VOICES[L][0][0]}
 function fillVoice(){const sel=$('#voice');if(!sel)return;const L=voiceLang();sel.innerHTML=VOICES[L].map(([n,g])=>`<option value="${n}">${n} (${t(g==='F'?'voiceF':'voiceM')})</option>`).join('');sel.value=curVoice()}
 function updateViewTabs(){const has=!!(mode&&mode.questions);$('#viewTabs').hidden=!has;if(has)$('#vtQn').textContent='('+mode.questions.length+')'}
@@ -64,7 +65,12 @@ const synth='speechSynthesis' in window?window.speechSynthesis:null;
 let mode,tokens=[],els=[],cur=-1,stopIdxs=[],solved=new Set(),playing=false,run=0,timer=null,picking=null,picked=new Set(),stopsOn=true,voiceOn=true,resumeAt=0;
 let R={};
 function freshReward(){R={jar:[],badges:new Set(),moves:{},streak:0,firstTry:true,bank:[]}}
-function keyFor(t){const w=t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');if(mode.forms&&mode.forms[w])return mode.forms[w];const k=Object.keys(CARDS).find(k=>!/\d/.test(k)&&w.startsWith(k));return (mode.cardOverride&&mode.cardOverride[k])||k}
+// Resolve a card by key from the passage's own cards (pipeline/user passages
+// carry mode.cards) first, then the shared built-in CARDS.
+const card=k=>(mode&&mode.cards&&mode.cards[k])||CARDS[k];
+function keyFor(t){const w=t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');if(mode.forms&&mode.forms[w])return mode.forms[w];
+ if(mode&&mode.cards&&mode.cards[w])return w;  // pipeline passages: normalized word IS the key
+ const k=Object.keys(CARDS).find(k=>!/\d/.test(k)&&w.startsWith(k));return (mode.cardOverride&&mode.cardOverride[k])||k}
 function parse(m){tokens=[];m.paras.forEach((p,pi)=>p.split(/\s+/).forEach(raw=>{let t=raw,cls=[],grp=null,stop=false;
   if(t.endsWith('^')){stop=true;t=t.slice(0,-1)}
   let mm;while((mm=t.match(/^([~\-=])(\d)/))||(t[0]==='*'&&t.length>1)){if(mm){cls.push(mm[1]==='~'?'clue':mm[1]==='-'?'contrast':'signal');grp=+mm[2];t=t.slice(2)}else{cls.push('vocab');t=t.slice(1)}}
@@ -75,11 +81,11 @@ function stopWordIdx(k){const w=CARDS[mode.stops[k].word].word;let best=-1;token
 function render(){const page=$('#page');page.innerHTML='<div id="glow">'+GLOW+'</div>';els=[];
  mode.paras.forEach((_,pi)=>{const wrap=document.createElement('div');wrap.style.display='grid';wrap.style.gap='10px';const p=document.createElement('p');
   tokens.forEach((tk,i)=>{if(tk.p!==pi)return;const s=document.createElement('span');s.className='w '+tk.cls.join(' ');s.textContent=tk.text;s.dataset.i=i;
-   if(tk.key){s.setAttribute('role','button');s.tabIndex=0;s.setAttribute('aria-label',t('openCard')+CARDS[tk.key].word)}els[i]=s;p.appendChild(s);p.appendChild(document.createTextNode(' '))});
+   if(tk.key&&card(tk.key)){s.setAttribute('role','button');s.tabIndex=0;s.setAttribute('aria-label',t('openCard')+card(tk.key).word)}else if(tk.key){tk.key=null;s.className='w '+tk.cls.filter(c=>c!=='vocab').join(' ')}els[i]=s;p.appendChild(s);p.appendChild(document.createTextNode(' '))});
   const n=document.createElement('div');n.id='notes'+pi;n.style.display='grid';n.style.gap='8px';wrap.append(p,n);page.appendChild(wrap)});
  if(stopsOn)mode.stops.forEach((_,k)=>{const i=stopWordIdx(k);if(els[i])els[i].classList.add('stopw')});
  $('#ptitle').textContent=mode.title;page.classList.remove('tapping','stopping');
- const vc=new Set(tokens.filter(t=>t.key).map(t=>CARDS[t.key].word)).size;
+ const vc=new Set(tokens.filter(t=>t.key&&card(t.key)).map(t=>card(t.key).word)).size;
  $('#details').innerHTML=mode.details.map(([k,v])=>`<div>${k}: ${v}</div>`).join('')+`<div style="margin-top:8px">${mode.stops.length||vc?t('detailsDemo',mode.stops.length,vc):t('detailsNone')}</div>`;
  progress();requestAnimationFrame(()=>moveGlow(-1))}
 function moveGlow(i){if(B()!=='k2')return;const g=$('#glow');if(!g)return;const page=$('#page');
@@ -266,7 +272,7 @@ function openStop(k){if(isNarrow())setSide(true);const s=mode.stops[k],box=$('#s
    const you=document.createElement('div');you.className='cmt';you.innerHTML=`<span class="av you">${t('you')}</span><span class="who">${t('yourReply')}</span>`;box.insertBefore(you,ta);
    const m=document.createElement('p');m.className='hint';m.textContent=t('compareHint');box.append(m);reveal(k)};
   box.append(ta,err,b)}}
-function showCard(key,clue){if(isNarrow())setSide(true);const c=CARDS[key];explored.add(c.word);const adv=B()==='912'||B()==='68';
+function showCard(key,clue){if(isNarrow())setSide(true);const c=card(key);if(!c)return;explored.add(c.word);const adv=B()==='912'||B()==='68';
  $('#cardBody').innerHTML=`<div class="card">
  <div class="word">${c.word}<span class="pos">${c.pos}</span></div>
  <div><button class="chipbtn" type="button" id="hear">${t('hear')}</button></div>
@@ -339,8 +345,16 @@ function applyProfile(p){updateProfBtn();updateNext();
  else if(p.role==='teacher'){setFam(true);fam.show({tab:'teacher',cls:p.te.cls,stu:null})}
  else if(document.body.classList.contains('fam'))fam.show({})}
 function fillPassages(){const sel=$('#passageSel');if(!sel)return;const es=uiLang==='es';
- sel.innerHTML=byBand(B()).map(p=>`<option value="${p.modes.en}">${p.title} · ${es?(/^\d+$/.test(p.grade)?'Grado ':'Grados '):(/^\d+$/.test(p.grade)?'Grade ':'Grades ')}${p.grade}${p.lexile?' · '+p.lexile:''}</option>`).join('');
- const ce=curEntry();if(ce)sel.value=ce.modes.en}
+ const gl=g=>(es?(/^\d+$/.test(g)?'Grado ':'Grados '):(/^\d+$/.test(g)?'Grade ':'Grades '))+g;
+ // Approved passages from the Admin screen follow the library ones for this band.
+ const eh=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const pub=publishedByBand(B(),es).map(p=>`<option value="${eh(p.pid)}">${eh(p.title)} · ${eh(gl(p.grade))}${p.lexile?' · '+eh(p.lexile):''}</option>`);
+ sel.innerHTML=byBand(B()).map(p=>`<option value="${p.modes.en}">${titleOf(p,es)} · ${es?(/^\d+$/.test(p.grade)?'Grado ':'Grados '):(/^\d+$/.test(p.grade)?'Grade ':'Grades ')}${p.grade}${p.lexile?' · '+p.lexile:''}</option>`).join('')+pub.join('');
+ const ce=curEntry();if(ce)sel.value=ce.modes.en;
+ else if(mode&&mode.pipeline){const b=mode.id.replace(/-(en|es)$/,'');const o=[...sel.options].find(o=>o.value.replace(/-(en|es)$/,'')===b);if(o)sel.value=o.value}}
+// Open an approved passage from the list in its own grade band.
+async function openPublished(pid){const p=PUBLISHED.find(x=>x.pid===pid);
+ const m=MODES.find(x=>x.id===pid)||await addPipelineMode(MODES,pid,{band:p?p.band:'35'});if(m)load(m.id)}
 let admin=null;
 function navActive(){const a=document.body.classList.contains('admin'),f=document.body.classList.contains('fam');[['#navContent',!a&&!f],['#famBtn',f],['#adminBtn',a]].forEach(([q,on])=>{const b=$(q);if(!b)return;b.classList.toggle('on',on);on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')})}
 function famLabel(){const on=document.body.classList.contains('fam');const b=$('#famBtn');if(!b)return;b.setAttribute('aria-pressed',on);navActive()}
@@ -359,7 +373,7 @@ function applyStatic(){document.querySelectorAll('[data-i18n]').forEach(e=>{e.te
 $('#page').addEventListener('click',e=>{const w=e.target.closest('.w');if(!w)return;const i=+w.dataset.i;if(picking===null)trackTap(i);
  if(picking!==null){w.classList.toggle('picked');picked.has(i)?picked.delete(i):picked.add(i);return}
  if(tokens[i].key){const k=stopForToken(i);if(k>=0&&!solved.has(k)){pauseHere();openStop(k);return}
-  if(playing)pauseHere();showCard(tokens[i].key,k>=0?mode.stops[k].clue:null);say(CARDS[tokens[i].key].word);if(B()==='k2')collect(CARDS[tokens[i].key].word);return}tapPlay(i)});
+  if(playing)pauseHere();showCard(tokens[i].key,k>=0?mode.stops[k].clue:null);say(card(tokens[i].key).word);if(B()==='k2')collect(card(tokens[i].key).word);return}tapPlay(i)});
 $('#page').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('vocab')){e.preventDefault();e.target.click()}});
 $('#play').onclick=()=>{if(playing){savePos(cur,true);stopAll();return}playFrom(resumeAt)};
 $('#restart').onclick=()=>{clearPos();load(mode.id)};
@@ -403,11 +417,14 @@ document.addEventListener('keydown',e=>{if(e.target.closest('textarea,input,sele
 $('#gameBtn').onclick=()=>{gameOn=!gameOn;syncGame();try{localStorage.setItem('ws-game',gameOn?'1':'0')}catch(e){}load(mode.id)};
 function syncGame(){const b=$('#gameBtn');b.textContent=t('gameBtn',gameOn);b.title=t('gameTitle');b.classList.toggle('off',!gameOn);b.setAttribute('aria-pressed',gameOn)}syncGame();
 function syncLang(){const has=(mode&&mode.pipeline)?!!(mode.sib||mode.sibId):(curEntry()?true:MODES.some(x=>x.id===B()+'es'));document.querySelectorAll('.lng').forEach(b=>{const on=(b.dataset.l==='es')===(mode.lang==='es-US');b.setAttribute('aria-pressed',on);if(b.dataset.l==='es'){b.disabled=!has;b.title=has?'':'No Spanish text for this passage yet'}})}
-$('#passageSel').onchange=()=>{const e=byMode($('#passageSel').value);if(e)load(modeFor(e,uiLang==='es'))};
+$('#passageSel').onchange=()=>{const v=$('#passageSel').value,e=byMode(v);if(e)load(modeFor(e,uiLang==='es'));else openPublished(v)};
 document.querySelectorAll('.lng').forEach(b=>b.onclick=async()=>{uiLang=b.dataset.l;const e=curEntry();
  // Pipeline passage: swap to the other language's text when the chosen language differs.
  if(mode&&mode.pipeline){const wantEs=uiLang==='es',isEs=mode.lang==='es-US';
-  if(wantEs!==isEs){const sib=await ensureSibling(MODES,mode);if(sib){load(sib);return}}
+  if(wantEs!==isEs){const sib=await ensureSibling(MODES,mode);if(sib){load(sib);return}
+   // No other-language version exists: don't flip the UI language over unchanged text;
+   // forget the guessed sibling so syncLang() disables the button with its tooltip.
+   mode.sibId=null;uiLang=isEs?'es':'en'}
   syncLang();applyStatic();return}
  load(e?modeFor(e,uiLang==='es'):(uiLang==='es'?B()+'es':B()))});
 $('#stopsBtn').onclick=()=>{stopsOn=!stopsOn;const b=$('#stopsBtn');b.textContent=t('stopsBtn',stopsOn);b.classList.toggle('off',!stopsOn);b.setAttribute('aria-pressed',stopsOn);load(mode.id)};
@@ -457,19 +474,21 @@ $('#voice').onchange=async()=>{const L=voiceLang();try{localStorage.setItem('ws-
 const tour=createTour({t,view:()=>document.body.classList.contains('admin')?'admin':document.body.classList.contains('fam')?'fam':'student',before:()=>{if(!document.body.classList.contains('admin')&&!document.body.classList.contains('fam')){setOpts(true);setView('p');setSide(false);stopAll()}}});
 $('#howBtn').onclick=()=>tour.start();
 $('#optBtn').onclick=()=>setOpts(document.body.classList.contains('opts-closed'));
-$('#famBtn').onclick=()=>setFam(true);$('#navContent').onclick=()=>{setAdmin(false);setFam(false);window.scrollTo(0,0)};
+$('#famBtn').onclick=()=>setFam(true);$('#navContent').onclick=()=>{setAdmin(false);setFam(false);window.scrollTo(0,0);hydratePublished().then(ok=>ok&&fillPassages())};
+// An admin Approve (admin.js) adds a passage to the list without a page reload.
+addEventListener('sa-published',()=>hydratePublished().then(ok=>ok&&fillPassages()));
 $('#adminBtn').onclick=()=>setAdmin(true);initNav();
 // Hydrate the roster/sessions/assignments/practice from the cloud (fires 'sa-people' when ready, which re-renders).
 hydratePeople();
 // Hydrate the passage catalog + shared cards, then the band-tab modes, from
 // the cloud BEFORE the first load so tabs and lists have their metadata.
 (async()=>{
- await hydrateContent();await hydrateBandModes();buildTabs();
+ await Promise.all([hydrateContent(),hydratePublished()]);await hydrateBandModes();buildTabs();
  // Resolve the starting passage now that the catalog is loaded.
  if(lastMode&&(hasMode(lastMode)||byMode(lastMode)))start=normStart(lastMode);
  if(q){
   if(hasMode(q)||byMode(q)){await load(normStart(q))}
-  else{const m=await addPipelineMode(MODES,q);await load(m?m.id:start)}
+  else{const pb=PUBLISHED.find(x=>x.pid===q);const m=await addPipelineMode(MODES,q,pb?{band:pb.band}:undefined);await load(m?m.id:start)}
  }else await load(start);
  if(location.hash==='#admin')setAdmin(true);else if(location.hash==='#family')setFam(true);
  else if(!q&&getProfile().role!=='guest')applyProfile(getProfile());
