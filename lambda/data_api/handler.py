@@ -28,6 +28,11 @@ segment; the method decides the action.
     GET  /api/v1/data/review?pid=<id>
     POST /api/v1/data/review  {pid, state, by?, notes?}
 
+  Content (migrated built-in passages): the player's catalog, shared vocab
+  cards, and one passage/mode by id. Seeded by lambda/scripts/seed_content.py.
+    GET /api/v1/data/catalog            -> {entries: [...], cards: {...}}
+    GET /api/v1/data/content?id=<modeId> -> the mode (paras, stops, questions, ...)
+
   Translate (Spanish version): translates text so the caller can then POST it
   to /text-to-speech as a normal passage (same pipeline, es-US voices).
     POST /api/v1/data/translate  {text, source?, target?}  -> {text}
@@ -220,6 +225,23 @@ def post_review(event):
     return json_response(201, rec)
 
 
+# ---- content (migrated built-in passages) ---------------------------------
+def get_catalog(event):
+    cat = db.get_raw("catalog", "index") or {"entries": []}
+    cards = db.get_raw("cards", "index") or {"cards": {}}
+    return json_response(200, {"entries": cat.get("entries", []), "cards": cards.get("cards", {})})
+
+
+def get_content(event):
+    mode_id = _q(event, "id")
+    if not mode_id:
+        return error_response(400, "id is required")
+    rec = db.get("content", mode_id)
+    if rec is None:
+        return error_response(404, f"No content for id '{mode_id}'")
+    return json_response(200, rec)
+
+
 # ---- translate ------------------------------------------------------------
 def post_translate(event):
     b = _body(event)
@@ -254,6 +276,8 @@ def post_stops(event):
 
 ROUTES = {
     ("roster", "GET"): get_roster,
+    ("catalog", "GET"): get_catalog,
+    ("content", "GET"): get_content,
     ("translate", "POST"): post_translate,
     ("cards", "POST"): post_cards,
     ("stops", "POST"): post_stops,

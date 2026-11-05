@@ -1,6 +1,6 @@
 // "What to read next": readings assigned by a teacher or parent, related readings, and a step up.
 import { art } from './art.js'
-import { byPid, related, stepUp, gradeText } from './catalog.js'
+import { byPid, related, stepUp, gradeText } from './content.js'
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 const DAY = 86400000

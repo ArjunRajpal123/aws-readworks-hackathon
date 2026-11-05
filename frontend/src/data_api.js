@@ -27,6 +27,10 @@ async function req(method, resource, { body, query } = {}) {
 // roster
 export const getRoster = () => req('GET', 'roster')
 
+// content (migrated built-in passages): catalog index + shared cards, and one mode by id
+export const getCatalog = () => req('GET', 'catalog')
+export const getContent = id => req('GET', 'content', { query: { id } })
+
 // sessions
 export const getSessions = student => req('GET', 'sessions', { query: { student } })
 export const postSession = rec => req('POST', 'sessions', { body: rec })

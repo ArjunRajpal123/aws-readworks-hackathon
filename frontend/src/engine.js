@@ -1,7 +1,5 @@
 import { I18N } from './i18n.js'
 import { initAdmin } from './admin.js'
-import { RW } from './data_rw.js'
-import { FULL_LIST } from './data_full.js'
 import { createQuestions } from './questions.js'
 import { createDialogs } from './rate.js'
 import { createTour } from './tour.js'
@@ -9,14 +7,14 @@ import { addPipelineMode, ensureSibling } from './pipeline_mode.js'
 import { createInfo } from './info.js'
 import { createFamily } from './family.js'
 import { addWords } from './store.js'
-import { byBand, byPid, byMode, modeFor } from './catalog.js'
+import { byBand, byPid, byMode, modeFor, MODES, CARDS, hydrateContent, hydrateBandModes, loadMode, hasMode } from './content.js'
 import { art } from './art.js'
 import { getProfile, setProfile, addSession, setSessionQuiz, upNext, bandOf, hydratePeople } from './people.js'
 import { createNext } from './next.js'
 import { createProfile } from './profile.js'
 import { initNav } from './nav.js'
 import { fetchProduct } from './api.js'
-import { SPK, MUTE, GLOW, JAR, BADGE, ICON, CARDS, MODES, ACCENTS } from './data.js'
+import { SPK, MUTE, GLOW, JAR, BADGE, ICON, ACCENTS } from './icons.js'
 
 // Imperative player ported from WordStops_v8; drives the markup rendered by App.vue.
 export function init() {
@@ -301,7 +299,13 @@ function renderReward(){const r=$('#reward');$('#rewardWrap').hidden=!gameOn;if(
 function idle(){const b=$('#stopBox');b.className='stopbox idle';
  b.innerHTML=stopsOn?`<p class="hint">${mode.stops.length?t('idle',B(),gameOn,mode.stops.length):t('idleNone')}</p>`:`<p class="hint">${t('stopsOff')}</p>`;
  $('#cardBody').innerHTML=`<p class="hint">${t('cardIdle')}</p>`}
-function load(id){stopAll();mode=MODES.find(m=>m.id===id);document.body.className=document.body.className.replace(/\bb-\w+/g,'').trim()+' b-'+B();setSide(false);document.documentElement.lang=mode.lang==='es-US'?'es':'en';uiLang=mode.lang==='es-US'?'es':'en';syncLang();buildTabs();applyStatic();
+async function load(id){stopAll();
+ // Modes are fetched from the cloud (content.js) on demand; built-in and
+ // pipeline modes already in MODES are used directly.
+ mode=MODES.find(m=>m.id===id)||await loadMode(id);
+ if(!mode){const f=byMode(id);if(f)mode=await loadMode(modeFor(f,uiLang==='es'))}
+ if(!mode)return; // nothing to show (no such passage)
+ document.body.className=document.body.className.replace(/\bb-\w+/g,'').trim()+' b-'+B();setSide(false);document.documentElement.lang=mode.lang==='es-US'?'es':'en';uiLang=mode.lang==='es-US'?'es':'en';syncLang();buildTabs();applyStatic();
  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.id===B()));
  $('#stopTitle').textContent=mode.stopTitle;$('#darkBtn').hidden=id!=='912';if(id!=='912'){$('#col').classList.remove('dark');$('#darkBtn').setAttribute('aria-pressed','false')}
  cur=-1;solved=new Set();picking=null;picked.clear();resumeAt=0;freshReward();parse(mode);loadAudio(aid());render();showSource();qs&&qs.render(mode);clearEcho();computeChunks();heard.clear();explored.clear();tapped.clear();lastHeard=-1;updateViewTabs();setView('p');fillVoice();idle();if(typeof placeStrip==='function'){sentOn=[];placeStrip(-1)}renderReward();showResume();renderHero();updateNext();spentMs=0;setOpts(true);
@@ -409,8 +413,11 @@ $('#voiceBtn').onclick=()=>{voiceOn=!voiceOn;const b=$('#voiceBtn');b.innerHTML=
 $('#darkBtn').onclick=()=>{const on=$('#col').classList.toggle('dark');$('#darkBtn').setAttribute('aria-pressed',on)};
 window.addEventListener('resize',()=>moveGlow(cur));
 try{const a=localStorage.getItem('ws3-acc');if(a!==null&&ACCENTS[+a]){document.documentElement.style.setProperty('--acc',ACCENTS[+a][0]);document.documentElement.style.setProperty('--acc-bg',ACCENTS[+a][1])}}catch(e){}
-let start='k2';try{const s=localStorage.getItem('ws3-mode');if(s&&MODES.some(m=>m.id===s))start=s}catch(e){}
- const q=new URLSearchParams(location.search).get('m');if(q&&MODES.some(m=>m.id===q))start=q;start=normStart(start)
+// `start` is resolved after cloud hydration (see the boot block below), since
+// MODES/CATALOG are empty until then. Keep the last-opened id and the ?m= id.
+let lastMode=null;try{lastMode=localStorage.getItem('ws3-mode')}catch(e){}
+ const q=new URLSearchParams(location.search).get('m');
+ let start='k2';
 // Side panel on narrow screens: the word panel slides in from the right and is easy to open and close.
 let panelFocus=null;
 function setSide(open){const was=document.body.classList.contains('side-open');if(open===was)return;
@@ -451,8 +458,17 @@ $('#famBtn').onclick=()=>setFam(true);$('#navContent').onclick=()=>{setAdmin(fal
 $('#adminBtn').onclick=()=>setAdmin(true);initNav();
 // Hydrate the roster/sessions/assignments/practice from the cloud (fires 'sa-people' when ready, which re-renders).
 hydratePeople();
-// ?m=<id> that isn't built in: try a pipeline/API product record (GET /api/v1/text-to-speech, src/api.js).
-if(q&&!MODES.some(m=>m.id===q))addPipelineMode(MODES,q).then(m=>load(m?m.id:start));else load(start);
-if(location.hash==='#admin')setAdmin(true);else if(location.hash==='#family')setFam(true);
-else if(!q&&getProfile().role!=='guest')applyProfile(getProfile());
+// Hydrate the passage catalog + shared cards, then the band-tab modes, from
+// the cloud BEFORE the first load so tabs and lists have their metadata.
+(async()=>{
+ await hydrateContent();await hydrateBandModes();buildTabs();
+ // Resolve the starting passage now that the catalog is loaded.
+ if(lastMode&&(hasMode(lastMode)||byMode(lastMode)))start=normStart(lastMode);
+ if(q){
+  if(hasMode(q)||byMode(q)){await load(normStart(q))}
+  else{const m=await addPipelineMode(MODES,q);await load(m?m.id:start)}
+ }else await load(start);
+ if(location.hash==='#admin')setAdmin(true);else if(location.hash==='#family')setFam(true);
+ else if(!q&&getProfile().role!=='guest')applyProfile(getProfile());
+})();
 }

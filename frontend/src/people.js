@@ -6,7 +6,7 @@
 // existing render paths keep their synchronous accessors; writes go to the cloud and update the
 // cache optimistically. The ROSTER_SEED / per-student sample history below are the local-dev
 // fallback (no API configured) and the source the post-deploy seeding script loads into DynamoDB.
-import { CATALOG, byPid, byBand, gradeNum, stepUp } from './catalog.js'
+import { CATALOG, byPid, byBand, gradeNum, stepUp } from './content.js'
 import {
   hasDataApi, getRoster, getSessions, getAssignments, getPractice,
   postSession, postAssignment, deleteAssignment, postPractice,

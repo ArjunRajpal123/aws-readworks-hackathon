@@ -96,6 +96,47 @@ def new_id():
     return f"{int(time.time() * 1000):x}{uuid.uuid4().hex[:6]}"
 
 
+# Passage product records predate the typed app-data items: their id is the
+# bare passage id (no "#"), they carry `lang` and `tracks`, and no `type`.
+# They're listed off the existing lang-index GSI so the browse page can show
+# every cloud/ETL/API passage without a full-table scan.
+def get_raw(item_type, item_id):
+    """get() without stripping the typed id (for large index items)."""
+    resp = _get_table().get_item(Key={"id": f"{item_type}#{item_id}"})
+    item = resp.get("Item")
+    return _from_dynamo(item) if item else None
+
+
+# Both casings: the pipeline writes lowercase "en"/"es", but some legacy API
+# records used "EN"/"ES". lang-index is case-sensitive, so query all four.
+_PASSAGE_LANGS = ("en", "es", "EN", "ES")
+
+
+def list_passages(limit=500):
+    """Compact list of passage product records: {id, title, lang, tracks[], generatedAt}."""
+    table = _get_table()
+    out = []
+    for lang in _PASSAGE_LANGS:
+        resp = table.query(
+            IndexName="lang-index",
+            KeyConditionExpression=Key("lang").eq(lang),
+            Limit=limit,
+        )
+        for item in resp.get("Items", []):
+            raw = item.get("id", "")
+            if "#" in raw or not item.get("tracks"):
+                continue  # skip typed app-data rows and non-passage items
+            out.append({
+                "id": raw,
+                "title": item.get("title", raw),
+                "lang": item.get("lang"),
+                "voices": [t.get("voiceId") for t in item.get("tracks", []) if t.get("voiceId")],
+                "generatedAt": (item.get("generation") or {}).get("runAt"),
+            })
+    out.sort(key=lambda p: p.get("title", "").lower())
+    return _from_dynamo(out)
+
+
 def _strip(item):
     """Return the item with the typed `id`/`type` reduced to a bare id."""
     if not item:

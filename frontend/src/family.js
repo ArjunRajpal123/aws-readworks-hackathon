@@ -1,7 +1,7 @@
 // Teacher and parent views. Teachers see a class, click into a student, and get class-level and student-level suggestions.
 // Parents see their children, what was read, the words covered, and words to go over again.
 import { art } from './art.js'
-import { CATALOG, byPid, byBand, gradeText, modeFor } from './catalog.js'
+import { CATALOG, byPid, byBand, gradeText, modeFor } from './content.js'
 import { CLASSES, STUDENTS, PARENTS, TEACHERS, student, klass, teacherOf, firstName, studentsIn, parentsOf, bandOf, summary, classSummary, studentTips, classTips, assignmentsFor, assign, unassign, loadAssign, recordPractice, fmtMin } from './people.js'
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
