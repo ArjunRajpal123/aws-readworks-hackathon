@@ -14,10 +14,13 @@ Word Stop publish checks (mirrors the design doc):
 """
 
 import json
+import logging
 import os
 import re
 
 import boto3
+
+log = logging.getLogger(__name__)
 
 _client = None
 MODEL_ID = os.environ.get("SA_GEN_MODEL", "us.amazon.nova-lite-v1:0")
@@ -253,6 +256,47 @@ def _stem_match(norm_word, passage_norms):
     return best
 
 
+# Small function-word lists, used only to tell whether a definition/example is
+# still in the source language after the model pass (it often leaves `def`
+# untranslated). Deliberately conservative: short text is never flagged.
+_EN_HINT = frozenset(
+    "the of to and is are was were in on it that this with for as at by from or be "
+    "have has had not can will often like into than then there their they them his "
+    "her its you your we our when while where which who what how very more most "
+    "some such also".split())
+_ES_HINT = frozenset(
+    "el la los las un una unos unas de del y es son era eran en que se por con "
+    "para como al lo su sus más pero muy cuando donde mientras también".split())
+
+
+def _in_wrong_language(text, lang):
+    """True if `text` reads as the OTHER language than `lang` ('es' or 'en')."""
+    words = re.findall(r"[a-záéíóúñü']+", (text or "").lower())
+    if len(words) < 3:
+        return False
+    en = sum(w in _EN_HINT for w in words)
+    es = sum(w in _ES_HINT for w in words)
+    if lang.startswith("es"):
+        return en > es and en / len(words) >= 0.2
+    return es > en and es / len(words) >= 0.2
+
+
+def _ensure_language(text, lang):
+    """Return `text` in `lang`. If the model left it in the other language,
+    machine-translate it (Amazon Translate is reliable for short sentences).
+    On a Translate error keep the original so a card is never lost."""
+    text = str(text or "")
+    if not text or not _in_wrong_language(text, lang):
+        return text
+    from common.translate import translate_text
+    src = "en" if lang.startswith("es") else "es"
+    try:
+        return translate_text(text, src, lang[:2])
+    except Exception:  # noqa: BLE001 - any Translate failure must not drop the card
+        log.warning("translate fallback failed for a %s card text", lang, exc_info=True)
+        return text
+
+
 def localize_cards(en_cards, es_text, lang="es"):
     """Translate English vocab cards to `lang`, matched to the surface form the
     word takes in the already-translated passage `es_text`, so the player
@@ -260,7 +304,8 @@ def localize_cards(en_cards, es_text, lang="es"):
       1. translate each card (word+def+ex), with the word AS IT APPEARS in es_text;
       2. a sense check that the translated word is the right MEANING.
     Then a programmatic surface-form repair snaps any off-form word to a passage
-    token sharing its stem. Cards that still can't be matched are dropped.
+    token sharing its stem, and any def/ex the model left in the source language
+    is machine-translated. Cards that still can't be matched are dropped.
     Returns [{word, def, ex}] whose words are guaranteed present in es_text.
     """
     cards_in = [c for c in (en_cards or []) if c.get("word")]
@@ -276,7 +321,9 @@ def localize_cards(en_cards, es_text, lang="es"):
         "set `word` to the translation EXACTLY AS THAT WORD APPEARS in the passage "
         "(same surface form/inflection); translate def and ex too. The word must be "
         "the correct MEANING of the English word, and must be a word present in the "
-        "passage."
+        "passage. Write `def` and `ex` ENTIRELY in " +
+        ("Spanish" if lang.startswith("es") else lang) +
+        ", never in English."
     )
     # The passage goes ONLY in guard_text (the guardContent block); putting it
     # in the instruction text too makes the guardrail flag the wrapped copy.
@@ -303,9 +350,9 @@ def localize_cards(en_cards, es_text, lang="es"):
             surface = forms[m]
         card = {"word": surface}
         if c.get("def"):
-            card["def"] = str(c["def"])[:200]
+            card["def"] = _ensure_language(c["def"], lang)[:200]
         if c.get("ex"):
-            card["ex"] = str(c["ex"])[:200]
+            card["ex"] = _ensure_language(c["ex"], lang)[:200]
         result.append(card)
     return result
 
