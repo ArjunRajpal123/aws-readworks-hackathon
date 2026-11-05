@@ -102,31 +102,41 @@ export function detect(text, fileName) {
 // which is the live AI path. The old window.SA_AI_ENDPOINT (/api/v1/assist)
 // was removed when we adopted the data API, so we no longer call it.
 export async function aiSuggest(text, det) {
-  // ---- local heuristics for the simple form fields ----
-  const words = wordsOf(text)
-  const stop = det && det.lang === 'es-US' ? ES_STOP : EN_STOP
-  const freq = new Map()
-  for (const w of words) { const lw = w.toLowerCase(); if (lw.length >= 5 && !stop.has(lw)) freq.set(lw, (freq.get(lw) || 0) + 1) }
-  const top = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0])
-  const quotes = (text.match(/["“”«»]/g) || []).length
-  const pronouns = (text.match(/\b(he|she|they|él|ella|ellos|ellas)\b/gi) || []).length
-  const genre = quotes >= 6 || pronouns / Math.max(1, words.length) > 0.03 ? 'fiction' : 'nonfiction'
-  const fields = { adGenre: genre }
-  if (top.length) fields.adTopic = top.slice(0, 2).map(w => w[0].toUpperCase() + w.slice(1)).join(', ')
-  if (top.length) fields.adTitle = (det && det.lang === 'es-US' ? 'Texto sobre ' : 'Passage about ') + top[0]
-
-  // ---- vocabulary: real Bedrock cards via the data API (guardrailed) ----
-  let vocabulary, mode = 'simulated'
-  try {
-    const { hasDataApi, genCards } = await import('./data_api.js')
-    if (hasDataApi()) {
-      const r = await genCards(text, (det && det.lang === 'es-US') ? 'es' : 'en')
-      if (r && Array.isArray(r.cards)) { vocabulary = r.cards.map(c => c.word).filter(Boolean); mode = 'service' }
-    }
-  } catch { /* fall back to local candidates below */ }
-  if (!vocabulary) {
-    const known = new Set(DB.keys())
-    vocabulary = [...new Set(words.map(w => w.toLowerCase()).filter(w => w.length >= 8 && !stop.has(w) && !known.has(w)))].slice(0, 6)
+  const lang = det && det.lang === 'es-US' ? 'es-US' : 'en-US'
+  // Map the data API's field names -> admin form input ids.
+  const idMap = {
+    title: 'adTitle', language: 'adSrcLang', gradeBand: 'adBand', grade: 'adGrade',
+    genre: 'adGenre', topic: 'adTopic', notes: 'adNotes', reviewer: 'adRevers',
+    spanishReviewer: 'adRevEs', batchLabel: 'adBatch', afterApproval: 'adVis', reviewBy: 'adDue',
   }
-  return { mode, fields, vocabulary }
+  let fields = {}, vocabulary, mode = 'simulated'
+  try {
+    const { hasDataApi, genAutofill, genCards } = await import('./data_api.js')
+    if (hasDataApi()) {
+      // Real AI metadata (title/grade/genre/topic/notes + reviewer attribution
+      // + workflow defaults) and real Bedrock vocabulary, in parallel.
+      const [af, cr] = await Promise.all([
+        genAutofill(text, lang),
+        genCards(text, lang === 'es-US' ? 'es' : 'en'),
+      ])
+      if (af && af.fields) { for (const [k, v] of Object.entries(af.fields)) fields[idMap[k] || k] = v; mode = 'service' }
+      if (cr && Array.isArray(cr.cards)) vocabulary = cr.cards.map(c => c.word).filter(Boolean)
+    }
+  } catch { /* fall back below */ }
+
+  // Local fallback only when the API is unavailable.
+  if (mode !== 'service') {
+    const words = wordsOf(text)
+    const stop = lang === 'es-US' ? ES_STOP : EN_STOP
+    const freq = new Map()
+    for (const w of words) { const lw = w.toLowerCase(); if (lw.length >= 5 && !stop.has(lw)) freq.set(lw, (freq.get(lw) || 0) + 1) }
+    const top = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2).map(e => e[0])
+    fields.adGenre = (text.match(/["“”«»]/g) || []).length >= 6 ? 'fiction' : 'nonfiction'
+    if (top.length) fields.adTopic = top.map(w => w[0].toUpperCase() + w.slice(1)).join(', ')
+    if (!vocabulary) {
+      const known = new Set(DB.keys())
+      vocabulary = [...new Set(words.map(w => w.toLowerCase()).filter(w => w.length >= 8 && !stop.has(w) && !known.has(w)))].slice(0, 6)
+    }
+  }
+  return { mode, fields, vocabulary: vocabulary || [] }
 }

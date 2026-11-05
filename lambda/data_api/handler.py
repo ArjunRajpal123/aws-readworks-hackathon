@@ -368,6 +368,15 @@ def post_localize(event):
     return json_response(200, {"cards": out})
 
 
+# ---- autofill passage metadata (Bedrock) ----------------------------------
+def post_autofill(event):
+    b = _body(event)
+    if b is None or not b.get("text") or not str(b["text"]).strip():
+        return error_response(400, "text is required")
+    fields = gen.autofill_fields(str(b["text"]), b.get("lang"))
+    return json_response(200, {"fields": fields})
+
+
 # ---- generation (Bedrock) -------------------------------------------------
 def post_cards(event):
     b = _body(event)
@@ -395,6 +404,7 @@ ROUTES = {
     ("translate", "POST"): post_translate,
     ("cards", "POST"): post_cards,
     ("stops", "POST"): post_stops,
+    ("autofill", "POST"): post_autofill,
     ("localize", "POST"): post_localize,
     ("pcards", "GET"): get_pcards,
     ("pcards", "POST"): post_pcards,

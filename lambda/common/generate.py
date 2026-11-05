@@ -112,6 +112,107 @@ def vocab_cards(text, lang="en", max_cards=8):
     return cards
 
 
+# ---- autofill passage metadata (title, grade, genre, topic, notes) --------
+import datetime  # noqa: E402
+
+AUTOFILL_MODEL = os.environ.get("SA_AUTOFILL_MODEL", MODEL_ID)
+_BANDS = ("k2", "35", "68", "912")
+_GENRES = ("fiction", "nonfiction", "poetry", "drama", "other")
+
+_AUTOFILL_SYSTEM = (
+    "You extract catalog metadata for a K-12 reading passage. Return ONLY a JSON "
+    "object with: title (a real, specific title for THIS passage, 3-8 words, never "
+    "'Passage about ...'), language ('en-US' or 'es-US'), gradeBand (one of 'k2',"
+    "'35','68','912'), grade (0-12, K=0), genre (one of 'fiction','nonfiction',"
+    "'poetry','drama','other'), topic (2-4 words naming what it is about — ALWAYS "
+    "provide one), notes (one short sentence of guidance for a human reviewer, "
+    "<=160 chars). Base every value on the passage. Omit a field only if truly "
+    "unknowable (but always give title, topic, genre)."
+)
+
+
+def _model_name(model_id):
+    m = (model_id or "").lower()
+    for key, name in (("nova-micro", "Nova Micro"), ("nova-lite", "Nova Lite"),
+                      ("nova-pro", "Nova Pro"), ("nova", "Nova"),
+                      ("haiku", "Claude Haiku"), ("sonnet", "Claude Sonnet"),
+                      ("claude", "Claude"), ("llama", "Llama")):
+        if key in m:
+            return name
+    return "AI model"
+
+
+def autofill_fields(text, lang_hint=None):
+    """Draft passage metadata from the text via Bedrock (guardrailed), plus
+    server-derived review fields. Returns a dict of fields the admin form reads;
+    empty on a guardrail block."""
+    global AUTOFILL_MODEL, MODEL_ID
+    saved = MODEL_ID
+    MODEL_ID = AUTOFILL_MODEL  # _converse uses MODEL_ID
+    try:
+        out = _safe_json(_AUTOFILL_SYSTEM, f"Passage:\n{text}", guard_text=text)
+    finally:
+        MODEL_ID = saved
+    obj = out if isinstance(out, dict) else (out[0] if isinstance(out, list) and out and isinstance(out[0], dict) else {})
+
+    fields = {}
+    title = obj.get("title")
+    if isinstance(title, str) and title.strip() and not title.lower().startswith("passage about"):
+        fields["title"] = title.strip()[:120]
+    lang = obj.get("language") or lang_hint
+    if lang in ("en-US", "es-US"):
+        fields["language"] = lang
+    band = str(obj.get("gradeBand") or "")
+    if band in _BANDS:
+        fields["gradeBand"] = band
+    grade = obj.get("grade")
+    if isinstance(grade, (int, float)) and 0 <= grade <= 12:
+        fields["grade"] = "K" if int(grade) == 0 else str(int(grade))
+    genre = obj.get("genre")
+    if genre in _GENRES:
+        fields["genre"] = genre
+    topic = obj.get("topic")
+    if isinstance(topic, str) and topic.strip():
+        fields["topic"] = topic.strip()[:60]
+    notes = obj.get("notes")
+    if isinstance(notes, str) and notes.strip():
+        fields["notes"] = notes.strip()[:160]
+
+    # Topic must always be present; fall back to salient words.
+    if not fields.get("topic"):
+        fields["topic"] = fields.get("title") or _topic_from_text(text)
+
+    # Server-derived review/workflow fields (the "preferences" we implemented):
+    attribution = f"Created by {_model_name(AUTOFILL_MODEL)} (AI)"
+    fields["reviewer"] = attribution
+    fields["spanishReviewer"] = attribution
+    slug_src = fields.get("topic") or fields.get("title") or "passage"
+    slug = re.sub(r"[^a-z0-9]+", "-", slug_src.lower()).strip("-")[:30] or "passage"
+    today = datetime.date.today()
+    fields["batchLabel"] = f"ai-{slug}-{today.isoformat()}"
+    fields["afterApproval"] = "draft"
+    fields["reviewBy"] = (today + datetime.timedelta(days=5)).isoformat()
+    return fields
+
+
+_TOPIC_STOP = {"the", "and", "for", "that", "this", "with", "from", "they", "them",
+               "their", "about", "into", "over", "your", "you", "are", "was", "were",
+               "has", "have", "had", "but", "not", "can", "will", "would", "when",
+               "where", "which", "what", "a", "an", "of", "to", "in", "is", "it",
+               "on", "as", "at", "by", "or", "be", "across", "both", "one", "night"}
+
+
+def _topic_from_text(text):
+    words = re.findall(r"[A-Za-z][A-Za-z'-]{3,}", (text or "").lower())
+    freq = {}
+    for w in words:
+        if w in _TOPIC_STOP:
+            continue
+        freq[w] = freq.get(w, 0) + 1
+    top = sorted(freq, key=lambda w: (-freq[w], w))[:2]
+    return " ".join(w.capitalize() for w in top) or "General"
+
+
 # ---- localize cards to another language, matched to the passage -----------
 import unicodedata  # noqa: E402
 

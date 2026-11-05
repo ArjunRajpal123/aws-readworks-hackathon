@@ -253,5 +253,35 @@ def test_delete_passage_404_when_nothing(table):
 def test_delete_passage_requires_id(table):
     assert call("DELETE", "passage")[0] == 400
 
+
+def test_autofill_returns_fields_and_defaults(table, monkeypatch):
+    from common import generate as gen
+    reply = json.dumps({"title": "Day of the Dead Altar", "language": "en-US",
+                        "gradeBand": "68", "grade": 6, "genre": "nonfiction",
+                        "topic": "Day of the Dead", "notes": "A traditional altar."})
+    monkeypatch.setattr(gen, "_client", type("B", (), {"converse": lambda self, **kw: {
+        "output": {"message": {"content": [{"text": reply}]}}, "stopReason": "end_turn"}})())
+    s, b = call("POST", "autofill", {"text": "Bright marigolds pave a fragrant path across the altar.", "lang": "en-US"})
+    assert s == 200
+    f = b["fields"]
+    assert f["title"] == "Day of the Dead Altar"
+    assert f["gradeBand"] == "68" and f["grade"] == "6" and f["genre"] == "nonfiction"
+    assert f["topic"] == "Day of the Dead"
+    # server-derived preferences
+    assert f["reviewer"].startswith("Created by")
+    assert f["spanishReviewer"].startswith("Created by")
+    assert f["afterApproval"] == "draft" and f["batchLabel"].startswith("ai-") and f["reviewBy"]
+
+
+def test_autofill_rejects_passage_about_title(table, monkeypatch):
+    from common import generate as gen
+    reply = json.dumps({"title": "Passage about bright", "topic": "marigolds", "genre": "fiction"})
+    monkeypatch.setattr(gen, "_client", type("B", (), {"converse": lambda self, **kw: {
+        "output": {"message": {"content": [{"text": reply}]}}, "stopReason": "end_turn"}})())
+    _, b = call("POST", "autofill", {"text": "Bright marigolds pave a path across the altar at night."})
+    # The lazy "Passage about ..." title is rejected; topic/genre still kept.
+    assert "title" not in b["fields"]
+    assert b["fields"]["topic"] == "marigolds"
+
     assert call("GET", "nope")[0] == 404
     assert call("PUT", "roster")[0] == 404  # method not routed
