@@ -26,7 +26,9 @@ segment; the method decides the action.
 
   Review / publish state:
     GET  /api/v1/data/review?pid=<id>
-    POST /api/v1/data/review  {pid, state, by?, notes?}
+    POST /api/v1/data/review  {pid, state, by?, notes?, meta?}
+    GET  /api/v1/data/published              -> {entries: [...]} approved generated
+                                                passages (state=published + a band in meta)
 
   Content (migrated built-in passages): the player's catalog, shared vocab
   cards, and one passage/mode by id. Seeded by lambda/scripts/seed_content.py.
@@ -212,17 +214,65 @@ def get_review(event):
     return json_response(200, rec or {"pid": pid, "state": "none"})
 
 
+_BANDS = ("k2", "35", "68", "912")
+_BAND_LABEL = {"k2": "K–2", "35": "3–5", "68": "6–8", "912": "9–12"}
+
+
+def _clean_meta(m):
+    """Catalog metadata a generated passage needs to be listed in the player:
+    where it belongs (grade band) and how to label it. Unknown keys are dropped."""
+    if not isinstance(m, dict):
+        return None
+    out = {}
+    for key, cap in (("title", 200), ("grade", 8), ("genre", 30), ("lexile", 12), ("topic", 60)):
+        v = m.get(key)
+        if isinstance(v, str) and v.strip():
+            out[key] = v.strip()[:cap]
+    if m.get("band") in _BANDS:
+        out["band"] = m["band"]
+    return out or None
+
+
 def post_review(event):
     b = _body(event)
     if b is None or not b.get("pid") or not b.get("state"):
         return error_response(400, "pid and state are required")
     if b["state"] not in ("draft", "review", "published", "rejected"):
         return error_response(400, "state must be draft|review|published|rejected")
-    rec = db.put("review", b["pid"], {
+    # A later review write (e.g. Approve) that doesn't resend the metadata must
+    # not erase what the submit stored, so keep the previous meta in that case.
+    prev = db.get("review", b["pid"]) or {}
+    meta = _clean_meta(b.get("meta")) or prev.get("meta")
+    item = {
         "pid": b["pid"], "state": b["state"], "by": b.get("by"),
         "notes": (b.get("notes") or "")[:1000], "at": db.now_iso(),
-    })
-    return json_response(201, rec)
+    }
+    if meta:
+        item["meta"] = meta
+    return json_response(201, db.put("review", b["pid"], item))
+
+
+def get_published(event):
+    """Approved generated passages, for the player's passage list. A passage is
+    listed once it is `published` AND has a grade band (stored with its review
+    at submit time); the library catalog itself is untouched."""
+    out = []
+    for r in db.list_type("review"):
+        meta = r.get("meta") or {}
+        if r.get("state") != "published" or meta.get("band") not in _BANDS:
+            continue
+        pid = r.get("pid") or r.get("id")
+        grade = str(meta.get("grade", ""))
+        out.append({
+            "pid": pid, "title": meta.get("title") or pid, "band": meta["band"],
+            # The dropdown shows "Grade 4" for a number and "Grades 3–5" otherwise,
+            # so fall back to the band's range when no numeric grade was entered.
+            "grade": grade if grade.isdigit() else _BAND_LABEL[meta["band"]],
+            "genre": meta.get("genre", ""), "lexile": meta.get("lexile", ""),
+            "lang": "es" if pid.endswith("-es") else "en",
+        })
+    out.sort(key=lambda p: p["title"].lower())
+    return json_response(200, {"entries": out})
 
 
 # ---- content (migrated built-in passages) ---------------------------------
@@ -420,4 +470,5 @@ ROUTES = {
     ("ratings", "POST"): post_rating,
     ("review", "GET"): get_review,
     ("review", "POST"): post_review,
+    ("published", "GET"): get_published,
 }

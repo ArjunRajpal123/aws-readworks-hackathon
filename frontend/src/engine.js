@@ -7,7 +7,7 @@ import { addPipelineMode, ensureSibling } from './pipeline_mode.js'
 import { createInfo } from './info.js'
 import { createFamily } from './family.js'
 import { addWords } from './store.js'
-import { byBand, byPid, byMode, modeFor, MODES, CARDS, hydrateContent, hydrateBandModes, loadMode, hasMode, titleOf } from './content.js'
+import { byBand, byPid, byMode, modeFor, MODES, CARDS, PUBLISHED, hydrateContent, hydrateBandModes, hydratePublished, publishedByBand, loadMode, hasMode, titleOf } from './content.js'
 import { art } from './art.js'
 import { getProfile, setProfile, addSession, setSessionQuiz, upNext, bandOf, hydratePeople } from './people.js'
 import { createNext } from './next.js'
@@ -345,8 +345,16 @@ function applyProfile(p){updateProfBtn();updateNext();
  else if(p.role==='teacher'){setFam(true);fam.show({tab:'teacher',cls:p.te.cls,stu:null})}
  else if(document.body.classList.contains('fam'))fam.show({})}
 function fillPassages(){const sel=$('#passageSel');if(!sel)return;const es=uiLang==='es';
- sel.innerHTML=byBand(B()).map(p=>`<option value="${p.modes.en}">${titleOf(p,es)} · ${es?(/^\d+$/.test(p.grade)?'Grado ':'Grados '):(/^\d+$/.test(p.grade)?'Grade ':'Grades ')}${p.grade}${p.lexile?' · '+p.lexile:''}</option>`).join('');
- const ce=curEntry();if(ce)sel.value=ce.modes.en}
+ const gl=g=>(es?(/^\d+$/.test(g)?'Grado ':'Grados '):(/^\d+$/.test(g)?'Grade ':'Grades '))+g;
+ // Approved passages from the Admin screen follow the library ones for this band.
+ const eh=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const pub=publishedByBand(B(),es).map(p=>`<option value="${eh(p.pid)}">${eh(p.title)} · ${eh(gl(p.grade))}${p.lexile?' · '+eh(p.lexile):''}</option>`);
+ sel.innerHTML=byBand(B()).map(p=>`<option value="${p.modes.en}">${titleOf(p,es)} · ${es?(/^\d+$/.test(p.grade)?'Grado ':'Grados '):(/^\d+$/.test(p.grade)?'Grade ':'Grades ')}${p.grade}${p.lexile?' · '+p.lexile:''}</option>`).join('')+pub.join('');
+ const ce=curEntry();if(ce)sel.value=ce.modes.en;
+ else if(mode&&mode.pipeline){const b=mode.id.replace(/-(en|es)$/,'');const o=[...sel.options].find(o=>o.value.replace(/-(en|es)$/,'')===b);if(o)sel.value=o.value}}
+// Open an approved passage from the list in its own grade band.
+async function openPublished(pid){const p=PUBLISHED.find(x=>x.pid===pid);
+ const m=MODES.find(x=>x.id===pid)||await addPipelineMode(MODES,pid,{band:p?p.band:'35'});if(m)load(m.id)}
 let admin=null;
 function navActive(){const a=document.body.classList.contains('admin'),f=document.body.classList.contains('fam');[['#navContent',!a&&!f],['#famBtn',f],['#adminBtn',a]].forEach(([q,on])=>{const b=$(q);if(!b)return;b.classList.toggle('on',on);on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')})}
 function famLabel(){const on=document.body.classList.contains('fam');const b=$('#famBtn');if(!b)return;b.setAttribute('aria-pressed',on);navActive()}
@@ -409,11 +417,14 @@ document.addEventListener('keydown',e=>{if(e.target.closest('textarea,input,sele
 $('#gameBtn').onclick=()=>{gameOn=!gameOn;syncGame();try{localStorage.setItem('ws-game',gameOn?'1':'0')}catch(e){}load(mode.id)};
 function syncGame(){const b=$('#gameBtn');b.textContent=t('gameBtn',gameOn);b.title=t('gameTitle');b.classList.toggle('off',!gameOn);b.setAttribute('aria-pressed',gameOn)}syncGame();
 function syncLang(){const has=(mode&&mode.pipeline)?!!(mode.sib||mode.sibId):(curEntry()?true:MODES.some(x=>x.id===B()+'es'));document.querySelectorAll('.lng').forEach(b=>{const on=(b.dataset.l==='es')===(mode.lang==='es-US');b.setAttribute('aria-pressed',on);if(b.dataset.l==='es'){b.disabled=!has;b.title=has?'':'No Spanish text for this passage yet'}})}
-$('#passageSel').onchange=()=>{const e=byMode($('#passageSel').value);if(e)load(modeFor(e,uiLang==='es'))};
+$('#passageSel').onchange=()=>{const v=$('#passageSel').value,e=byMode(v);if(e)load(modeFor(e,uiLang==='es'));else openPublished(v)};
 document.querySelectorAll('.lng').forEach(b=>b.onclick=async()=>{uiLang=b.dataset.l;const e=curEntry();
  // Pipeline passage: swap to the other language's text when the chosen language differs.
  if(mode&&mode.pipeline){const wantEs=uiLang==='es',isEs=mode.lang==='es-US';
-  if(wantEs!==isEs){const sib=await ensureSibling(MODES,mode);if(sib){load(sib);return}}
+  if(wantEs!==isEs){const sib=await ensureSibling(MODES,mode);if(sib){load(sib);return}
+   // No other-language version exists: don't flip the UI language over unchanged text;
+   // forget the guessed sibling so syncLang() disables the button with its tooltip.
+   mode.sibId=null;uiLang=isEs?'es':'en'}
   syncLang();applyStatic();return}
  load(e?modeFor(e,uiLang==='es'):(uiLang==='es'?B()+'es':B()))});
 $('#stopsBtn').onclick=()=>{stopsOn=!stopsOn;const b=$('#stopsBtn');b.textContent=t('stopsBtn',stopsOn);b.classList.toggle('off',!stopsOn);b.setAttribute('aria-pressed',stopsOn);load(mode.id)};
@@ -463,19 +474,21 @@ $('#voice').onchange=async()=>{const L=voiceLang();try{localStorage.setItem('ws-
 const tour=createTour({t,view:()=>document.body.classList.contains('admin')?'admin':document.body.classList.contains('fam')?'fam':'student',before:()=>{if(!document.body.classList.contains('admin')&&!document.body.classList.contains('fam')){setOpts(true);setView('p');setSide(false);stopAll()}}});
 $('#howBtn').onclick=()=>tour.start();
 $('#optBtn').onclick=()=>setOpts(document.body.classList.contains('opts-closed'));
-$('#famBtn').onclick=()=>setFam(true);$('#navContent').onclick=()=>{setAdmin(false);setFam(false);window.scrollTo(0,0)};
+$('#famBtn').onclick=()=>setFam(true);$('#navContent').onclick=()=>{setAdmin(false);setFam(false);window.scrollTo(0,0);hydratePublished().then(ok=>ok&&fillPassages())};
+// An admin Approve (admin.js) adds a passage to the list without a page reload.
+addEventListener('sa-published',()=>hydratePublished().then(ok=>ok&&fillPassages()));
 $('#adminBtn').onclick=()=>setAdmin(true);initNav();
 // Hydrate the roster/sessions/assignments/practice from the cloud (fires 'sa-people' when ready, which re-renders).
 hydratePeople();
 // Hydrate the passage catalog + shared cards, then the band-tab modes, from
 // the cloud BEFORE the first load so tabs and lists have their metadata.
 (async()=>{
- await hydrateContent();await hydrateBandModes();buildTabs();
+ await Promise.all([hydrateContent(),hydratePublished()]);await hydrateBandModes();buildTabs();
  // Resolve the starting passage now that the catalog is loaded.
  if(lastMode&&(hasMode(lastMode)||byMode(lastMode)))start=normStart(lastMode);
  if(q){
   if(hasMode(q)||byMode(q)){await load(normStart(q))}
-  else{const m=await addPipelineMode(MODES,q);await load(m?m.id:start)}
+  else{const pb=PUBLISHED.find(x=>x.pid===q);const m=await addPipelineMode(MODES,q,pb?{band:pb.band}:undefined);await load(m?m.id:start)}
  }else await load(start);
  if(location.hash==='#admin')setAdmin(true);else if(location.hash==='#family')setFam(true);
  else if(!q&&getProfile().role!=='guest')applyProfile(getProfile());

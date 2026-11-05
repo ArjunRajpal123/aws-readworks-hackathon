@@ -9,13 +9,17 @@
 // metadata. Each passage/mode's full body (paras, stops, questions) is
 // fetched lazily the first time it is opened, then cached.
 
-import { hasDataApi, getCatalog, getContent } from './data_api.js'
+import { hasDataApi, getCatalog, getContent, getPublished } from './data_api.js'
 
 // Populated by hydrateContent(). MODES holds mode bodies as they are loaded;
 // CARDS is the shared vocab dictionary; CATALOG is the list/metadata index.
 export const MODES = []
 export const CARDS = {}
 export const CATALOG = []
+// Approved passages made in the Admin screen. Kept apart from CATALOG on purpose:
+// the demo student histories and "up next" read minutes/vocab from every CATALOG
+// entry, which generated passages don't have. Only the passage list reads this.
+export const PUBLISHED = []
 
 const modeById = new Map()
 let catalogLoaded = false
@@ -38,6 +42,31 @@ export async function hydrateContent() {
   Object.assign(CARDS, data.cards || {})
   catalogLoaded = true
   return true
+}
+
+// (Re)load the approved generated passages. Safe to call again after an Approve.
+// A failure leaves the previous list in place and never affects the catalog.
+export async function hydratePublished() {
+  if (!hasDataApi()) return false
+  const data = await getPublished()
+  if (!data || !Array.isArray(data.entries)) return false
+  PUBLISHED.length = 0
+  PUBLISHED.push(...data.entries)
+  return true
+}
+
+// Approved passages for one grade band, one row per passage: the English
+// version, unless it is only approved in Spanish (or the student is reading in
+// Spanish and that version is approved too).
+export function publishedByBand(band, es) {
+  const base = p => p.pid.replace(/-(en|es)$/, '')
+  const inBand = PUBLISHED.filter(p => p.band === band)
+  const want = es ? 'es' : 'en'
+  const bases = [...new Set(inBand.map(base))]
+  return bases.map(b => {
+    const sibs = inBand.filter(p => base(p) === b)
+    return sibs.find(p => p.lang === want) || sibs[0]
+  })
 }
 
 function registerMode(m) {

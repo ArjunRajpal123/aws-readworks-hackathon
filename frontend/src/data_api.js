@@ -60,6 +60,9 @@ export const postPractice = (student, word, knew) => req('POST', 'practice', { b
 export const getRatings = () => req('GET', 'ratings')
 export const postRating = rec => req('POST', 'ratings', { body: rec })
 
+// approved generated passages for the player's passage list -> {entries: [...]}
+export const getPublished = () => req('GET', 'published')
+
 // review / publish state
 export const getReview = pid => req('GET', 'review', { query: { pid } })
 export const postReview = rec => req('POST', 'review', { body: rec })
