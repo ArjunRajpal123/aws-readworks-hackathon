@@ -8,20 +8,32 @@ const BASE = window.SA_DATA_URL
 
 export const hasDataApi = () => !!BASE
 
+const sleep = ms => new Promise(r => setTimeout(r, ms))
+
 async function req(method, resource, { body, query } = {}) {
   if (!BASE) return null
   const qs = query ? '?' + new URLSearchParams(query) : ''
-  try {
-    const r = await fetch(`${BASE}/${resource}${qs}`, {
-      method,
-      headers: body ? { 'content-type': 'application/json' } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
-    })
-    if (!r.ok) return null
-    return await r.json()
-  } catch {
-    return null
+  const url = `${BASE}/${resource}${qs}`
+  const opts = {
+    method,
+    headers: body ? { 'content-type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
   }
+  // GET reads are idempotent: retry a few times with backoff so a cold Lambda,
+  // a GSI still warming up, or a transient network error doesn't leave the
+  // page with no data (the "had to go back and forth to get content" bug).
+  // POST/DELETE are not retried (they create/delete).
+  const tries = method === 'GET' ? 4 : 1
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fetch(url, opts)
+      if (r.ok) return await r.json()
+      // 4xx won't fix itself; stop. 5xx/throttle: retry.
+      if (r.status < 500 && r.status !== 429) return null
+    } catch { /* network error: retry */ }
+    if (i < tries - 1) await sleep(300 * (i + 1))
+  }
+  return null
 }
 
 // roster

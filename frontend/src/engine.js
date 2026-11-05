@@ -310,8 +310,11 @@ async function load(id){stopAll();
  $('#stopTitle').textContent=mode.stopTitle;$('#darkBtn').hidden=id!=='912';if(id!=='912'){$('#col').classList.remove('dark');$('#darkBtn').setAttribute('aria-pressed','false')}
  cur=-1;solved=new Set();picking=null;picked.clear();resumeAt=0;freshReward();parse(mode);loadAudio(aid());render();showSource();qs&&qs.render(mode);clearEcho();computeChunks();heard.clear();explored.clear();tapped.clear();lastHeard=-1;updateViewTabs();setView('p');fillVoice();idle();if(typeof placeStrip==='function'){sentOn=[];placeStrip(-1)}renderReward();showResume();renderHero();updateNext();spentMs=0;setOpts(true);
  document.querySelectorAll('#bands li').forEach(li=>li.classList.toggle('cur',li.dataset.id===B()));try{localStorage.setItem('ws3-mode',id);const ce=curEntry();if(ce)localStorage.setItem('ws-bp-'+ce.band,ce.pid)}catch(e){}}
+const TAB_ORDER=['k2','35','68','912'];
 function buildTabs(){$('#tabs').innerHTML='';$('#bands').innerHTML='';
- MODES.filter(m=>!m.band).forEach(m=>{const v=(uiLang==='es'&&MODES.find(x=>x.id===m.id+'es'))||m;
+ // Base band modes, always in grade order (cloud fetches resolve out of order).
+ const base=MODES.filter(m=>!m.band).sort((a,b)=>TAB_ORDER.indexOf(a.id)-TAB_ORDER.indexOf(b.id));
+ base.forEach(m=>{const v=(uiLang==='es'&&MODES.find(x=>x.id===m.id+'es'))||m;
   const b=document.createElement('button');b.type='button';b.className='tab';b.setAttribute('role','tab');b.dataset.id=m.id;b.innerHTML=`${m.tab}<small>${v.sub}</small>`;
   b.onclick=()=>openBand(m.id);$('#tabs').appendChild(b);
   const li=document.createElement('li');li.dataset.id=m.id;li.innerHTML=`<span>${m.tab}</span><span>${v.how}</span>`;$('#bands').appendChild(li)})}
