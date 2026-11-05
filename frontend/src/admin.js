@@ -524,13 +524,21 @@ export function initAdmin(t) {
       e.at = e.stages.length
       e.state = e.review === 'required' ? 'review' : 'done'
       if (already) e.error = t('adDupe')
-      await publishReview(e)
+      try { await publishReview(e) } catch { /* review state is best-effort */ }
       // Vocabulary cards and Word Stops (real Bedrock drafts) when requested.
       // Cards are saved against the passage id so the player underlines them.
+      // Each phase is independent: a failure in one must not abort the others,
+      // so the passage always ends up as complete as possible.
       let srcCards = []
-      if (on('adCards') || on('adStops')) { e.gen = 'pending'; save(); renderQueue(); srcCards = await makeCardsAndStops(e, text, srcLang, enId) }
-      // Other language: translate and generate the sibling (en <-> es) through the same pipeline.
-      if (on('adTrans')) { e.other = 'pending'; save(); renderQueue(); await makeOtherLanguage(e, text, srcLang, base, srcCards) }
+      if (on('adCards') || on('adStops')) {
+        e.gen = 'pending'; save(); renderQueue()
+        try { srcCards = await makeCardsAndStops(e, text, srcLang, enId) } catch { e.gen = 'error'; save(); renderQueue() }
+      }
+      // Other language: translate and generate the sibling (en <-> es).
+      if (on('adTrans')) {
+        e.other = 'pending'; save(); renderQueue()
+        try { await makeOtherLanguage(e, text, srcLang, base, srcCards) } catch { e.other = 'error'; save(); renderQueue() }
+      }
     } else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
     save(); renderQueue()
   }
@@ -542,10 +550,12 @@ export function initAdmin(t) {
   async function makeCardsAndStops(entry, text, srcLang, pid) {
     const lang = srcLang.startsWith('es') ? 'es' : 'en'
     let cards = []
-    if (on('adCards')) { const r = await genCards(text, lang); cards = (r && r.cards) || [] }
-    let stops = []
-    if (on('adStops')) { const r = await genStops(text, cards.map(c => c.word), lang); stops = (r && r.stops) || [] }
+    if (on('adCards')) { try { const r = await genCards(text, lang); cards = (r && r.cards) || [] } catch { cards = [] } }
+    // Save the cards for the player IMMEDIATELY after generating them, so a
+    // later failure (stops, translation) can never lose them.
     if (pid && cards.length) { try { await putPassageCards(pid, cards) } catch { /* best effort */ } }
+    let stops = []
+    if (on('adStops')) { try { const r = await genStops(text, cards.map(c => c.word), lang); stops = (r && r.stops) || [] } catch { stops = [] } }
     entry.cards = cards.length; entry.stops = stops.length; entry.gen = 'done'
     return cards
   }
