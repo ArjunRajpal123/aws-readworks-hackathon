@@ -1,22 +1,20 @@
 import { I18N } from './i18n.js'
 import { initAdmin } from './admin.js'
-import { RW } from './data_rw.js'
-import { FULL_LIST } from './data_full.js'
 import { createQuestions } from './questions.js'
 import { createDialogs } from './rate.js'
 import { createTour } from './tour.js'
-import { addPipelineMode } from './pipeline_mode.js'
+import { addPipelineMode, ensureSibling } from './pipeline_mode.js'
 import { createInfo } from './info.js'
 import { createFamily } from './family.js'
 import { addWords } from './store.js'
-import { byBand, byPid, byMode, modeFor } from './catalog.js'
+import { byBand, byPid, byMode, modeFor, MODES, CARDS, hydrateContent, hydrateBandModes, loadMode, hasMode } from './content.js'
 import { art } from './art.js'
-import { getProfile, setProfile, addSession, setSessionQuiz, upNext, bandOf } from './people.js'
+import { getProfile, setProfile, addSession, setSessionQuiz, upNext, bandOf, hydratePeople } from './people.js'
 import { createNext } from './next.js'
 import { createProfile } from './profile.js'
 import { initNav } from './nav.js'
 import { fetchProduct } from './api.js'
-import { SPK, MUTE, GLOW, JAR, BADGE, ICON, CARDS, MODES, ACCENTS } from './data.js'
+import { SPK, MUTE, GLOW, JAR, BADGE, ICON, ACCENTS } from './icons.js'
 
 // Imperative player ported from WordStops_v8; drives the markup rendered by App.vue.
 export function init() {
@@ -102,9 +100,10 @@ if(import.meta.env.DEV){window.__SA=SA;window.__done=()=>{finAt=0;maybeDone()}} 
 const lastAtOrBefore=(arr,t)=>{let lo=0,hi=arr.length-1,a=-1;while(lo<=hi){const m=(lo+hi)>>1;if(arr[m]<=t){a=m;lo=m+1}else hi=m-1}return a};
 async function loadAudio(mid){if(SA[mid]!==undefined)return;SA[mid]=null;
  try{
-  const prod=await fetchProduct(mid);if(!prod)return;
   const want=curVoice(),okT=x=>x.qa&&x.qa.status!=='failed';
-  const tr=prod.tracks.find(x=>x.voiceId===want&&okT(x))||prod.tracks.find(x=>x.default&&okT(x))||prod.tracks.find(okT);if(!tr)return;
+  const prod=await fetchProduct(mid,want,voiceLang());if(!prod)return;
+  // The API picks the track for the chosen voice (selectedTrack); local sa/ records are picked here the same way.
+  const tr=prod.selectedTrack?prod.tracks.find(x=>x.id===prod.selectedTrack):prod.tracks.find(x=>x.voiceId===want&&okT(x))||prod.tracks.find(x=>x.default&&okT(x))||prod.tracks.find(okT);if(!tr)return;
   const gz=await fetch(prod.urls[tr.id].timing);
   // S3 sends Content-Encoding: gzip, so the browser usually inflates it already; fall back to doing it here if not.
   const raw=await gz.arrayBuffer();let tm;
@@ -300,13 +299,22 @@ function renderReward(){const r=$('#reward');$('#rewardWrap').hidden=!gameOn;if(
 function idle(){const b=$('#stopBox');b.className='stopbox idle';
  b.innerHTML=stopsOn?`<p class="hint">${mode.stops.length?t('idle',B(),gameOn,mode.stops.length):t('idleNone')}</p>`:`<p class="hint">${t('stopsOff')}</p>`;
  $('#cardBody').innerHTML=`<p class="hint">${t('cardIdle')}</p>`}
-function load(id){stopAll();mode=MODES.find(m=>m.id===id);document.body.className=document.body.className.replace(/\bb-\w+/g,'').trim()+' b-'+B();setSide(false);document.documentElement.lang=mode.lang==='es-US'?'es':'en';uiLang=mode.lang==='es-US'?'es':'en';syncLang();buildTabs();applyStatic();
+async function load(id){stopAll();
+ // Modes are fetched from the cloud (content.js) on demand; built-in and
+ // pipeline modes already in MODES are used directly.
+ mode=MODES.find(m=>m.id===id)||await loadMode(id);
+ if(!mode){const f=byMode(id);if(f)mode=await loadMode(modeFor(f,uiLang==='es'))}
+ if(!mode)return; // nothing to show (no such passage)
+ document.body.className=document.body.className.replace(/\bb-\w+/g,'').trim()+' b-'+B();setSide(false);document.documentElement.lang=mode.lang==='es-US'?'es':'en';uiLang=mode.lang==='es-US'?'es':'en';syncLang();buildTabs();applyStatic();
  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.id===B()));
  $('#stopTitle').textContent=mode.stopTitle;$('#darkBtn').hidden=id!=='912';if(id!=='912'){$('#col').classList.remove('dark');$('#darkBtn').setAttribute('aria-pressed','false')}
  cur=-1;solved=new Set();picking=null;picked.clear();resumeAt=0;freshReward();parse(mode);loadAudio(aid());render();showSource();qs&&qs.render(mode);clearEcho();computeChunks();heard.clear();explored.clear();tapped.clear();lastHeard=-1;updateViewTabs();setView('p');fillVoice();idle();if(typeof placeStrip==='function'){sentOn=[];placeStrip(-1)}renderReward();showResume();renderHero();updateNext();spentMs=0;setOpts(true);
  document.querySelectorAll('#bands li').forEach(li=>li.classList.toggle('cur',li.dataset.id===B()));try{localStorage.setItem('ws3-mode',id);const ce=curEntry();if(ce)localStorage.setItem('ws-bp-'+ce.band,ce.pid)}catch(e){}}
+const TAB_ORDER=['k2','35','68','912'];
 function buildTabs(){$('#tabs').innerHTML='';$('#bands').innerHTML='';
- MODES.filter(m=>!m.band).forEach(m=>{const v=(uiLang==='es'&&MODES.find(x=>x.id===m.id+'es'))||m;
+ // Base band modes, always in grade order (cloud fetches resolve out of order).
+ const base=MODES.filter(m=>!m.band).sort((a,b)=>TAB_ORDER.indexOf(a.id)-TAB_ORDER.indexOf(b.id));
+ base.forEach(m=>{const v=(uiLang==='es'&&MODES.find(x=>x.id===m.id+'es'))||m;
   const b=document.createElement('button');b.type='button';b.className='tab';b.setAttribute('role','tab');b.dataset.id=m.id;b.innerHTML=`${m.tab}<small>${v.sub}</small>`;
   b.onclick=()=>openBand(m.id);$('#tabs').appendChild(b);
   const li=document.createElement('li');li.dataset.id=m.id;li.innerHTML=`<span>${m.tab}</span><span>${v.how}</span>`;$('#bands').appendChild(li)})}
@@ -394,17 +402,25 @@ $('#back5').onclick=()=>skip(-5);$('#fwd5').onclick=()=>skip(5);
 document.addEventListener('keydown',e=>{if(e.target.closest('textarea,input,select'))return;if(e.key==='ArrowLeft'){e.shiftKey?prevSent():skip(-5)}else if(e.key==='ArrowRight'){e.shiftKey?nextSent():skip(5)}});
 $('#gameBtn').onclick=()=>{gameOn=!gameOn;syncGame();try{localStorage.setItem('ws-game',gameOn?'1':'0')}catch(e){}load(mode.id)};
 function syncGame(){const b=$('#gameBtn');b.textContent=t('gameBtn',gameOn);b.title=t('gameTitle');b.classList.toggle('off',!gameOn);b.setAttribute('aria-pressed',gameOn)}syncGame();
-function syncLang(){const has=curEntry()?true:MODES.some(x=>x.id===B()+'es');document.querySelectorAll('.lng').forEach(b=>{const on=(b.dataset.l==='es')===(mode.lang==='es-US');b.setAttribute('aria-pressed',on);if(b.dataset.l==='es'){b.disabled=!has;b.title=has?'':'No Spanish text for this passage yet'}})}
+function syncLang(){const has=(mode&&mode.pipeline)?!!(mode.sib||mode.sibId):(curEntry()?true:MODES.some(x=>x.id===B()+'es'));document.querySelectorAll('.lng').forEach(b=>{const on=(b.dataset.l==='es')===(mode.lang==='es-US');b.setAttribute('aria-pressed',on);if(b.dataset.l==='es'){b.disabled=!has;b.title=has?'':'No Spanish text for this passage yet'}})}
 $('#passageSel').onchange=()=>{const e=byMode($('#passageSel').value);if(e)load(modeFor(e,uiLang==='es'))};
-document.querySelectorAll('.lng').forEach(b=>b.onclick=()=>{uiLang=b.dataset.l;const e=curEntry();load(e?modeFor(e,uiLang==='es'):(uiLang==='es'?B()+'es':B()))});
+document.querySelectorAll('.lng').forEach(b=>b.onclick=async()=>{uiLang=b.dataset.l;const e=curEntry();
+ // Pipeline passage: swap to the other language's text when the chosen language differs.
+ if(mode&&mode.pipeline){const wantEs=uiLang==='es',isEs=mode.lang==='es-US';
+  if(wantEs!==isEs){const sib=await ensureSibling(MODES,mode);if(sib){load(sib);return}}
+  syncLang();applyStatic();return}
+ load(e?modeFor(e,uiLang==='es'):(uiLang==='es'?B()+'es':B()))});
 $('#stopsBtn').onclick=()=>{stopsOn=!stopsOn;const b=$('#stopsBtn');b.textContent=t('stopsBtn',stopsOn);b.classList.toggle('off',!stopsOn);b.setAttribute('aria-pressed',stopsOn);load(mode.id)};
 $('#voiceBtn').innerHTML=SPK;
 $('#voiceBtn').onclick=()=>{voiceOn=!voiceOn;const b=$('#voiceBtn');b.innerHTML=voiceOn?SPK:MUTE;b.setAttribute('aria-pressed',voiceOn);b.setAttribute('aria-label',voiceOn?t('voiceOn'):t('voiceOff'));if(!voiceOn&&synth)synth.cancel();Object.values(SA).forEach(a=>{if(a)a.audio.muted=!voiceOn})};
 $('#darkBtn').onclick=()=>{const on=$('#col').classList.toggle('dark');$('#darkBtn').setAttribute('aria-pressed',on)};
 window.addEventListener('resize',()=>moveGlow(cur));
 try{const a=localStorage.getItem('ws3-acc');if(a!==null&&ACCENTS[+a]){document.documentElement.style.setProperty('--acc',ACCENTS[+a][0]);document.documentElement.style.setProperty('--acc-bg',ACCENTS[+a][1])}}catch(e){}
-let start='k2';try{const s=localStorage.getItem('ws3-mode');if(s&&MODES.some(m=>m.id===s))start=s}catch(e){}
- const q=new URLSearchParams(location.search).get('m');if(q&&MODES.some(m=>m.id===q))start=q;start=normStart(start)
+// `start` is resolved after cloud hydration (see the boot block below), since
+// MODES/CATALOG are empty until then. Keep the last-opened id and the ?m= id.
+let lastMode=null;try{lastMode=localStorage.getItem('ws3-mode')}catch(e){}
+ const q=new URLSearchParams(location.search).get('m');
+ let start='k2';
 // Side panel on narrow screens: the word panel slides in from the right and is easy to open and close.
 let panelFocus=null;
 function setSide(open){const was=document.body.classList.contains('side-open');if(open===was)return;
@@ -432,14 +448,30 @@ pfd=createProfile({t,onPick:applyProfile});
 $('#nextBtn').onclick=()=>nxt.open();$('#profBtn').onclick=()=>pfd.open();
 addEventListener('sa-people',()=>{updateNext();updateProfBtn()});
 $('#vtP').onclick=()=>setView('p');$('#vtQ').onclick=()=>setView('q');$('#rateBtn').onclick=()=>dlg.openRate();
-$('#voice').onchange=()=>{const L=voiceLang();try{localStorage.setItem('ws-voice-'+L,$('#voice').value)}catch(e){}stopAll();qs&&qs.stop();SA[aid()]=undefined;loadAudio(aid());showSource()};
+$('#voice').onchange=async()=>{const L=voiceLang();try{localStorage.setItem('ws-voice-'+L,$('#voice').value)}catch(e){}
+ // Remember where we were and whether we were playing, then reload the chosen
+ // voice's track and resume from the same word so the new voice takes over.
+ const at=cur>=0?cur:resumeAt;const was=playing;stopAll();qs&&qs.stop();
+ SA[aid()]=undefined;await loadAudio(aid());showSource();
+ if(was)playFrom(at||0)};
 const tour=createTour({t,view:()=>document.body.classList.contains('admin')?'admin':document.body.classList.contains('fam')?'fam':'student',before:()=>{if(!document.body.classList.contains('admin')&&!document.body.classList.contains('fam')){setOpts(true);setView('p');setSide(false);stopAll()}}});
 $('#howBtn').onclick=()=>tour.start();
 $('#optBtn').onclick=()=>setOpts(document.body.classList.contains('opts-closed'));
 $('#famBtn').onclick=()=>setFam(true);$('#navContent').onclick=()=>{setAdmin(false);setFam(false);window.scrollTo(0,0)};
 $('#adminBtn').onclick=()=>setAdmin(true);initNav();
-// ?m=<id> that isn't built in: try a pipeline/API product record (GET /api/v1/text-to-speech, src/api.js).
-if(q&&!MODES.some(m=>m.id===q))addPipelineMode(MODES,q).then(m=>load(m?m.id:start));else load(start);
-if(location.hash==='#admin')setAdmin(true);else if(location.hash==='#family')setFam(true);
-else if(!q&&getProfile().role!=='guest')applyProfile(getProfile());
+// Hydrate the roster/sessions/assignments/practice from the cloud (fires 'sa-people' when ready, which re-renders).
+hydratePeople();
+// Hydrate the passage catalog + shared cards, then the band-tab modes, from
+// the cloud BEFORE the first load so tabs and lists have their metadata.
+(async()=>{
+ await hydrateContent();await hydrateBandModes();buildTabs();
+ // Resolve the starting passage now that the catalog is loaded.
+ if(lastMode&&(hasMode(lastMode)||byMode(lastMode)))start=normStart(lastMode);
+ if(q){
+  if(hasMode(q)||byMode(q)){await load(normStart(q))}
+  else{const m=await addPipelineMode(MODES,q);await load(m?m.id:start)}
+ }else await load(start);
+ if(location.hash==='#admin')setAdmin(true);else if(location.hash==='#family')setFam(true);
+ else if(!q&&getProfile().role!=='guest')applyProfile(getProfile());
+})();
 }

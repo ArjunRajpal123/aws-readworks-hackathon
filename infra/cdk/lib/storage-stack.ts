@@ -66,6 +66,17 @@ export class StorageStack extends cdk.Stack {
       versioned: true,
       // Object Created events drive the cloud ETL (EtlStack: incoming/*.json).
       eventBridgeEnabled: true,
+      // The player fetch()es the timing files through the API's presigned URLs,
+      // cross-origin from the web app. The presigned signature is still what
+      // grants access; this only lets the browser read the response.
+      cors: [
+        {
+          allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.HEAD],
+          allowedOrigins: ["*"],
+          allowedHeaders: ["*"],
+          maxAge: 3600,
+        },
+      ],
       removalPolicy,
       autoDeleteObjects: !isProd,
       lifecycleRules: [
@@ -98,6 +109,16 @@ export class StorageStack extends cdk.Stack {
     this.referenceTable.addGlobalSecondaryIndex({
       indexName: "lang-index",
       partitionKey: { name: "lang", type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    // GSI to list each app-data domain (roster, sessions, assignments,
+    // practice, ratings, review) without a full-table scan. Items carry a
+    // `type` attribute = their key prefix; passage product records have no
+    // `type` and so never appear in this index. See lambda/common/data_store.py.
+    this.referenceTable.addGlobalSecondaryIndex({
+      indexName: "type-index",
+      partitionKey: { name: "type", type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL,
     });
 

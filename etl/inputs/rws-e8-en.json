@@ -1,35 +1,10 @@
 {
   "id": "rws-e8-en",
   "lang": "en",
-  "title": "Field Trip (E8, en)",
+  "title": "Field Trip",
   "text": "His energy was back.\n\nEven though it was sunny outside, he felt a black cloud hovering over his head, threatening stormy weather inside his brain and making him angry.\n\nThe morning of his 6th grade field trip to the Rose Center for Earth and Space at the Museum of Natural History, he fell ill.\n\nSurely the museum was closed, and Mr. Connolly had gone home.",
   "source": {
-    "workbook": "RW_Sentences.xlsx",
-    "sheet": "Sentences",
-    "rowId": "E8",
-    "sourceUrl": "https://www.readworks.org/article/Field-Trip/eeff0e15-58d8-45b1-8161-93ef6ab4ad49",
-    "machineTranslated": false,
-    "segments": [
-      {
-        "paragraph": 0,
-        "column": "Short simple sentence",
-        "case": "short"
-      },
-      {
-        "paragraph": 1,
-        "column": "Complex longer sentence",
-        "case": "complex"
-      },
-      {
-        "paragraph": 2,
-        "column": "Sentence with a number",
-        "case": "number"
-      },
-      {
-        "paragraph": 3,
-        "column": "Sentence with Mr./Mrs. (English only)",
-        "case": "title_abbrev"
-      }
-    ]
+    "file": "frontend/src via etl/export_player_inputs.mjs",
+    "from": "mode rw-E8-k2"
   }
 }

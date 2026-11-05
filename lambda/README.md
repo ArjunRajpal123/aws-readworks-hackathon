@@ -97,6 +97,10 @@ The legacy `engine` field is ignored. By default only the default track (`tts-1`
 → `200`: same shape as the POST response, loaded from the reference table, with fresh `urls`. Works for catalog passages written by `etl/run_aws.py` too.
 → `400` without `id`, `404` if the id doesn't exist.
 
+Optional `&voiceId=Stephen` (what the player sends from its voice picker) picks one track: that voice if it has a track whose QA didn't fail, otherwise the default track. The response adds `selectedTrack` and `urls` holds only that track.
+
+Optional `&lang=es` (or `en`, `en-US`, `es-US`) returns that language's version of the passage. Each language is its own record, so an id in the other language is mapped to its sibling: `<id>-en` ↔ `<id>-es` (`rws-e1-en`), or `<id>` ↔ `<id>es` for the demo passages (`35`, `35es`). `404` if that language has no version. Combine with `voiceId` to pick the voice in that language, e.g. `?id=35&lang=es&voiceId=Pedro`.
+
 ## Tests (offline)
 
 ```bash

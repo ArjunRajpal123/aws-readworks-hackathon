@@ -138,3 +138,30 @@ GET /api/v1/text-to-speech?id=001
 Superseded (pre-PR #9, do not produce): {version:1, audio:"audio/001.mp3",
 text:"text/001.json", words:[{i,s,e,t}]} and the API's
 {id, text_path, audio_path, timestamp:[{id,s,e,block}]} under tts/.
+
+
+5. App data API (DynamoDB, single table, typed ids) — /api/v1/data
+------------------------------------------------------------------
+Everything the app shows beyond raw passages is cloud-backed here. The player
+has NO built-in content: catalog, passages, vocab cards, Word Stops and
+questions are all served from this API (seeded once from the former
+data_*.js by lambda/scripts/seed_content.py).
+
+  GET  /roster                         {classes,teachers,students,parents}
+  GET  /content/catalog  -> /catalog   {entries:[catalog meta], cards:{key:card}}
+  GET  /content?id=<modeId>            one player mode: {id, band, lang, title,
+         tab, sub, voice, reward, stopTitle, how, paras[], stops[], forms,
+         questions[], pid, modes{en,es}, grade, genre, lexile, tags, words}
+  GET  /sessions?student=<id> · POST /sessions
+  GET  /assignments?student=<id> · POST /assignments · DELETE /assignments?id=
+  GET  /practice?student=<id> · POST /practice
+  GET  /ratings · POST /ratings
+  GET  /review?pid=<id> · POST /review   state: draft|review|published|rejected
+  POST /translate {text,source?,target?} -> {text}   (Amazon Translate)
+  POST /cards {text,lang?} -> {cards:[...]}           (Amazon Bedrock)
+  POST /stops {text,vocab[],lang?} -> {stops:[...]}   (Bedrock + 4 publish checks)
+
+Item keys (typed): content#<modeId>, catalog#index, cards#index, student#,
+class#, teacher#, parent#, session#, assign#, practice#, rating#, review#.
+Passage product records (pipeline, sa/product/<id>) keep their bare id and are
+listed via the lang-index GSI; app-data items use the type-index GSI.
