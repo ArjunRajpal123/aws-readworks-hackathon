@@ -254,6 +254,47 @@ def post_translate(event):
     return json_response(200, {"text": out})
 
 
+# ---- per-passage vocab cards for the player (underlining) -----------------
+# Generated cards saved against a passage id so the player can underline and
+# open them. Keyed by the passage/mode id; the player's pipeline_mode.js reads
+# this to mark vocab tokens.
+def get_pcards(event):
+    pid = _q(event, "pid")
+    if not pid:
+        return error_response(400, "pid is required")
+    rec = db.get("pcards", pid)
+    return json_response(200, rec or {"pid": pid, "cards": []})
+
+
+def post_pcards(event):
+    b = _body(event)
+    if b is None or not b.get("pid"):
+        return error_response(400, "pid is required")
+    cards = b.get("cards") or []
+    if not isinstance(cards, list):
+        return error_response(400, "cards must be an array")
+    # Keep only the fields the player needs.
+    clean = [{"word": str(c.get("word", ""))[:40],
+              "def": str(c.get("def", ""))[:300],
+              "ex": str(c.get("ex", ""))[:300]}
+             for c in cards if isinstance(c, dict) and c.get("word")]
+    rec = db.put("pcards", b["pid"], {"pid": b["pid"], "cards": clean})
+    return json_response(201, rec)
+
+
+# ---- localize cards to the sibling language, matched to the passage --------
+def post_localize(event):
+    b = _body(event)
+    if b is None or not b.get("text") or not str(b["text"]).strip():
+        return error_response(400, "text (the translated passage) is required")
+    cards = b.get("cards") or []
+    if not isinstance(cards, list):
+        return error_response(400, "cards must be an array")
+    out = gen.localize_cards([c for c in cards if isinstance(c, dict)],
+                             str(b["text"]), b.get("lang", "es"))
+    return json_response(200, {"cards": out})
+
+
 # ---- generation (Bedrock) -------------------------------------------------
 def post_cards(event):
     b = _body(event)
@@ -281,6 +322,9 @@ ROUTES = {
     ("translate", "POST"): post_translate,
     ("cards", "POST"): post_cards,
     ("stops", "POST"): post_stops,
+    ("localize", "POST"): post_localize,
+    ("pcards", "GET"): get_pcards,
+    ("pcards", "POST"): post_pcards,
     ("sessions", "GET"): get_sessions,
     ("sessions", "POST"): post_session,
     ("assignments", "GET"): get_assignments,

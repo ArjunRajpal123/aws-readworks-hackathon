@@ -4,7 +4,7 @@
 // the right is the shape the team's pipeline would receive, and the queue progress is simulated.
 import { detect, aiSuggest } from './assist.js'
 import { createProduct } from './api.js'
-import { postReview, translate, genCards, genStops } from './data_api.js'
+import { postReview, translate, genCards, genStops, localizeCards, putPassageCards } from './data_api.js'
 import { RW_KNOWN } from './vocab_db.js'
 import { loadRatings, clearRatings } from './rate.js'
 
@@ -526,39 +526,56 @@ export function initAdmin(t) {
       if (already) e.error = t('adDupe')
       await publishReview(e)
       // Vocabulary cards and Word Stops (real Bedrock drafts) when requested.
-      if (on('adCards') || on('adStops')) { e.gen = 'pending'; save(); renderQueue(); await makeCardsAndStops(e, text, srcLang) }
+      // Cards are saved against the passage id so the player underlines them.
+      let srcCards = []
+      if (on('adCards') || on('adStops')) { e.gen = 'pending'; save(); renderQueue(); srcCards = await makeCardsAndStops(e, text, srcLang, enId) }
       // Other language: translate and generate the sibling (en <-> es) through the same pipeline.
-      if (on('adTrans')) { e.other = 'pending'; save(); renderQueue(); await makeOtherLanguage(e, text, srcLang, base) }
+      if (on('adTrans')) { e.other = 'pending'; save(); renderQueue(); await makeOtherLanguage(e, text, srcLang, base, srcCards) }
     } else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
     save(); renderQueue()
   }
 
   // Draft vocabulary cards and/or Word Stops with Bedrock. Word Stops are
   // anchored on the card words and server-side pass the four publish checks.
-  async function makeCardsAndStops(entry, text, srcLang) {
+  // Generate cards/stops, persist the cards against the passage id (pcards) so
+  // the player underlines them, and return the cards for the sibling to localize.
+  async function makeCardsAndStops(entry, text, srcLang, pid) {
     const lang = srcLang.startsWith('es') ? 'es' : 'en'
     let cards = []
     if (on('adCards')) { const r = await genCards(text, lang); cards = (r && r.cards) || [] }
     let stops = []
     if (on('adStops')) { const r = await genStops(text, cards.map(c => c.word), lang); stops = (r && r.stops) || [] }
+    if (pid && cards.length) { try { await putPassageCards(pid, cards) } catch { /* best effort */ } }
     entry.cards = cards.length; entry.stops = stops.length; entry.gen = 'done'
+    return cards
   }
 
   // Translate the passage into the other language (en <-> es) and generate that
   // sibling through the same pipeline (Amazon Translate + Polly voices for that
   // language), with its own cards and Word Stops. Best-effort: a failure is
   // noted on the row but does not fail the source passage.
-  async function makeOtherLanguage(entry, srcText, srcLang, base) {
+  async function makeOtherLanguage(entry, srcText, srcLang, base, srcCards) {
     const src = srcLang.slice(0, 2), dst = src === 'es' ? 'en' : 'es'
     const tr = await translate(srcText, src, dst)
     if (!tr || !tr.text) { entry.other = 'error'; return }
     const title = await translate(entry.title, src, dst)
     const id = `${base}-${dst}`
-    const res = await createProduct({ text: tr.text, id, title: ((title && title.text) || entry.title).slice(0, 200), languageCode: dst === 'es' ? 'es-US' : 'en-US', allVoices: on('adAud') })
-    entry.other = res && res.ok ? 'done' : 'error'
-    if (!res || !res.ok) return
-    await postReview({ pid: id, state: entry.review === 'required' ? 'review' : 'published' })
-    if (on('adCards') || on('adStops')) await makeCardsAndStops(entry, tr.text, dst === 'es' ? 'es-US' : 'en-US')
+    const dstLang = dst === 'es' ? 'es-US' : 'en-US'
+    const res = await createProduct({ text: tr.text, id, title: ((title && title.text) || entry.title).slice(0, 200), languageCode: dstLang, allVoices: on('adAud') })
+    entry.other = res && res.ok ? 'done' : (res && /already exists/i.test(res.error || '') ? 'done' : 'error')
+    if (entry.other !== 'done') return
+    await postReview({ pid: id, state: 'review' })  // AI translation always goes to human review
+    // Localize the SOURCE cards to the translated passage's surface forms so the
+    // same vocabulary underlines in the sibling language. Falls back to fresh
+    // generation if we have no source cards.
+    let sibCards = []
+    if ((srcCards || []).length) {
+      const r = await localizeCards(tr.text, srcCards, dst)
+      sibCards = (r && r.cards) || []
+      if (sibCards.length) { try { await putPassageCards(id, sibCards) } catch { /* best effort */ } }
+    } else if (on('adCards') || on('adStops')) {
+      await makeCardsAndStops(entry, tr.text, dstLang, id)
+    }
   }
 
   // ---- events ----

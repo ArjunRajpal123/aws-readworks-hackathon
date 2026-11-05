@@ -173,6 +173,33 @@ def test_cards_and_stops_require_text(table):
     assert call("POST", "stops", {"vocab": ["x"]})[0] == 400
 
 
+def test_pcards_roundtrip(table):
+    # Save per-passage vocab cards, then read them back.
+    s, b = call("POST", "pcards", {"pid": "p-x-en", "cards": [
+        {"word": "glow", "def": "to shine", "ex": "The lights glow."},
+        {"word": "", "def": "dropped"},  # no word -> dropped
+    ]})
+    assert s == 201 and [c["word"] for c in b["cards"]] == ["glow"]
+    s, b = call("GET", "pcards", qs={"pid": "p-x-en"})
+    assert s == 200 and b["cards"][0]["word"] == "glow"
+
+
+def test_pcards_unknown_returns_empty(table):
+    s, b = call("GET", "pcards", qs={"pid": "nope"})
+    assert s == 200 and b["cards"] == []
+
+
+def test_localize_matches_passage(table, monkeypatch):
+    from common import generate as gen
+    reply = json.dumps([{"word": "brillan", "def": "dar luz", "ex": "Las luces brillan."}])
+    monkeypatch.setattr(gen, "_client", type("B", (), {"converse": lambda self, **kw: {
+        "output": {"message": {"content": [{"text": reply}]}}, "stopReason": "end_turn"}})())
+    s, b = call("POST", "localize", {
+        "text": "Las luces doradas brillan suavemente en la casa.",
+        "cards": [{"word": "glow", "def": "to shine"}], "lang": "es"})
+    assert s == 200 and [c["word"] for c in b["cards"]] == ["brillan"]
+
+
 def test_unknown_resource_404(table):
     assert call("GET", "nope")[0] == 404
     assert call("PUT", "roster")[0] == 404  # method not routed

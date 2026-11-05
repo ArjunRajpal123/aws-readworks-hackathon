@@ -70,3 +70,9 @@ export const translate = (text, source = 'en', target = 'es') => req('POST', 'tr
 // generation (Bedrock): vocabulary cards and Word Stops drafted from a passage
 export const genCards = (text, lang = 'en') => req('POST', 'cards', { body: { text, lang } })
 export const genStops = (text, vocab, lang = 'en') => req('POST', 'stops', { body: { text, vocab, lang } })
+// localize English cards to the sibling language, matched to the translated
+// passage surface form -> {cards}. Used for the Spanish sibling's vocab.
+export const localizeCards = (text, cards, lang = 'es') => req('POST', 'localize', { body: { text, cards, lang } })
+// per-passage vocab cards the player underlines: save / read by passage id
+export const putPassageCards = (pid, cards) => req('POST', 'pcards', { body: { pid, cards } })
+export const getPassageCards = pid => req('GET', 'pcards', { query: { pid } })
