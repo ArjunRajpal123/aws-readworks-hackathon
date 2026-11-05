@@ -226,7 +226,7 @@ export function initAdmin(t) {
     if (on('adAud')) stages.audio = { engine: 'polly-neural', languages: audioLangs(), voices: { 'en-US': ['Danielle', 'Stephen'], 'es-US': ['Lupe', 'Pedro'] } }
     if (on('adTrans')) stages.otherLanguage = { mode: 'ai-draft', reviewRequired: true }
     if (on('adCards')) {
-      const words = [...(det && det.vocab ? det.vocab.map(v => ({ word: v.word, source: 'database' })) : []), ...aiVocab.map(w => ({ word: w, source: 'ai-suggested', needsReview: true }))]
+      const words = [...(det && det.vocab ? det.vocab.map(v => ({ word: v.word, source: 'database' })) : []), ...keptVocab().map(w => ({ word: w, source: 'ai-suggested', needsReview: true }))]
       stages.vocabularyCards = { languages: ['en-US', 'es-US'], ...(words.length ? { words } : {}) }
     }
     const qsrc = val('adQsSrc')
@@ -321,6 +321,7 @@ export function initAdmin(t) {
   const BAND = { k2: 'K-2', 35: '3-5', 68: '6-8', 912: '9-12' }
   const touched = new Set(), auto = new Map() // field id -> 'det' (from the text) or 'ai'
   let det = null, aiVocab = [], aiUsed = null, detTimer = 0
+  const aiDismissed = new Set() // lowercased AI vocab words the admin removed
   const sourceText = () => (method() === 'file' && !currentText().trim() ? fileTexts.join('\n\n') : currentText())
   function badge(id, kind) {
     const lab = root.querySelector(`label[for="${id}"]`); if (!lab) return
@@ -369,14 +370,24 @@ export function initAdmin(t) {
       ${det.known ? `<li>${t('adDetKnown', esc(det.known.title), det.known.id)}</li>` : ''}
       <li>${det.vocab.length ? t('adDetVocab', det.vocab.length, '') + '<div class="ad-chips">' + chips + '</div>' : t('adDetNoVocab')}</li></ul>${aiVocab.length ? aiBlock() : ''}`
   }
-  const aiBlock = () => `<p class="ad-help">${t('adAIFor')}</p><div class="ad-chips">${aiVocab.map(w => `<span class="ad-chip ad-chip-ai">${esc(w)}</span>`).join(' ')}</div>`
+  // AI vocab words with a per-word Keep/Remove toggle; only kept words flow to
+  // the submission. aiDismissed holds the lowercased words the admin removed.
+  const keptVocab = () => aiVocab.filter(w => !aiDismissed.has(w.toLowerCase()))
+  const aiBlock = () => {
+    const kept = keptVocab().length
+    return `<div class="ad-vhead-row"><p class="ad-help">${t('adAIFor')}</p><span class="ad-help">${t('adVocabKept', kept, aiVocab.length)}</span></div>
+      <div class="ad-chips">${aiVocab.map(w => {
+        const off = aiDismissed.has(w.toLowerCase())
+        return `<button type="button" class="ad-chip ad-chip-ai ad-vchip${off ? ' ad-vchip-off' : ''}" data-vocab="${esc(w)}" aria-pressed="${!off}">${esc(w)}${off ? ' +' : ' ×'}</button>`
+      }).join(' ')}</div>`
+  }
   function undoFill() {
     for (const [id] of auto) {
       const el = $('#' + id); if (!el) continue
       el.value = id === 'adGenre' ? 'fiction' : id === 'adRights' ? 'readworks' : ''
       badge(id, null)
     }
-    auto.clear(); aiVocab = []; aiUsed = null; det = det && { ...det, known: null }; $('#adAIMsg').textContent = ''; render()
+    auto.clear(); aiVocab = []; aiDismissed.clear(); aiUsed = null; det = det && { ...det, known: null }; $('#adAIMsg').textContent = ''; render()
   }
   function assistInfo() {
     const filled = [...auto].filter(([, k]) => k === 'det').map(([i]) => i)
@@ -401,10 +412,18 @@ export function initAdmin(t) {
     btn.disabled = true; lab.textContent = t('adAIWorking')
     try {
       const text = sourceText(), d = det || detect(text) || { lang: 'en-US' }
+      // Cheap, local adequacy check before filling (keeps cost at zero): enough
+      // words and looks like sentences. Brief feedback; stop if inadequate.
+      const words = (text.trim().match(/\S+/g) || []).length
+      if (words < 20) { $('#adAIMsg').textContent = t('adAIThin'); btn.disabled = false; lab.textContent = label; return }
       const res = await aiSuggest(text, d)
       const names = []
       for (const [id, v] of Object.entries(res.fields || {})) if (setField(id, v, 'ai')) names.push(id)
       aiVocab = (res.vocabulary || []).map(w => (typeof w === 'string' ? w : w.word))
+      aiDismissed.clear()
+      // Attribute the draft to the AI model in the reviewer field so it's clear
+      // a human still needs to sign off (never an invented person's name).
+      setField('adRevers', t('adAIBy'), 'ai')
       aiUsed = { used: true, mode: res.mode, fieldsSuggested: names, vocabularySuggested: aiVocab.length }
       $('#adAIMsg').textContent = names.length || aiVocab.length ? t('adAIDone', names.length) : t('adAINone')
     } catch (err) { $('#adAIMsg').textContent = String(err.message || err) }
@@ -620,7 +639,16 @@ export function initAdmin(t) {
     if (e.target.id === 'adTrans') touched.add('adTrans')
     if (e.target.name === 'adMethod') { placeAI(); runDetect() }
   })
-  root.addEventListener('click', e => { if (e.target.id === 'adUndo') undoFill() })
+  root.addEventListener('click', e => {
+    if (e.target.id === 'adUndo') { undoFill(); return }
+    // Per-word Keep/Remove toggle on AI vocab chips.
+    const chip = e.target.closest('.ad-vchip')
+    if (chip) {
+      const w = chip.dataset.vocab.toLowerCase()
+      if (aiDismissed.has(w)) aiDismissed.delete(w); else aiDismissed.add(w)
+      renderDetect()
+    }
+  })
   $('#adAI').addEventListener('click', openAI)
   $('#adFbClear').addEventListener('click', () => clearRatings())
   window.addEventListener('sa-rating', renderFeedback)

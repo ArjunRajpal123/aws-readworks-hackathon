@@ -504,6 +504,9 @@ dialog.sa-dlg::backdrop{background:rgba(0,0,0,.55)}
 .ad-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
 .ad-chip{display:inline-block;padding:1px 10px;border-radius:12px;font-size:14px;background:var(--band);border:1px solid var(--line)}
 .ad-chip-ai{border-style:dashed;border-color:var(--contrast)}
+.ad-vchip{cursor:pointer;font:inherit}
+.ad-vchip-off{opacity:.5;text-decoration:line-through}
+.ad-vhead-row{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
 .ad-badge{display:inline-block;margin-left:6px;padding:0 8px;border-radius:10px;font:500 11px var(--f-head);letter-spacing:.03em;vertical-align:middle}
 .ad-b-det{background:var(--acc-bg);color:var(--teal-dk);border:1px solid var(--teal)}
 .ad-b-ai{background:var(--contrast-bg);color:var(--contrast);border:1px dashed var(--contrast)}
