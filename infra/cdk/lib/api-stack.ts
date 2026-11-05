@@ -93,6 +93,8 @@ export function functionCode(functionDir: string): lambda.Code {
 export class ApiStack extends cdk.Stack {
   /** `/api/v1/text-to-speech` endpoint URL — FrontendStack wires this into the player at deploy time. */
   public readonly apiUrl: string;
+  /** `/api/v1/assist` endpoint URL — injected into the admin UI as window.SA_AI_ENDPOINT. */
+  public readonly assistUrl: string;
 
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
@@ -110,14 +112,43 @@ export class ApiStack extends cdk.Stack {
       TTS_URL_TTL_SECONDS: "3600",
     };
 
-    const makeFunction = (id: string, dirName: string, nameSuffix: string, memorySize: number) =>
+    // The AI assist endpoint talks to Bedrock, not S3/DynamoDB, so it gets its
+    // own env (models + the child-safety guardrail). Values come from context
+    // so they can be tuned without a code change; the guardrail id/version are
+    // created out of band (see infra/cdk/README) and passed at deploy time.
+    const assistEnv: Record<string, string> = {
+      ASSIST_VALIDATE_MODEL:
+        (this.node.tryGetContext("assistValidateModel") as string) ||
+        process.env.ASSIST_VALIDATE_MODEL ||
+        "us.amazon.nova-micro-v1:0",
+      ASSIST_AUTOFILL_MODEL:
+        (this.node.tryGetContext("assistAutofillModel") as string) ||
+        process.env.ASSIST_AUTOFILL_MODEL ||
+        "us.amazon.nova-lite-v1:0",
+      ASSIST_GUARDRAIL_ID:
+        (this.node.tryGetContext("assistGuardrailId") as string) ||
+        process.env.ASSIST_GUARDRAIL_ID ||
+        "",
+      ASSIST_GUARDRAIL_VERSION:
+        (this.node.tryGetContext("assistGuardrailVersion") as string) ||
+        process.env.ASSIST_GUARDRAIL_VERSION ||
+        "",
+    };
+
+    const makeFunction = (
+      id: string,
+      dirName: string,
+      nameSuffix: string,
+      memorySize: number,
+      environment: Record<string, string> = ttsEnv
+    ) =>
       new lambda.Function(this, id, {
         functionName: resourceName(config, "lambda", nameSuffix),
         // Lambda's newest Python runtime is 3.13 (no 3.14 yet).
         runtime: lambda.Runtime.PYTHON_3_13,
         handler: "handler.handler",
         code: functionCode(path.join(LAMBDA_ROOT, dirName)),
-        environment: ttsEnv,
+        environment,
         timeout: cdk.Duration.seconds(25), // HTTP API integration hard-caps at 29s
         memorySize,
       });
@@ -125,6 +156,12 @@ export class ApiStack extends cdk.Stack {
     // POST tokenizes, builds SSML and gzips timing: more memory = more CPU.
     const postFn = makeFunction("TextToSpeechPostFn", "text_to_speech_post", "tts-post", 1024);
     const getFn = makeFunction("TextToSpeechGetFn", "text_to_speech_get", "tts-get", 256);
+    // LIST scans the reference table and returns a small summary per passage.
+    const listFn = makeFunction("TextToSpeechListFn", "text_to_speech_list", "tts-list", 256);
+    // ASSIST calls Bedrock (validate + autofill + translate) behind the guardrail.
+    const assistFn = makeFunction("AssistFn", "assist", "assist", 256, assistEnv);
+    // APPROVE flips an AI passage's review status to reviewed (S3 + DynamoDB).
+    const approveFn = makeFunction("PassageApproveFn", "passage_approve", "approve", 256);
 
     // grantReadWrite/grantRead also grant the needed KMS actions on the
     // bucket's and table's customer-managed keys.
@@ -138,6 +175,38 @@ export class ApiStack extends cdk.Stack {
     referenceTable.encryptionKey?.grantDecrypt(postFn);
     // GET reads the product record straight from S3 (sa/product/<id>.soundAlong.json),
     // not DynamoDB, so it needs no table grant.
+    // LIST only scans the reference table for the passage summaries; no S3,
+    // no writes. Scoped to Scan (plus decrypt for the table's KMS key).
+    referenceTable.grant(listFn, "dynamodb:Scan");
+    referenceTable.encryptionKey?.grantDecrypt(listFn);
+    // APPROVE reads+writes the S3 product JSON and updates the DynamoDB item's
+    // review status. Needs bucket read/write and table update (+ KMS).
+    mediaBucket.grantReadWrite(approveFn);
+    referenceTable.grant(approveFn, "dynamodb:UpdateItem");
+    referenceTable.encryptionKey?.grantDecrypt(approveFn);
+
+    // ASSIST invokes Bedrock models (cross-region inference profiles, so both
+    // the profile ARN and the underlying foundation models must be allowed)
+    // and applies the content-safety guardrail. No S3/DynamoDB access.
+    assistFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+        resources: [
+          `arn:${cdk.Aws.PARTITION}:bedrock:*::foundation-model/*`,
+          `arn:${cdk.Aws.PARTITION}:bedrock:*:${cdk.Aws.ACCOUNT_ID}:inference-profile/*`,
+        ],
+      })
+    );
+    if (assistEnv.ASSIST_GUARDRAIL_ID) {
+      assistFn.addToRolePolicy(
+        new iam.PolicyStatement({
+          actions: ["bedrock:ApplyGuardrail"],
+          resources: [
+            `arn:${cdk.Aws.PARTITION}:bedrock:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:guardrail/${assistEnv.ASSIST_GUARDRAIL_ID}`,
+          ],
+        })
+      );
+    }
 
     // SynthesizeSpeech has no resource-level permissions, only "*".
     postFn.addToRolePolicy(
@@ -178,8 +247,30 @@ export class ApiStack extends cdk.Stack {
       methods: [apigwv2.HttpMethod.GET],
       integration: new HttpLambdaIntegration("GetIntegration", getFn),
     });
+    // Lists every generated passage (summary only) so the player can show
+    // user-entered passages in its picker. Reuses the same HTTP API.
+    httpApi.addRoutes({
+      path: "/api/v1/passages",
+      methods: [apigwv2.HttpMethod.GET],
+      integration: new HttpLambdaIntegration("ListIntegration", listFn),
+    });
+    // AI assist for the admin "Fill in with AI" button (validate + autofill +
+    // translate), same HTTP API. The browser POSTs {text, mode}.
+    httpApi.addRoutes({
+      path: "/api/v1/assist",
+      methods: [apigwv2.HttpMethod.POST],
+      integration: new HttpLambdaIntegration("AssistIntegration", assistFn),
+    });
+    // Approve an AI-generated passage (flip reviewStatus to reviewed).
+    httpApi.addRoutes({
+      path: "/api/v1/passages/approve",
+      methods: [apigwv2.HttpMethod.POST],
+      integration: new HttpLambdaIntegration("ApproveIntegration", approveFn),
+    });
 
     this.apiUrl = `${httpApi.apiEndpoint}/api/v1/text-to-speech`;
     new cdk.CfnOutput(this, "ApiUrl", { value: this.apiUrl });
+    this.assistUrl = `${httpApi.apiEndpoint}/api/v1/assist`;
+    new cdk.CfnOutput(this, "AssistUrl", { value: this.assistUrl });
   }
 }

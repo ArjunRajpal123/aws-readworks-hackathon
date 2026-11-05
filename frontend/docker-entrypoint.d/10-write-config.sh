@@ -4,4 +4,8 @@
 # API URL baked in -- SA_API_URL is set on the pod's "web" container by
 # infra/cdk's FrontendStack, from ApiStack's apiUrl, at deploy time.
 set -eu
-echo "window.SA_API_URL=\"${SA_API_URL:-}\";" > /usr/share/nginx/html/config.js
+{
+  echo "window.SA_API_URL=\"${SA_API_URL:-}\";"
+  # AI assist endpoint for the admin "Fill in with AI" button (src/assist.js).
+  echo "window.SA_AI_ENDPOINT=\"${SA_AI_ENDPOINT:-}\";"
+} > /usr/share/nginx/html/config.js

@@ -9,13 +9,13 @@ import { addPipelineMode } from './pipeline_mode.js'
 import { createInfo } from './info.js'
 import { createFamily } from './family.js'
 import { addWords } from './store.js'
-import { byBand, byPid, byMode, modeFor } from './catalog.js'
+import { byBand, byPid, byMode, modeFor, mergeDiscovered } from './catalog.js'
 import { art } from './art.js'
 import { getProfile, setProfile, addSession, setSessionQuiz, upNext, bandOf } from './people.js'
 import { createNext } from './next.js'
 import { createProfile } from './profile.js'
 import { initNav } from './nav.js'
-import { fetchProduct } from './api.js'
+import { fetchProduct, listProducts } from './api.js'
 import { SPK, MUTE, GLOW, JAR, BADGE, ICON, CARDS, MODES, ACCENTS } from './data.js'
 
 // Imperative player ported from WordStops_v8; drives the markup rendered by App.vue.
@@ -31,7 +31,7 @@ const STOPW=new Set('the and was were are for with that this they them then than
 function trackTap(i){const tk=tokens[i];if(!tk||tk.key)return;const w=tk.text.replace(/[^\p{L}'’-]/gu,'').toLowerCase();if(w.length>=4&&!STOPW.has(w))tapped.add(w)}
 function collectedWords(){const out=[],seen=new Set();[...explored].forEach(w=>{const k=w.toLowerCase();if(!seen.has(k)){seen.add(k);out.push(w)}});tapped.forEach(w=>{if(!seen.has(w)){seen.add(w);out.push(w)}});return out}
 function finishData(){const words=collectedWords(),n=words.length,stopsTot=mode.stops?mode.stops.length:0,stopsDone=solved.size;
- const vocab=[...new Set(tokens.filter(t=>t.key).map(t=>CARDS[t.key].word))];
+ const vocab=[...new Set(tokens.filter(t=>t.key&&card(t.key)).map(t=>card(t.key).word))];
  return{title:mode.title,words,stars:[true,n>=3,n>=6||(stopsTot>0&&stopsDone>=stopsTot)],need2:Math.max(1,3-n),stops:[stopsDone,stopsTot],next:vocab.filter(w=>!explored.has(w))}}
 const curEntry=()=>mode?byMode(mode.id):null;
 let spentMs=0,lastTouch=Date.now();
@@ -66,7 +66,14 @@ const synth='speechSynthesis' in window?window.speechSynthesis:null;
 let mode,tokens=[],els=[],cur=-1,stopIdxs=[],solved=new Set(),playing=false,run=0,timer=null,picking=null,picked=new Set(),stopsOn=true,voiceOn=true,resumeAt=0;
 let R={};
 function freshReward(){R={jar:[],badges:new Set(),moves:{},streak:0,firstTry:true,bank:[]}}
-function keyFor(t){const w=t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');if(mode.forms&&mode.forms[w])return mode.forms[w];const k=Object.keys(CARDS).find(k=>!/\d/.test(k)&&w.startsWith(k));return (mode.cardOverride&&mode.cardOverride[k])||k}
+// A passage's own vocabulary cards (pipeline/API passages carry mode.cards),
+// falling back to the global built-in CARDS. card(key) resolves from whichever
+// has it, so pipeline passages show vocab without being in CARDS.
+const card=k=>(mode&&mode.cards&&mode.cards[k])||CARDS[k];
+function keyFor(t){const w=t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');if(mode.forms&&mode.forms[w])return mode.forms[w];
+ // Pipeline passages: the normalized word IS the card key (see pipeline_mode.js cardsFromProduct).
+ if(mode&&mode.cards&&mode.cards[w])return w;
+ const k=Object.keys(CARDS).find(k=>!/\d/.test(k)&&w.startsWith(k));return (mode.cardOverride&&mode.cardOverride[k])||k}
 function parse(m){tokens=[];m.paras.forEach((p,pi)=>p.split(/\s+/).forEach(raw=>{let t=raw,cls=[],grp=null,stop=false;
   if(t.endsWith('^')){stop=true;t=t.slice(0,-1)}
   let mm;while((mm=t.match(/^([~\-=])(\d)/))||(t[0]==='*'&&t.length>1)){if(mm){cls.push(mm[1]==='~'?'clue':mm[1]==='-'?'contrast':'signal');grp=+mm[2];t=t.slice(2)}else{cls.push('vocab');t=t.slice(1)}}
@@ -77,11 +84,11 @@ function stopWordIdx(k){const w=CARDS[mode.stops[k].word].word;let best=-1;token
 function render(){const page=$('#page');page.innerHTML='<div id="glow">'+GLOW+'</div>';els=[];
  mode.paras.forEach((_,pi)=>{const wrap=document.createElement('div');wrap.style.display='grid';wrap.style.gap='10px';const p=document.createElement('p');
   tokens.forEach((tk,i)=>{if(tk.p!==pi)return;const s=document.createElement('span');s.className='w '+tk.cls.join(' ');s.textContent=tk.text;s.dataset.i=i;
-   if(tk.key){s.setAttribute('role','button');s.tabIndex=0;s.setAttribute('aria-label',t('openCard')+CARDS[tk.key].word)}els[i]=s;p.appendChild(s);p.appendChild(document.createTextNode(' '))});
+   if(tk.key&&card(tk.key)){s.setAttribute('role','button');s.tabIndex=0;s.setAttribute('aria-label',t('openCard')+card(tk.key).word)}else if(tk.key){tk.key=null;s.className='w '+tk.cls.filter(c=>c!=='vocab').join(' ')}els[i]=s;p.appendChild(s);p.appendChild(document.createTextNode(' '))});
   const n=document.createElement('div');n.id='notes'+pi;n.style.display='grid';n.style.gap='8px';wrap.append(p,n);page.appendChild(wrap)});
  if(stopsOn)mode.stops.forEach((_,k)=>{const i=stopWordIdx(k);if(els[i])els[i].classList.add('stopw')});
  $('#ptitle').textContent=mode.title;page.classList.remove('tapping','stopping');
- const vc=new Set(tokens.filter(t=>t.key).map(t=>CARDS[t.key].word)).size;
+ const vc=new Set(tokens.filter(t=>t.key&&card(t.key)).map(t=>card(t.key).word)).size;
  $('#details').innerHTML=mode.details.map(([k,v])=>`<div>${k}: ${v}</div>`).join('')+`<div style="margin-top:8px">${mode.stops.length||vc?t('detailsDemo',mode.stops.length,vc):t('detailsNone')}</div>`;
  progress();requestAnimationFrame(()=>moveGlow(-1))}
 function moveGlow(i){if(B()!=='k2')return;const g=$('#glow');if(!g)return;const page=$('#page');
@@ -268,7 +275,7 @@ function openStop(k){if(isNarrow())setSide(true);const s=mode.stops[k],box=$('#s
    const you=document.createElement('div');you.className='cmt';you.innerHTML=`<span class="av you">${t('you')}</span><span class="who">${t('yourReply')}</span>`;box.insertBefore(you,ta);
    const m=document.createElement('p');m.className='hint';m.textContent=t('compareHint');box.append(m);reveal(k)};
   box.append(ta,err,b)}}
-function showCard(key,clue){if(isNarrow())setSide(true);const c=CARDS[key];explored.add(c.word);const adv=B()==='912'||B()==='68';
+function showCard(key,clue){if(isNarrow())setSide(true);const c=card(key);if(!c)return;explored.add(c.word);const adv=B()==='912'||B()==='68';
  $('#cardBody').innerHTML=`<div class="card">
  <div class="word">${c.word}<span class="pos">${c.pos}</span></div>
  <div><button class="chipbtn" type="button" id="hear">${t('hear')}</button></div>
@@ -352,7 +359,7 @@ function applyStatic(){document.querySelectorAll('[data-i18n]').forEach(e=>{e.te
 $('#page').addEventListener('click',e=>{const w=e.target.closest('.w');if(!w)return;const i=+w.dataset.i;if(picking===null)trackTap(i);
  if(picking!==null){w.classList.toggle('picked');picked.has(i)?picked.delete(i):picked.add(i);return}
  if(tokens[i].key){const k=stopForToken(i);if(k>=0&&!solved.has(k)){pauseHere();openStop(k);return}
-  if(playing)pauseHere();showCard(tokens[i].key,k>=0?mode.stops[k].clue:null);say(CARDS[tokens[i].key].word);if(B()==='k2')collect(CARDS[tokens[i].key].word);return}tapPlay(i)});
+  if(playing)pauseHere();showCard(tokens[i].key,k>=0?mode.stops[k].clue:null);say(card(tokens[i].key).word);if(B()==='k2')collect(card(tokens[i].key).word);return}tapPlay(i)});
 $('#page').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('vocab')){e.preventDefault();e.target.click()}});
 $('#play').onclick=()=>{if(playing){savePos(cur,true);stopAll();return}playFrom(resumeAt)};
 $('#restart').onclick=()=>{clearPos();load(mode.id)};
@@ -395,9 +402,24 @@ $('#back5').onclick=()=>skip(-5);$('#fwd5').onclick=()=>skip(5);
 document.addEventListener('keydown',e=>{if(e.target.closest('textarea,input,select'))return;if(e.key==='ArrowLeft'){e.shiftKey?prevSent():skip(-5)}else if(e.key==='ArrowRight'){e.shiftKey?nextSent():skip(5)}});
 $('#gameBtn').onclick=()=>{gameOn=!gameOn;syncGame();try{localStorage.setItem('ws-game',gameOn?'1':'0')}catch(e){}load(mode.id)};
 function syncGame(){const b=$('#gameBtn');b.textContent=t('gameBtn',gameOn);b.title=t('gameTitle');b.classList.toggle('off',!gameOn);b.setAttribute('aria-pressed',gameOn)}syncGame();
-function syncLang(){const has=curEntry()?true:MODES.some(x=>x.id===B()+'es');document.querySelectorAll('.lng').forEach(b=>{const on=(b.dataset.l==='es')===(mode.lang==='es-US');b.setAttribute('aria-pressed',on);if(b.dataset.l==='es'){b.disabled=!has;b.title=has?'':'No Spanish text for this passage yet'}})}
-$('#passageSel').onchange=()=>{const e=byMode($('#passageSel').value);if(e)load(modeFor(e,uiLang==='es'))};
-document.querySelectorAll('.lng').forEach(b=>b.onclick=()=>{uiLang=b.dataset.l;const e=curEntry();load(e?modeFor(e,uiLang==='es'):(uiLang==='es'?B()+'es':B()))});
+function syncLang(){const ce=curEntry();
+ // A Spanish version exists if the catalog entry has a distinct es mode id, or
+ // (built-in demo passages) a MODES entry named <band>es.
+ const has=ce?(ce.modes.es&&ce.modes.es!==ce.modes.en):MODES.some(x=>x.id===B()+'es');
+ document.querySelectorAll('.lng').forEach(b=>{const on=(b.dataset.l==='es')===(mode.lang==='es-US');b.setAttribute('aria-pressed',on);if(b.dataset.l==='es'){b.disabled=!has;b.title=has?'':'No Spanish text for this passage yet'}})}
+// Load a mode id, first registering it as a pipeline mode if it's a discovered
+// (user-entered) passage not yet in MODES. Falls back to the default on a
+// missing/withdrawn product so the picker never dead-ends.
+function loadMode(id){if(MODES.some(m=>m.id===id)){load(id);return}
+ const e=byMode(id);const band=e?e.band:'35';
+ addPipelineMode(MODES,id,{band}).then(m=>load(m?m.id:start)).catch(()=>load(start))}
+$('#passageSel').onchange=()=>{const e=byMode($('#passageSel').value);if(e)loadMode(modeFor(e,uiLang==='es'))};
+document.querySelectorAll('.lng').forEach(b=>b.onclick=()=>{uiLang=b.dataset.l;const e=curEntry();
+ // Use the entry's es/en mode id DIRECTLY (not modeFor, which only returns the
+ // es id once that mode is already in MODES — pipeline es modes are registered
+ // lazily by loadMode, so modeFor would otherwise bounce back to English).
+ const target=e?(uiLang==='es'?e.modes.es:e.modes.en):(uiLang==='es'?B()+'es':B());
+ loadMode(target)});
 $('#stopsBtn').onclick=()=>{stopsOn=!stopsOn;const b=$('#stopsBtn');b.textContent=t('stopsBtn',stopsOn);b.classList.toggle('off',!stopsOn);b.setAttribute('aria-pressed',stopsOn);load(mode.id)};
 $('#voiceBtn').innerHTML=SPK;
 $('#voiceBtn').onclick=()=>{voiceOn=!voiceOn;const b=$('#voiceBtn');b.innerHTML=voiceOn?SPK:MUTE;b.setAttribute('aria-pressed',voiceOn);b.setAttribute('aria-label',voiceOn?t('voiceOn'):t('voiceOff'));if(!voiceOn&&synth)synth.cancel();Object.values(SA).forEach(a=>{if(a)a.audio.muted=!voiceOn})};
@@ -441,6 +463,11 @@ $('#famBtn').onclick=()=>setFam(true);$('#navContent').onclick=()=>{setAdmin(fal
 $('#adminBtn').onclick=()=>setAdmin(true);initNav();
 // ?m=<id> that isn't built in: try a pipeline/API product record (GET /api/v1/text-to-speech, src/api.js).
 if(q&&!MODES.some(m=>m.id===q))addPipelineMode(MODES,q).then(m=>load(m?m.id:start));else load(start);
+// User-entered passages (generated via the API/ETL, listed by GET /api/v1/passages)
+// aren't built into the app. Discover them and add them to the passage picker so
+// they're selectable, not only reachable by their ?m=<id> link. Playback still
+// goes through addPipelineMode/fetchProduct, lazily, when one is opened.
+listProducts().then(passages=>{const added=mergeDiscovered(passages);if(added.length)fillPassages()}).catch(()=>{});
 if(location.hash==='#admin')setAdmin(true);else if(location.hash==='#family')setFam(true);
 else if(!q&&getProfile().role!=='guest')applyProfile(getProfile());
 }

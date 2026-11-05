@@ -163,9 +163,18 @@ def handler(event, context):
             return error_response(
                 409, f"A passage with id '{record_id}' already exists; choose a different id")
 
+    vocab_cards = body.get("vocabularyCards")
+    if vocab_cards is not None and not isinstance(vocab_cards, list):
+        return error_response(400, "'vocabularyCards' must be an array")
+
+    review = body.get("review")
+    if review is not None and not isinstance(review, dict):
+        return error_response(400, "'review' must be an object")
+
     passage = PassageInput.from_dict(
         {"id": record_id, "lang": lang, "title": title, "text": text,
-         "pronunciation": pronunciation}
+         "pronunciation": pronunciation, "vocabularyCards": vocab_cards,
+         "review": review}
     )
 
     storage = _RecordingStorage(pipeline_runtime.storage())

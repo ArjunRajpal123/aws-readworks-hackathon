@@ -51,6 +51,62 @@ CATALOG.sort((a, b) => a.order - b.order || a.title.localeCompare(b.title))
 export const byBand = b => CATALOG.filter(e => e.band === b)
 export const byPid = pid => CATALOG.find(e => e.pid === pid)
 export const byMode = id => CATALOG.find(e => e.modes.en === id || e.modes.es === id)
+
+// Passages generated at runtime (user-entered via the API / ETL, listed by
+// GET /api/v1/passages) aren't in the build-time CATALOG. mergeDiscovered adds
+// each one so it shows up in the passage picker and byMode/byPid resolve it;
+// playback still goes through addPipelineMode(MODES, id)/fetchProduct. The id
+// IS the player mode id (that's how ?m=<id> already opens these). A band the
+// app doesn't have a tab for falls back to '35', so the entry is always
+// reachable from an existing tab. Returns the entries actually added.
+// Language-sibling id, matching lambda/text_to_speech_get sibling_id():
+//   <base>-en <-> <base>-es, else <id> <-> <id>es.
+function siblingId(id, lang) {
+  const m = /^(.*)-(en|es)$/.exec(id)
+  if (m) return `${m[1]}-${lang}`
+  const base = id.endsWith('es') ? id.slice(0, -2) : id
+  return lang === 'es' ? base + 'es' : base
+}
+
+export function mergeDiscovered(passages) {
+  const list = passages || []
+  const ids = new Set(list.map(p => p && p.id).filter(Boolean))
+  const added = []
+  for (const p of list) {
+    const id = p && p.id
+    if (!id) continue
+    // One catalog entry per logical passage, keyed by the ENGLISH id. Skip
+    // Spanish records (they attach to their English sibling as modes.es) and
+    // skip anything already present (built-in or already merged) — this is the
+    // dedup guard that prevents the same passage showing multiple times.
+    if ((p.lang || 'en') === 'es') continue
+    if (byMode(id) || CATALOG.some(e => e.pid === id)) continue
+    const band = BANDS.includes(p.band) ? p.band : '35'
+    // Point modes.es at the Spanish sibling only when that record actually
+    // exists in the list; otherwise leave it on the English id so the toggle
+    // stays disabled ("no Spanish yet").
+    const esId = siblingId(id, 'es')
+    const hasEs = ids.has(esId)
+    const entry = {
+      pid: id,
+      band,
+      title: p.title || id,
+      grade: { k2: '1-2', 35: '3-5', 68: '6-8', 912: '9-12' }[band] || '3-5',
+      genre: 'User',
+      order: -1,                 // sort user-added passages to the top of their band
+      words: 0,
+      vocab: [],
+      questions: 0,
+      stops: 0,
+      userAdded: true,
+      modes: { en: id, es: hasEs ? esId : id },
+    }
+    add(entry)
+    added.push(entry)
+  }
+  if (added.length) CATALOG.sort((a, b) => a.order - b.order || a.title.localeCompare(b.title))
+  return added
+}
 export const modeFor = (e, es) => (es && MODES.some(m => m.id === e.modes.es) ? e.modes.es : e.modes.en)
 export const gradeText = (e, es) => (/^\d+$/.test(e.grade) ? (es ? 'Grado ' : 'Grade ') : (es ? 'Grados ' : 'Grades ')) + e.grade
 export const gradeNum = e => (/^\d+$/.test(e.grade) ? +e.grade : { k2: 1.5, 35: 4, 68: 7, 912: 10.5 }[e.band])

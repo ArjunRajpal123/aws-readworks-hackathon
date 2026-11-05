@@ -504,6 +504,17 @@ dialog.sa-dlg::backdrop{background:rgba(0,0,0,.55)}
 .ad-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
 .ad-chip{display:inline-block;padding:1px 10px;border-radius:12px;font-size:14px;background:var(--band);border:1px solid var(--line)}
 .ad-chip-ai{border-style:dashed;border-color:var(--contrast)}
+.ad-vocab{list-style:none;margin:8px 0 2px;padding:0;display:grid;gap:8px}
+.ad-vcard{border:1px solid var(--line);border-left:3px dashed var(--contrast);border-radius:6px;padding:8px 12px;background:var(--band)}
+.ad-vhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.ad-vpos{font-style:italic;color:var(--muted);font-size:13px}
+.ad-vdef{margin:4px 0 0;font-size:15px}
+.ad-vex{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.ad-vhead-row{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+.ad-vcount{font-weight:600}
+.ad-vhead .ad-vtoggle{margin-left:auto}
+.ad-vcard-off{opacity:.5}
+.ad-vcard-off .ad-vdef,.ad-vcard-off .ad-vex{text-decoration:line-through}
 .ad-badge{display:inline-block;margin-left:6px;padding:0 8px;border-radius:10px;font:500 11px var(--f-head);letter-spacing:.03em;vertical-align:middle}
 .ad-b-det{background:var(--acc-bg);color:var(--teal-dk);border:1px solid var(--teal)}
 .ad-b-ai{background:var(--contrast-bg);color:var(--contrast);border:1px dashed var(--contrast)}

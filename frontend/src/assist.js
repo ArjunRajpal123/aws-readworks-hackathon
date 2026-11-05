@@ -97,16 +97,45 @@ export function detect(text, fileName) {
   return { lang, confidence, words: nWords, sentences, grade, band, vocab: matchVocab(words), known: matchKnown(text), titleGuess }
 }
 
-// What an AI service would suggest. Replace by setting window.SA_AI_ENDPOINT (POST {text, language} -> {fields, vocabulary}).
+const AI_ENDPOINT = () => (typeof window !== 'undefined' && window.SA_AI_ENDPOINT) || ''
+
+// Step 1 of "Fill in with AI": a cheap adequacy check on the passage text.
+// POST {text, mode:'validate'} -> {ok, feedback, blocked?}. The feedback is one
+// short sentence (kept small to control cost). With no endpoint configured this
+// returns a local, clearly-simulated OK so the screen still demos.
+export async function validateText(text) {
+  const endpoint = AI_ENDPOINT()
+  if (!endpoint) {
+    const words = wordsOf(text).length
+    return words >= 20
+      ? { ok: true, feedback: 'OK: Looks adequate (local check, no AI configured).', simulated: true }
+      : { ok: false, feedback: 'FIX: Add more text — this looks too short.', simulated: true }
+  }
+  const r = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, mode: 'validate' }) })
+  const j = await r.json().catch(() => ({}))
+  if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`)
+  return { ok: !!j.ok, feedback: j.feedback || '', blocked: !!j.blocked }
+}
+
+// Step 2: once the text is adequate, ask the service to fill the rest of the form.
+// POST {text, mode:'autofill'} -> {fields, vocabulary, blocked?}. Field keys are
+// mapped to the admin form's input ids. Replace by setting window.SA_AI_ENDPOINT.
 export async function aiSuggest(text, det) {
-  const endpoint = typeof window !== 'undefined' && window.SA_AI_ENDPOINT
+  const endpoint = AI_ENDPOINT()
   if (endpoint) {
-    const r = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, language: det && det.lang }) })
-    const j = await r.json()
-    const ids = { title: 'adTitle', author: 'adAuthor', genre: 'adGenre', topic: 'adTopic', gradeBand: 'adBand', grade: 'adGrade', language: 'adSrcLang', lexile: 'adLexile' }
+    const r = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, mode: 'autofill', language: det && det.lang }) })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`)
+    const ids = {
+      title: 'adTitle', author: 'adAuthor', genre: 'adGenre', topic: 'adTopic',
+      gradeBand: 'adBand', grade: 'adGrade', language: 'adSrcLang', lexile: 'adLexile',
+      // Review / workflow fields (attribution + content-derived notes + defaults).
+      notes: 'adNotes', reviewer: 'adRevers', spanishReviewer: 'adRevEs',
+      batchLabel: 'adBatch', afterApproval: 'adVis', reviewBy: 'adDue',
+    }
     const fields = {}
     for (const [k, v] of Object.entries(j.fields || {})) fields[ids[k] || k] = v
-    return { mode: 'service', fields, vocabulary: j.vocabulary || [] }
+    return { mode: 'service', fields, vocabulary: j.vocabulary || [], blocked: !!j.blocked }
   }
   await new Promise(r => setTimeout(r, 700))
   const words = wordsOf(text)

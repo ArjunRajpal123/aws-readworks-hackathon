@@ -2,8 +2,8 @@
 // read-from-file passage is sent to POST /api/v1/text-to-speech and opens in the player when it's done. Everything
 // else (ReadWorks IDs, bulk CSVs, translation, cards, Word Stops, review) is still a demo: the "request" shown on
 // the right is the shape the team's pipeline would receive, and the queue progress is simulated.
-import { detect, aiSuggest } from './assist.js'
-import { createProduct } from './api.js'
+import { detect, aiSuggest, validateText } from './assist.js'
+import { createProduct, translatePassage, approvePassage } from './api.js'
 import { RW_KNOWN } from './vocab_db.js'
 import { loadRatings, clearRatings } from './rate.js'
 
@@ -225,7 +225,11 @@ export function initAdmin(t) {
     if (on('adAud')) stages.audio = { engine: 'polly-neural', languages: audioLangs(), voices: { 'en-US': ['Danielle', 'Stephen'], 'es-US': ['Lupe', 'Pedro'] } }
     if (on('adTrans')) stages.spanishVersion = { mode: 'ai-draft', reviewRequired: true }
     if (on('adCards')) {
-      const words = [...(det && det.vocab ? det.vocab.map(v => ({ word: v.word, source: 'database' })) : []), ...aiVocab.map(w => ({ word: w, source: 'ai-suggested', needsReview: true }))]
+      const words = [
+        ...(det && det.vocab ? det.vocab.map(v => ({ word: v.word, source: 'database' })) : []),
+        // Only the AI cards the admin kept (Keep/Remove toggle) are included.
+        ...keptCards().map(c => ({ word: c.word, pos: c.pos, def: c.def, ex: c.ex, source: 'ai-suggested', needsReview: true })),
+      ]
       stages.vocabularyCards = { languages: ['en-US', 'es-US'], ...(words.length ? { words } : {}) }
     }
     const qsrc = val('adQsSrc')
@@ -302,10 +306,15 @@ export function initAdmin(t) {
     q.innerHTML = `<div class="ad-tw"><table><thead><tr><th>${t('adColPass')}</th><th>${t('adColStatus')}</th><th>${t('adColProg')}</th><th>${t('adColAct')}</th></tr></thead><tbody>${queue.map(e => {
       const total = e.stages.length
       const pct = e.state === 'running' ? Math.round(100 * e.at / total) : 100
-      return `<tr><td><strong>${esc(e.title)}</strong><br><span class="ad-help">${esc(e.langs)} · ${esc(e.band)} · ${esc(e.time)}</span>${e.error ? `<br><span class="ad-help">${esc(e.error)}</span>` : ''}</td>
+      // Spanish (AI-translated) status line + actions, when a translation was produced.
+      const esLine = e.esState ? `<br><span class="ad-help">ES: ${esc(t('adEsState_' + e.esState) || e.esState)}${e.esError ? ' · ' + esc(e.esError) : ''}</span>` : ''
+      const esActs = e.esPid && (e.esState === 'review' || e.esState === 'reviewed')
+        ? `<a class="ad-btn ad-small" href="?m=${encodeURIComponent(e.esPid)}">${t('adOpenEs')}</a>${e.esState === 'review' ? `<button type="button" class="ad-btn ad-small" data-act="approveEs" data-id="${e.id}">${t('adApproveEs')}</button>` : ''}`
+        : ''
+      return `<tr><td><strong>${esc(e.title)}</strong><br><span class="ad-help">${esc(e.langs)} · ${esc(e.band)} · ${esc(e.time)}</span>${e.error ? `<br><span class="ad-help">${esc(e.error)}</span>` : ''}${esLine}</td>
         <td><span class="ad-pill ad-${e.state}">${stageLabel(e)}</span></td>
         <td><div class="ad-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div></td>
-        <td class="ad-acts">${e.state === 'review' ? `<button type="button" class="ad-btn ad-small" data-act="approve" data-id="${e.id}">${t('adApprove')}</button>` : ''}${e.pid && e.state !== 'running' && e.state !== 'error' ? `<a class="ad-btn ad-small" href="?m=${encodeURIComponent(e.pid)}">${t('adOpen')}</a>` : ''}<button type="button" class="ad-btn ad-ghost ad-small" data-act="remove" data-id="${e.id}">${t('adRemove')}</button></td></tr>`
+        <td class="ad-acts">${e.state === 'review' ? `<button type="button" class="ad-btn ad-small" data-act="approve" data-id="${e.id}">${t('adApprove')}</button>` : ''}${e.pid && e.state !== 'running' && e.state !== 'error' ? `<a class="ad-btn ad-small" href="?m=${encodeURIComponent(e.pid)}">${t('adOpen')}</a>` : ''}${esActs}<button type="button" class="ad-btn ad-ghost ad-small" data-act="remove" data-id="${e.id}">${t('adRemove')}</button></td></tr>`
     }).join('')}</tbody></table></div>`
   }
   // ---- form assist: fill in what the text already tells us, and optionally ask AI ----
@@ -313,16 +322,22 @@ export function initAdmin(t) {
   const BAND = { k2: 'K-2', 35: '3-5', 68: '6-8', 912: '9-12' }
   const touched = new Set(), auto = new Map() // field id -> 'det' (from the text) or 'ai'
   let det = null, aiVocab = [], aiUsed = null, detTimer = 0
+  const aiDismissed = new Set() // words the admin chose NOT to add (by lowercased word)
+  const keptCards = () => aiVocab.filter(c => !aiDismissed.has(c.word))
   const sourceText = () => (method() === 'file' && !currentText().trim() ? fileTexts.join('\n\n') : currentText())
   function badge(id, kind) {
     const lab = root.querySelector(`label[for="${id}"]`); if (!lab) return
     lab.querySelectorAll('.ad-badge').forEach(b => b.remove())
     if (kind) lab.insertAdjacentHTML('beforeend', ` <span class="ad-badge ad-b-${kind}">${t(kind === 'ai' ? 'adBadgeAI' : 'adBadgeDet')}</span>`)
   }
+  // AI may improve on a value the heuristic "detect" pass guessed for these
+  // fields (its topic/title guesses are weak); it still never overrides a value
+  // the human typed (touched).
+  const AI_OVERRIDES_DET = new Set(['adTopic', 'adTitle'])
   function setField(id, value, kind) {
     if (!value || touched.has(id)) return false
     const el = $('#' + id); if (!el) return false
-    if (kind === 'ai' && auto.get(id) === 'det') return false
+    if (kind === 'ai' && auto.get(id) === 'det' && !AI_OVERRIDES_DET.has(id)) return false
     if (el.value && !auto.has(id) && el.tagName !== 'SELECT') return false
     if (el.tagName === 'SELECT' && ![...el.options].some(o => o.value === String(value))) return false
     el.value = String(value); auto.set(id, kind); badge(id, kind); return true
@@ -362,14 +377,30 @@ export function initAdmin(t) {
       ${det.known ? `<li>${t('adDetKnown', esc(det.known.title), det.known.id)}</li>` : ''}
       <li>${det.vocab.length ? t('adDetVocab', det.vocab.length, '') + '<div class="ad-chips">' + chips + '</div>' : t('adDetNoVocab')}</li></ul>${aiVocab.length ? aiBlock() : ''}`
   }
-  const aiBlock = () => `<p class="ad-help">${t('adAIFor')}</p><div class="ad-chips">${aiVocab.map(w => `<span class="ad-chip ad-chip-ai">${esc(w)}</span>`).join(' ')}</div>`
+  // AI vocabulary shown as reviewable cards (word · part of speech · definition
+  // · example), the shape the player's CARDS use. Each card has a Keep/Remove
+  // toggle so the admin decides which words get added; only kept cards go into
+  // the payload's vocabularyCards on Submit.
+  const aiBlock = () => {
+    const kept = keptCards().length
+    return `<div class="ad-vhead-row"><p class="ad-help">${t('adAIFor')}</p><span class="ad-help ad-vcount">${t('adVocabKept', kept, aiVocab.length)}</span></div>
+    <ul class="ad-vocab">${aiVocab.map(c => {
+      const off = aiDismissed.has(c.word)
+      return `<li class="ad-vcard${off ? ' ad-vcard-off' : ''}">
+        <div class="ad-vhead"><strong>${esc(c.word)}</strong>${c.pos ? `<em class="ad-vpos">${esc(c.pos)}</em>` : ''}<span class="ad-badge ad-b-ai">${t('adBadgeAI')}</span>
+          <button type="button" class="ad-btn ad-ghost ad-small ad-vtoggle" data-vocab="${esc(c.word)}">${off ? t('adVocabAdd') : t('adVocabRemove')}</button></div>
+        ${c.def ? `<p class="ad-vdef">${esc(c.def)}</p>` : ''}
+        ${c.ex ? `<p class="ad-vex">“${esc(c.ex)}”</p>` : ''}
+      </li>`
+    }).join('')}</ul>`
+  }
   function undoFill() {
     for (const [id] of auto) {
       const el = $('#' + id); if (!el) continue
       el.value = id === 'adGenre' ? 'fiction' : id === 'adRights' ? 'readworks' : ''
       badge(id, null)
     }
-    auto.clear(); aiVocab = []; aiUsed = null; det = det && { ...det, known: null }; $('#adAIMsg').textContent = ''; render()
+    auto.clear(); aiVocab = []; aiDismissed.clear(); aiUsed = null; det = det && { ...det, known: null }; $('#adAIMsg').textContent = ''; render()
   }
   function assistInfo() {
     const filled = [...auto].filter(([, k]) => k === 'det').map(([i]) => i)
@@ -394,12 +425,24 @@ export function initAdmin(t) {
     btn.disabled = true; lab.textContent = t('adAIWorking')
     try {
       const text = sourceText(), d = det || detect(text) || { lang: 'en-US' }
+      // Step 1: cheap validation. Show the brief feedback; stop here if the
+      // text is inadequate or was blocked by the safety guardrail.
+      const check = await validateText(text)
+      $('#adAIMsg').textContent = check.feedback || ''
+      if (!check.ok) { btn.disabled = false; lab.textContent = label; render(); return }
+      // Step 2: fill the rest of the form. Fields it fills get the "AI" badge
+      // (setField(..., 'ai')) and are recorded in assist.ai in the payload, so
+      // the submission clearly shows what was auto-filled by AI.
       const res = await aiSuggest(text, d)
+      if (res.blocked) { $('#adAIMsg').textContent = t('adAINone'); btn.disabled = false; lab.textContent = label; render(); return }
       const names = []
       for (const [id, v] of Object.entries(res.fields || {})) if (setField(id, v, 'ai')) names.push(id)
-      aiVocab = (res.vocabulary || []).map(w => (typeof w === 'string' ? w : w.word))
-      aiUsed = { used: true, mode: res.mode, fieldsSuggested: names, vocabularySuggested: aiVocab.length }
-      $('#adAIMsg').textContent = names.length || aiVocab.length ? t('adAIDone', names.length) : t('adAINone')
+      // Keep full cards ({word, pos, def, ex}); tolerate bare strings from the
+      // local simulation by wrapping them. A fresh run starts with all kept.
+      aiVocab = (res.vocabulary || []).map(w => (typeof w === 'string' ? { word: w } : w)).filter(c => c && c.word)
+      aiDismissed.clear()
+      aiUsed = { used: true, mode: res.mode, validated: true, feedback: check.feedback, fieldsSuggested: names, vocabularySuggested: aiVocab.length }
+      $('#adAIMsg').textContent = (check.feedback ? check.feedback + ' · ' : '') + (names.length || aiVocab.length ? t('adAIDone', names.length) : t('adAINone'))
     } catch (err) { $('#adAIMsg').textContent = String(err.message || err) }
     btn.disabled = false; lab.textContent = label; render()
   }
@@ -435,6 +478,15 @@ export function initAdmin(t) {
 
   // Pasted text, or text read from a single file, can go to POST /api/v1/text-to-speech; the other methods have no API yet.
   const apiText = () => (method() === 'paste' || (method() === 'file' && files.length <= 1) ? sourceText().trim() : '')
+  // A stable, human-readable passage id derived from the title (+ language),
+  // so submitting the SAME passage twice resolves to the same id and the API
+  // rejects the duplicate (409) instead of creating another random-id record.
+  // Ends in -en / -es so the GET endpoint's language-sibling lookup works.
+  function stableId(title, lang) {
+    const slug = (title || 'passage').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'passage'
+    return `user-${slug}-${lang === 'es-US' ? 'es' : 'en'}`
+  }
 
   async function submit() {
     if (missing().length) return
@@ -457,12 +509,60 @@ export function initAdmin(t) {
     if (!entry.api) return
 
     // Voices come from etl/voices.json on the server; "audio" on means every configured voice, as the request shows.
-    const res = await createProduct({ text, title: title.slice(0, 200), languageCode: p.passage.language || 'en-US', allVoices: on('adAud') })
+    // The kept AI vocab cards ride along so the player can underline them and open the card.
+    const vocabularyCards = on('adCards')
+      ? keptCards().map(c => ({ word: c.word, pos: c.pos, def: c.def, ex: c.ex }))
+      : []
+    const lang = p.passage.language || 'en-US'
+    const id = stableId(title, lang)
+    const res = await createProduct({ id, text, title: title.slice(0, 200), languageCode: lang, allVoices: on('adAud'), vocabularyCards })
     const e = queue.find(x => x.id === entry.id)
     if (!e) return // removed while it was running
     e.api = false
+    // Did we end up with a usable English passage? Either freshly created, OR
+    // it already existed (409) — in both cases we have a valid English id and
+    // can still add/refresh the Spanish version.
+    const englishReady = !!(res && res.ok) || !!(res && /already exists/i.test(res.error || ''))
     if (res && res.ok) { e.pid = res.record.id; e.at = e.stages.length; e.state = e.review === 'required' ? 'review' : 'done' }
+    else if (res && /already exists/i.test(res.error || '')) {
+      // Same title submitted again: the passage already exists, so point at it
+      // rather than creating a duplicate. This is the duplicate-reference guard.
+      e.pid = id; e.at = e.stages.length; e.state = 'done'; e.error = t('adDupe')
+    }
     else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
+    save(); renderQueue()
+
+    // Auto-deploy a Spanish version when translation is on and the source is
+    // English: Nova translates the text + vocab, and we create the -es sibling
+    // marked machine/draft (A: it's playable but shows "pending review" until
+    // an admin approves it). Runs whether the English was just created or
+    // already existed, so you can add Spanish to an existing passage. If the
+    // Spanish already exists it's left as-is (createProduct 409 -> keep it).
+    if (englishReady && on('adTrans') && lang === 'en-US') {
+      e.esState = 'translating'; save(); renderQueue()
+      const esId = id.replace(/-en$/, '') + '-es'
+      const tr = await translatePassage(text, vocabularyCards)
+      if (!tr) { e.esState = 'error'; save(); renderQueue(); return }
+      const esRes = await createProduct({
+        id: esId, text: tr.text, title: (tr.title || title).slice(0, 200),
+        languageCode: 'es-US', allVoices: on('adAud'),
+        vocabularyCards: tr.vocabularyCards || [],
+        review: { provenance: 'machine', reviewStatus: 'draft', translatedFrom: id, reviewer: `Created by ${tr.model || 'AI'} (AI)` },
+      })
+      const e2 = queue.find(x => x.id === entry.id); if (!e2) return
+      if (esRes && esRes.ok) { e2.esPid = esRes.record.id; e2.esState = 'review' }
+      else if (esRes && /already exists/i.test(esRes.error || '')) { e2.esPid = esId; e2.esState = 'review' }
+      else { e2.esState = 'error'; e2.esError = (esRes && esRes.error) || 'Translation deploy failed' }
+      save(); renderQueue()
+    }
+  }
+  // Admin approves the AI Spanish draft -> flips reviewStatus to reviewed.
+  async function approveEs(qid) {
+    const e = queue.find(x => x.id === qid); if (!e || !e.esPid) return
+    e.esState = 'approving'; save(); renderQueue()
+    const r = await approvePassage(e.esPid)
+    e.esState = r && r.ok ? 'reviewed' : 'review'
+    if (!(r && r.ok)) e.esError = (r && r.error) || 'Approve failed'
     save(); renderQueue()
   }
 
@@ -519,9 +619,9 @@ export function initAdmin(t) {
   $('#adQueue').addEventListener('click', e => {
     const b = e.target.closest('button[data-act]'); if (!b) return
     const i = queue.findIndex(x => x.id === b.dataset.id); if (i < 0) return
-    if (b.dataset.act === 'remove') queue.splice(i, 1)
-    else { queue[i].state = 'done' }
-    save(); renderQueue()
+    if (b.dataset.act === 'remove') { queue.splice(i, 1); save(); renderQueue() }
+    else if (b.dataset.act === 'approveEs') { approveEs(b.dataset.id) }
+    else { queue[i].state = 'done'; save(); renderQueue() }
   })
   // sub-options follow their parent toggle
   const syncParents = () => {
@@ -542,6 +642,13 @@ export function initAdmin(t) {
     if (e.target.name === 'adMethod') { placeAI(); runDetect() }
   })
   root.addEventListener('click', e => { if (e.target.id === 'adUndo') undoFill() })
+  // Per-card Keep/Remove for AI vocabulary suggestions.
+  root.addEventListener('click', e => {
+    const b = e.target.closest('.ad-vtoggle'); if (!b) return
+    const w = b.dataset.vocab
+    if (aiDismissed.has(w)) aiDismissed.delete(w); else aiDismissed.add(w)
+    render()
+  })
   $('#adAI').addEventListener('click', openAI)
   $('#adFbClear').addEventListener('click', () => clearRatings())
   window.addEventListener('sa-rating', renderFeedback)
