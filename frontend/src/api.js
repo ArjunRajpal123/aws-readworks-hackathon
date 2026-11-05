@@ -42,55 +42,9 @@ export async function fetchProduct(id, voiceId, lang) {
   }
 }
 
-// The passages list endpoint sits next to text-to-speech on the same API
-// (…/api/v1/text-to-speech -> …/api/v1/passages).
-const LIST_API = API ? API.replace(/\/text-to-speech$/, '/passages') : null
-
-// Lists every passage the pipeline has generated (summary only: id, title,
-// lang, band, voice names), so the player can show user-entered passages in
-// its picker. Playback still uses fetchProduct(id) per passage. Returns an
-// array (possibly empty) or [] when no API is configured or the call fails.
-export async function listProducts() {
-  if (!LIST_API) return []
-  try {
-    const r = await fetch(LIST_API)
-    if (!r.ok) return []
-    const j = await r.json().catch(() => ({}))
-    return Array.isArray(j.passages) ? j.passages : []
-  } catch {
-    return []
-  }
-}
-
-// Translates an English passage (+ its vocab cards) to Spanish via the assist
-// endpoint (POST {text, mode:'translate', vocabularyCards}). Returns
-// {text, title, vocabularyCards, model} or null when no AI endpoint is set.
-export async function translatePassage(text, vocabularyCards) {
-  const endpoint = (typeof window !== 'undefined' && window.SA_AI_ENDPOINT) || ''
-  if (!endpoint) return null
-  try {
-    const r = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, mode: 'translate', vocabularyCards }) })
-    const j = await r.json().catch(() => ({}))
-    if (!r.ok || j.blocked || !j.text) return null
-    return j
-  } catch { return null }
-}
-
-// Approves an AI-generated passage (POST /api/v1/passages/approve {id}),
-// flipping its reviewStatus to "reviewed". Returns {ok} / {ok:false, error}.
-export async function approvePassage(id) {
-  const base = API ? API.replace(/\/text-to-speech$/, '/passages/approve') : null
-  if (!base) return { ok: false, error: 'No API configured' }
-  try {
-    const r = await fetch(base, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) })
-    const j = await r.json().catch(() => ({}))
-    return r.ok ? { ok: true, ...j } : { ok: false, error: j.error || `HTTP ${r.status}` }
-  } catch (e) { return { ok: false, error: e.message || 'Network error' } }
-}
-
 // Generates a new passage with POST /api/v1/text-to-speech (Polly audio, word
 // timing and the product record, stored where GET and the player read them).
-// body: {text, title?, languageCode?, allVoices?, vocabularyCards?}; see
+// body: {text, title?, languageCode?, allVoices?}; see
 // lambda/text_to_speech_post/handler.py. Returns {ok: true, record} or
 // {ok: false, error}. With no API configured there is nothing to call:
 // returns null so the caller can fall back.

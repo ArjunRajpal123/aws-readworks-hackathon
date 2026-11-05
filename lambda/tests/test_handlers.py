@@ -54,57 +54,6 @@ def test_post_runs_pipeline_with_default_voice(fake_aws):
     assert all(c["TextType"] == "ssml" for c in polly.calls)
 
 
-def test_post_stores_vocabulary_cards(fake_aws):
-    _, storage = fake_aws
-    status, body = _post({
-        "text": "The clever fox watched the sunrise.", "id": "vocab-1",
-        "vocabularyCards": [
-            {"word": "clever", "pos": "adjective", "def": "quick to learn", "ex": "A clever fox."},
-            {"word": "sunrise", "pos": "noun", "def": "when the sun comes up"},
-            {"word": "x"},                 # too short -> dropped
-            {"word": "CLEVER", "def": "dup"},  # duplicate -> dropped
-        ],
-    })
-    assert status == 201
-    vocab = body["vocabulary"]
-    assert [v["word"] for v in vocab] == ["clever", "sunrise"]
-    assert vocab[0] == {"word": "clever", "pos": "adjective", "def": "quick to learn", "ex": "A clever fox."}
-    assert "ex" not in vocab[1]  # partial card kept
-    # Persisted on the stored record, not just the response.
-    assert storage.records["vocab-1"]["vocabulary"][0]["word"] == "clever"
-
-
-def test_post_stores_review_metadata(fake_aws):
-    _, storage = fake_aws
-    status, body = _post({
-        "text": "Una historia corta.", "id": "foo-es", "languageCode": "es-US",
-        "review": {"provenance": "machine", "reviewStatus": "draft",
-                   "translatedFrom": "foo-en", "reviewer": "Created by Nova Lite (AI)",
-                   "bogus": "dropped"},
-    })
-    assert status == 201
-    rev = body["review"]
-    assert rev["provenance"] == "machine" and rev["reviewStatus"] == "draft"
-    assert rev["translatedFrom"] == "foo-en"
-    assert "bogus" not in rev
-    assert storage.records["foo-es"]["review"]["reviewStatus"] == "draft"
-
-
-def test_post_review_must_be_object(fake_aws):
-    status, resp = _post({"text": "Hi there.", "id": "r1", "review": "nope"})
-    assert status == 400 and "'review'" in resp["error"]
-
-
-def test_post_without_vocab_has_no_vocabulary_key(fake_aws):
-    status, body = _post({"text": "Just a plain passage here.", "id": "novocab-1"})
-    assert status == 201 and "vocabulary" not in body
-
-
-def test_post_vocabulary_cards_must_be_array(fake_aws):
-    status, resp = _post({"text": "Hello there.", "id": "badvocab", "vocabularyCards": "nope"})
-    assert status == 400 and "'vocabularyCards'" in resp["error"]
-
-
 def test_post_spanish_with_extra_voice(fake_aws):
     status, body = _post({"text": "Hola. ¿Cómo estás?", "languageCode": "es-US",
                           "voiceId": "pedro"})

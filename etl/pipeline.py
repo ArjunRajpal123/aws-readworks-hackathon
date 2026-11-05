@@ -58,20 +58,10 @@ class PassageInput:
     text: str
     # Optional per-word pronunciation fixes: {"<tokenIndex>": {"w": "amazon:VB"}}.
     pronunciation: dict | None = None
-    # Optional vocabulary cards to show in the player: a list of
-    # {word, pos?, def?, ex?}. The player underlines matching words in the
-    # passage and opens the card on tap (see frontend/src/pipeline_mode.js).
-    vocab_cards: list | None = None
-    # Optional review metadata, used for AI-generated (e.g. machine-translated)
-    # passages: {provenance, reviewStatus, translatedFrom, reviewer}. Stored on
-    # the product record under `review` so the player/admin can show a
-    # "pending review" state and an approve action.
-    review: dict | None = None
 
     @classmethod
     def from_dict(cls, data: dict) -> "PassageInput":
-        """Build from an input JSON / API body:
-        {id, lang, title, text, pronunciation?, vocabularyCards?, review?}.
+        """Build from an input JSON / API body: {id, lang, title, text, pronunciation?}.
 
         Shared by run_local.py, run_aws.py and the API Lambda so every entry
         point reads passages the same way.
@@ -82,8 +72,6 @@ class PassageInput:
             title=data.get("title", data["id"]),
             text=data["text"],
             pronunciation=data.get("pronunciation"),
-            vocab_cards=data.get("vocabularyCards"),
-            review=data.get("review"),
         )
 
 
@@ -340,53 +328,6 @@ def _make_track(passage: PassageInput, tk, voice, polly_client) -> tuple[dict, d
     return track, files, summary
 
 
-def _clean_vocab_cards(cards) -> list:
-    """Normalize vocabulary cards for the product record: a list of
-    {word, pos?, def?, ex?}. Drops malformed/empty entries and de-dupes by
-    lowercased word. Returns [] when there's nothing usable."""
-    if not isinstance(cards, list):
-        return []
-    out, seen = [], set()
-    for item in cards:
-        if isinstance(item, str):
-            item = {"word": item}
-        if not isinstance(item, dict):
-            continue
-        word = str(item.get("word") or "").strip()
-        key = word.lower()
-        if not (1 < len(word) <= 40) or key in seen:
-            continue
-        seen.add(key)
-        card = {"word": word}
-        for field, cap in (("pos", 20), ("def", 300), ("ex", 300)):
-            val = item.get(field)
-            if isinstance(val, str) and val.strip():
-                card[field] = val.strip()[:cap]
-        out.append(card)
-        if len(out) >= 12:
-            break
-    return out
-
-
-def _clean_review(review) -> dict:
-    """Normalize review metadata for the product record. Keeps only known
-    keys with safe string values. Returns {} when there's nothing usable."""
-    if not isinstance(review, dict):
-        return {}
-    out = {}
-    provenance = review.get("provenance")
-    if provenance in ("human", "machine"):
-        out["provenance"] = provenance
-    status = review.get("reviewStatus")
-    if status in ("draft", "reviewed", "pending"):
-        out["reviewStatus"] = status
-    for key in ("translatedFrom", "reviewer"):
-        val = review.get(key)
-        if isinstance(val, str) and val.strip():
-            out[key] = val.strip()[:120]
-    return out
-
-
 def run(passage: PassageInput, polly_client, storage: Storage,
         track_ids: list[str] | None = None) -> dict:
     """Run P1+P3 for one passage and write the player-facing output.
@@ -435,12 +376,6 @@ def run(passage: PassageInput, polly_client, storage: Storage,
             "estCostUsd": round(billed * NEURAL_USD_PER_MCHAR / 1_000_000, 5),
         },
     }
-    cards = _clean_vocab_cards(passage.vocab_cards)
-    if cards:
-        product["vocabulary"] = cards
-    review = _clean_review(passage.review)
-    if review:
-        product["review"] = review
 
     # --- write: every track's files first, the product record last ---------
     for _, files, _ in built:

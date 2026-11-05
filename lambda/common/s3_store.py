@@ -64,17 +64,6 @@ def get_product(record_id):
     return json.loads(body)
 
 
-def put_product(record_id, product):
-    """Overwrite the product record JSON in S3 (used by the approve endpoint
-    so the GET response, which reads S3, reflects the new review status)."""
-    s3_client().put_object(
-        Bucket=BUCKET,
-        Key=f"{KEY_PREFIX}product/{record_id}.soundAlong.json",
-        Body=json.dumps(product, ensure_ascii=False).encode("utf-8"),
-        ContentType="application/json",
-    )
-
-
 def presigned_url(key):
     """Presigned GET URL for a product-record key (relative to KEY_PREFIX)."""
     return s3_client().generate_presigned_url(
