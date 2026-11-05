@@ -4,7 +4,8 @@
 // the right is the shape the team's pipeline would receive, and the queue progress is simulated.
 import { detect, aiSuggest } from './assist.js'
 import { createProduct } from './api.js'
-import { postReview, translate, genCards, genStops } from './data_api.js'
+import { makeTranslation } from './pipeline_mode.js'
+import { postReview, genCards, genStops } from './data_api.js'
 import { RW_KNOWN } from './vocab_db.js'
 import { loadRatings, clearRatings } from './rate.js'
 
@@ -482,18 +483,29 @@ export function initAdmin(t) {
     // Both languages share a base id (<base>-en / <base>-es) so the player's
     // language toggle and GET ?lang= resolve each one's sibling.
     const srcLang = p.passage.language || 'en-US'
+    // The other language (en <-> es) is translated and generated in parallel,
+    // and the row only offers "Open" once both exist.
     const base = 'p-' + entry.id
-    const res = await createProduct({ text, id: `${base}-${srcLang.slice(0, 2)}`, title: title.slice(0, 200), languageCode: srcLang, allVoices: on('adAud') })
+    const src = srcLang.slice(0, 2), dst = src === 'es' ? 'en' : 'es'
+    if (on('adTrans')) { entry.other = 'pending'; save(); renderQueue() }
+    const [res, oth] = await Promise.all([
+      createProduct({ text, id: `${base}-${src}`, title: title.slice(0, 200), languageCode: srcLang, allVoices: on('adAud') }),
+      on('adTrans') ? makeTranslation({ text, title, from: src, to: dst, id: `${base}-${dst}`, allVoices: on('adAud') }) : null,
+    ])
     const e = queue.find(x => x.id === entry.id)
     if (!e) return // removed while it was running
     e.api = false
+    if (oth) e.other = oth.ok ? 'done' : 'error'
     if (res && res.ok) {
       e.pid = res.record.id; e.at = e.stages.length; e.state = e.review === 'required' ? 'review' : 'done'
       await publishReview(e)
-      // Vocabulary cards and Word Stops (real Bedrock drafts) when requested.
-      if (on('adCards') || on('adStops')) { e.gen = 'pending'; save(); renderQueue(); await makeCardsAndStops(e, text, srcLang) }
-      // Other language: translate and generate the sibling (en <-> es) through the same pipeline.
-      if (on('adTrans')) { e.other = 'pending'; save(); renderQueue(); await makeOtherLanguage(e, text, srcLang, base) }
+      if (oth && oth.ok) await postReview({ pid: oth.record.id, state: e.review === 'required' ? 'review' : 'published' })
+      save(); renderQueue()
+      // Vocabulary cards and Word Stops (real Bedrock drafts) for each language, when requested.
+      if (on('adCards') || on('adStops')) {
+        e.gen = 'pending'; save(); renderQueue()
+        await Promise.all([makeCardsAndStops(e, text, srcLang), oth && oth.ok ? makeCardsAndStops(e, oth.text, dst === 'es' ? 'es-US' : 'en-US') : null])
+      }
     } else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
     save(); renderQueue()
   }
@@ -507,23 +519,6 @@ export function initAdmin(t) {
     let stops = []
     if (on('adStops')) { const r = await genStops(text, cards.map(c => c.word), lang); stops = (r && r.stops) || [] }
     entry.cards = cards.length; entry.stops = stops.length; entry.gen = 'done'
-  }
-
-  // Translate the passage into the other language (en <-> es) and generate that
-  // sibling through the same pipeline (Amazon Translate + Polly voices for that
-  // language), with its own cards and Word Stops. Best-effort: a failure is
-  // noted on the row but does not fail the source passage.
-  async function makeOtherLanguage(entry, srcText, srcLang, base) {
-    const src = srcLang.slice(0, 2), dst = src === 'es' ? 'en' : 'es'
-    const tr = await translate(srcText, src, dst)
-    if (!tr || !tr.text) { entry.other = 'error'; return }
-    const title = await translate(entry.title, src, dst)
-    const id = `${base}-${dst}`
-    const res = await createProduct({ text: tr.text, id, title: ((title && title.text) || entry.title).slice(0, 200), languageCode: dst === 'es' ? 'es-US' : 'en-US', allVoices: on('adAud') })
-    entry.other = res && res.ok ? 'done' : 'error'
-    if (!res || !res.ok) return
-    await postReview({ pid: id, state: entry.review === 'required' ? 'review' : 'published' })
-    if (on('adCards') || on('adStops')) await makeCardsAndStops(entry, tr.text, dst === 'es' ? 'es-US' : 'en-US')
   }
 
   // ---- events ----

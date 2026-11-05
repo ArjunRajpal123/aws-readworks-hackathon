@@ -3,7 +3,8 @@
 // into the app. The text comes from the product's contentTokenized, one player token per pipeline
 // word, so the word count matches the timing file and the Polly voices (Danielle/Stephen, Lupe/Pedro) play.
 
-import { fetchProduct } from './api.js'
+import { fetchProduct, createProduct } from './api.js'
+import { translate } from './data_api.js'
 
 const ID_RE = /^[A-Za-z0-9._-]{1,64}$/
 
@@ -25,6 +26,16 @@ export function siblingId(id, lang) {
   if (m) return `${m[1]}-${lang}`
   const base = id.endsWith('es') ? id.slice(0, -2) : id
   return lang === 'es' ? base + 'es' : base
+}
+
+// Translate a passage (en <-> es) and generate that version through the
+// pipeline under `id` (Amazon Translate, then Polly voices for that language).
+// Returns createProduct's {ok, record|error}, plus the translated text.
+export async function makeTranslation({ text, title, from, to, id, allVoices = true }) {
+  const [tr, tt] = await Promise.all([translate(text, from, to), translate(title || id, from, to)])
+  if (!tr || !tr.text) return { ok: false, error: 'Translation failed' }
+  const res = await createProduct({ text: tr.text, id, title: ((tt && tt.text) || title || id).slice(0, 200), languageCode: to === 'es' ? 'es-US' : 'en-US', allVoices })
+  return { ...(res || { ok: false, error: 'No API configured' }), text: tr.text }
 }
 
 function buildMode(id, prod, band, MODES) {
@@ -61,17 +72,26 @@ export async function addPipelineMode(MODES, id, { band = '35' } = {}) {
   return mode
 }
 
-// Register the sibling-language passage if the backend has one, link it, and
-// return its id. Called by the language toggle on demand. Returns null if
-// there is no sibling (toggle then just keeps the current text).
-export async function ensureSibling(MODES, mode) {
+// Register the sibling-language passage, link it, and return its id. Called
+// by the language toggle on demand. A passage made before both languages were
+// generated up front has no sibling yet: it is translated and generated now
+// (onMaking() is called first, since that takes a few seconds). Returns null
+// if there is no sibling and it could not be made.
+export async function ensureSibling(MODES, mode, { onMaking } = {}) {
   if (!mode || !mode.pipeline) return null
   if (mode.sib && MODES.some(m => m.id === mode.sib)) return mode.sib
   const sib = mode.sibId
   if (!sib || sib === mode.id || !ID_RE.test(sib)) return null
   let sibMode = MODES.find(m => m.id === sib)
   if (!sibMode) {
-    const sibProd = await fetchProduct(sib)
+    let sibProd = await fetchProduct(sib)
+    if (!sibProd || !Array.isArray(sibProd.tracks)) {
+      if (onMaking) onMaking()
+      const from = mode.lang === 'es-US' ? 'es' : 'en'
+      const res = await makeTranslation({ text: mode.paras.join('\n\n'), title: mode.title, from, to: from === 'es' ? 'en' : 'es', id: sib })
+      if (!res.ok) return null
+      sibProd = res.record
+    }
     if (!sibProd || !Array.isArray(sibProd.tracks)) return null
     sibMode = buildMode(sib, sibProd, mode.band, MODES)
     if (!sibMode) return null

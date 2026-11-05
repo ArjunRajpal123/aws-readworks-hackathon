@@ -408,7 +408,7 @@ $('#passageSel').onchange=()=>{const e=byMode($('#passageSel').value);if(e)load(
 document.querySelectorAll('.lng').forEach(b=>b.onclick=async()=>{uiLang=b.dataset.l;const e=curEntry();
  // Pipeline passage: swap to the other language's text when the chosen language differs.
  if(mode&&mode.pipeline){const wantEs=uiLang==='es',isEs=mode.lang==='es-US';
-  if(wantEs!==isEs){const sib=await ensureSibling(MODES,mode);if(sib){load(sib);return}}
+  if(wantEs!==isEs){const sib=await ensureSibling(MODES,mode,{onMaking:()=>toast(t('sibMaking'))});if(sib){load(sib);return}toast(t('sibFailed'))}
   syncLang();applyStatic();return}
  load(e?modeFor(e,uiLang==='es'):(uiLang==='es'?B()+'es':B()))});
 $('#stopsBtn').onclick=()=>{stopsOn=!stopsOn;const b=$('#stopsBtn');b.textContent=t('stopsBtn',stopsOn);b.classList.toggle('off',!stopsOn);b.setAttribute('aria-pressed',stopsOn);load(mode.id)};

@@ -46,7 +46,7 @@ export const I18N = {
   stopsOff: 'Word Stops are off. Tapping a word opens its card only, with no question.',
   cardIdle: 'Tap any underlined word to open its card. Tap any other word to hear the passage from there.',
   stopsBtn: on => `Word Stops: ${on ? 'On' : 'Off'}`, gameBtn: on => `Game features: ${on ? 'On' : 'Off'}`,
-  gameTitle: 'Optional add-on: glow jar, badges, streaks, word bank', voiceOn: 'Voice on', voiceOff: 'Voice off',
+  gameTitle: 'Optional add-on: glow jar, badges, streaks, word bank', voiceOn: 'Voice on', voiceOff: 'Voice off', sibMaking: 'Making the English version… this takes a few seconds.', sibFailed: 'Could not make the other language version. Try again later.',
   foot1: `Passage text, grade, Lexile, vocabulary, questions and sample answers come from ReadWorks' public passage data. Photos are openly licensed and credited under each picture; the drawings are original. Spanish text is a machine-translated draft that has not been reviewed.`,
   foot2: `<strong>Why guess first.</strong> A meta-analysis of 21 studies found instruction in working out word meaning from context had a 0.43 SD effect, and direct clue instruction did best (<a href="https://pedagogischestudien.nl/article/download/14910/16362" target="_blank" rel="noopener">Fukkink &amp; de Glopper, 1998</a>).`,
   foot3: `<strong>Sources:</strong>
@@ -96,7 +96,7 @@ export const I18N = {
   stopsOff: 'Las Paradas de palabras están desactivadas. Al tocar una palabra solo se abre su tarjeta, sin pregunta.',
   cardIdle: 'Toca cualquier palabra subrayada para abrir su tarjeta. Toca cualquier otra palabra para oír el texto desde ahí.',
   stopsBtn: on => `Paradas de palabras: ${on ? 'Sí' : 'No'}`, gameBtn: on => `Funciones de juego: ${on ? 'Sí' : 'No'}`,
-  gameTitle: 'Extra opcional: frasco de luz, insignias, rachas, banco de palabras', voiceOn: 'Voz activada', voiceOff: 'Voz desactivada',
+  gameTitle: 'Extra opcional: frasco de luz, insignias, rachas, banco de palabras', sibMaking: 'Creando la versión en español… tarda unos segundos.', sibFailed: 'No se pudo crear la versión en el otro idioma. Inténtalo más tarde.', voiceOn: 'Voz activada', voiceOff: 'Voz desactivada',
   foot1: `El texto, el grado, el Lexile, el vocabulario, las preguntas y las respuestas de ejemplo vienen de los datos públicos de ReadWorks. Las fotos tienen licencia abierta y se acreditan debajo de cada imagen; los dibujos son originales. El texto en español es un borrador de traducción automática que no ha sido revisado.`,
   foot2: `<strong>Por qué adivinar primero.</strong> Un metaanálisis de 21 estudios halló que enseñar a deducir el significado de una palabra por el contexto tuvo un efecto de 0,43 DE, y la instrucción directa sobre pistas fue la que mejor funcionó (<a href="https://pedagogischestudien.nl/article/download/14910/16362" target="_blank" rel="noopener">Fukkink y de Glopper, 1998</a>).`,
   foot3: `<strong>Fuentes:</strong>
