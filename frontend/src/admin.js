@@ -410,9 +410,9 @@ export function initAdmin(t) {
     if (slot && wrap.parentElement !== slot) slot.appendChild(wrap)
     wrap.hidden = !(m === 'paste' || m === 'file')
   }
-  function renderFeedback() {
+  async function renderFeedback() {
     const box = $('#adFb'); if (!box) return
-    const r = loadRatings()
+    const r = await loadRatings()
     $('#adFbClear').hidden = !r.length
     if (!r.length) { box.innerHTML = `<p class="ad-help">${t('adFbNone')}</p>`; return }
     const h = Math.round(100 * r.filter(x => x.helpful).length / r.length), a = Math.round(100 * r.filter(x => x.audioGood).length / r.length)
@@ -421,14 +421,16 @@ export function initAdmin(t) {
   }
   function render() { renderSummary(); renderQueue(); renderDetect(); renderFeedback() }
 
-  // simulated progress through the stages
+  // Queue rows advance only on real API progress now (see submit()). While a
+  // passage is being generated we sweep the running stages up to the last one
+  // for a live progress bar, but the final stage and the done/error state come
+  // from the API's actual answer -- nothing is simulated to "succeed".
   setInterval(() => {
     let changed = false
     for (const e of queue) {
-      if (e.state !== 'running') continue
-      if (e.api && e.at >= e.stages.length - 1) continue // the last stage waits for the API's answer
+      if (e.state !== 'running' || !e.api) continue
+      if (e.at >= e.stages.length - 1) continue // hold at the last stage until the API answers
       e.at += 1; changed = true
-      if (e.at >= e.stages.length) e.state = e.review === 'required' ? 'review' : 'done'
     }
     if (changed) { save(); renderQueue() }
   }, STAGE_MS)
@@ -440,7 +442,12 @@ export function initAdmin(t) {
     if (missing().length) return
     const p = payload()
     const text = apiText()
-    if (text.length > API_MAX_CHARS && window.SA_API_URL) { $('#adMsg').textContent = t('adTooLong', API_MAX_CHARS); return }
+    // Everything runs through the cloud pipeline now. The paste and single-file
+    // methods have the passage text to send; ReadWorks-id and bulk uploads have
+    // no server-side fetch/CSV path, so they are refused rather than faked.
+    if (!text) { $('#adMsg').textContent = t('adNoApiMethod'); return }
+    if (!window.SA_API_URL) { $('#adMsg').textContent = t('adNoApi'); return }
+    if (text.length > API_MAX_CHARS) { $('#adMsg').textContent = t('adTooLong', API_MAX_CHARS); return }
     const n = Math.max(1, itemCount())
     const title = p.passage.title || (p.input.readworksId ? 'ReadWorks ' + p.input.readworksId.slice(0, 8) : p.input.bulkFile || 'Untitled')
     const entry = {
@@ -449,19 +456,19 @@ export function initAdmin(t) {
       band: p.passage.gradeBand ? BANDS.find(b => b[0] === p.passage.gradeBand)[1] : '—',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       stages: stagesFor(p), at: 0, state: 'running', review: p.review.mode, vis: p.review.afterApproval,
-      api: !!(text && window.SA_API_URL),
+      api: true,
     }
     queue.unshift(entry)
     save(); $('#adMsg').textContent = ''; render()
     $('#adQH').scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
-    if (!entry.api) return
 
     // Voices come from etl/voices.json on the server; "audio" on means every configured voice, as the request shows.
+    // The pipeline runs synchronously, so the 201 response is the real result -- the queue reflects it, nothing is simulated.
     const res = await createProduct({ text, title: title.slice(0, 200), languageCode: p.passage.language || 'en-US', allVoices: on('adAud') })
     const e = queue.find(x => x.id === entry.id)
     if (!e) return // removed while it was running
     e.api = false
-    if (res && res.ok) { e.pid = res.record.id; e.at = e.stages.length; e.state = e.review === 'required' ? 'review' : 'done' }
+    if (res && res.ok) { e.pid = res.record.id; e.at = e.stages.length; e.state = e.review === 'required' ? 'review' : 'done'; await publishReview(e) }
     else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
     save(); renderQueue()
   }

@@ -1,15 +1,30 @@
-// "You finished reading" pop-up and the Rate dialog. Ratings are kept in this browser in the demo; the team's service would collect them.
+// "You finished reading" pop-up and the Rate dialog. Ratings go to the cloud
+// data API (POST /api/v1/data/ratings); the admin "Feedback from students"
+// panel reads them back with loadRatings(). With no API configured (local
+// dev) ratings fall back to this browser's localStorage so the demo still works.
+import { hasDataApi, getRatings, postRating } from './data_api.js'
+
 const KEY = 'sa-ratings'
 
-export function loadRatings() {
-  try { return JSON.parse(localStorage.getItem(KEY) || '[]') } catch { return [] }
+const localRatings = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]') } catch { return [] } }
+
+// Async: returns cloud ratings when the data API is configured, else local.
+export async function loadRatings() {
+  if (hasDataApi()) { const r = await getRatings(); if (r) return r }
+  return localRatings()
 }
 export function clearRatings() {
+  // Cloud ratings are a durable record and are not cleared from the client;
+  // this only clears any local-dev fallback and refreshes the panel.
   try { localStorage.removeItem(KEY) } catch { /* storage can be blocked */ }
   window.dispatchEvent(new Event('sa-rating'))
 }
-function saveRating(r) {
-  const all = loadRatings(); all.push(r)
+async function saveRating(r) {
+  if (hasDataApi()) {
+    const saved = await postRating(r)
+    if (saved) { window.dispatchEvent(new Event('sa-rating')); return }
+  }
+  const all = localRatings(); all.push(r)
   try { localStorage.setItem(KEY, JSON.stringify(all.slice(-200))) } catch { /* storage can be blocked */ }
   window.dispatchEvent(new Event('sa-rating'))
 }

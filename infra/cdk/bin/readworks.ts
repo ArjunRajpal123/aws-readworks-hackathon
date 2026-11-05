@@ -57,6 +57,7 @@ const frontend = new FrontendStack(app, `${config.projectName}-frontend`, {
   config,
   mediaBucket: storage.mediaBucket,
   apiUrl: api.apiUrl,
+  dataUrl: api.dataUrl,
   description: "ReadWorks Sound Along — web player on Amazon EKS.",
 });
 // Tag everything so the AWS Resource Group (rg-readworks-bb) captures it.

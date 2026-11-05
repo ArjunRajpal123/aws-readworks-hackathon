@@ -112,6 +112,16 @@ export class StorageStack extends cdk.Stack {
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
+    // GSI to list each app-data domain (roster, sessions, assignments,
+    // practice, ratings, review) without a full-table scan. Items carry a
+    // `type` attribute = their key prefix; passage product records have no
+    // `type` and so never appear in this index. See lambda/common/data_store.py.
+    this.referenceTable.addGlobalSecondaryIndex({
+      indexName: "type-index",
+      partitionKey: { name: "type", type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
     // ---------------------------------------------------------------------
     // Outputs — the API stack and the ETL app reference these.
     // ---------------------------------------------------------------------
