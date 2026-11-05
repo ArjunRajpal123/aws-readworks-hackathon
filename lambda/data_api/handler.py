@@ -254,6 +254,79 @@ def post_translate(event):
     return json_response(200, {"text": out})
 
 
+# ---- delete a passage and everything generated for it ---------------------
+import os  # noqa: E402
+
+_s3 = None
+
+
+def _s3_client():
+    global _s3
+    if _s3 is None:
+        import boto3
+        _s3 = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "us-west-2"))
+    return _s3
+
+
+def _delete_s3_prefixes(bucket, prefixes):
+    """Delete every object under each prefix. Best-effort count."""
+    s3 = _s3_client()
+    deleted = 0
+    for prefix in prefixes:
+        token = None
+        while True:
+            kw = {"Bucket": bucket, "Prefix": prefix}
+            if token:
+                kw["ContinuationToken"] = token
+            resp = s3.list_objects_v2(**kw)
+            objs = [{"Key": o["Key"]} for o in resp.get("Contents", []) or []]
+            if objs:
+                s3.delete_objects(Bucket=bucket, Delete={"Objects": objs, "Quiet": True})
+                deleted += len(objs)
+            token = resp.get("NextContinuationToken")
+            if not token:
+                break
+    return deleted
+
+
+def delete_passage(event):
+    """Remove a passage and ALL its generated artifacts, for both language
+    siblings of a base id: the product records (S3 sa/product + sa/audio and
+    the DynamoDB item), the per-passage vocab cards, and the review state.
+
+    id may be the base (<base>) or either sibling (<base>-en / <base>-es);
+    both -en and -es are removed so "delete" is complete.
+    """
+    raw = _q(event, "id")
+    if not raw:
+        return error_response(400, "id is required")
+    # Normalize to a base, then expand to both siblings.
+    base = raw[:-3] if raw.endswith(("-en", "-es")) else raw
+    ids = [f"{base}-en", f"{base}-es", base]  # include the bare base just in case
+    ids = list(dict.fromkeys(ids))            # de-dupe, keep order
+
+    bucket = os.environ.get("TTS_MEDIA_BUCKET")
+    removed = {"products": [], "s3Objects": 0, "pcards": [], "review": []}
+    table = db._get_table()
+    for pid in ids:
+        # product record (bare id, no type) — only if it exists
+        got = table.get_item(Key={"id": pid}).get("Item")
+        if got:
+            table.delete_item(Key={"id": pid})
+            removed["products"].append(pid)
+            if bucket:
+                removed["s3Objects"] += _delete_s3_prefixes(
+                    bucket, [f"sa/product/{pid}.soundAlong.json", f"sa/audio/{pid}/"])
+        # typed items: per-passage cards + review state
+        if db.get("pcards", pid) is not None:
+            db.delete("pcards", pid); removed["pcards"].append(pid)
+        if db.get("review", pid) is not None:
+            db.delete("review", pid); removed["review"].append(pid)
+    if not removed["products"] and not removed["pcards"] and not removed["review"]:
+        return error_response(404, f"No passage found for '{raw}'")
+    return json_response(200, {"deleted": base, **removed})
+
+
 # ---- per-passage vocab cards for the player (underlining) -----------------
 # Generated cards saved against a passage id so the player can underline and
 # open them. Keyed by the passage/mode id; the player's pipeline_mode.js reads
@@ -325,6 +398,7 @@ ROUTES = {
     ("localize", "POST"): post_localize,
     ("pcards", "GET"): get_pcards,
     ("pcards", "POST"): post_pcards,
+    ("passage", "DELETE"): delete_passage,
     ("sessions", "GET"): get_sessions,
     ("sessions", "POST"): post_session,
     ("assignments", "GET"): get_assignments,

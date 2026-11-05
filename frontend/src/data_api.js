@@ -76,3 +76,6 @@ export const localizeCards = (text, cards, lang = 'es') => req('POST', 'localize
 // per-passage vocab cards the player underlines: save / read by passage id
 export const putPassageCards = (pid, cards) => req('POST', 'pcards', { body: { pid, cards } })
 export const getPassageCards = pid => req('GET', 'pcards', { query: { pid } })
+// delete a passage and ALL its artifacts (both -en/-es siblings): product
+// records, S3 audio, vocab cards and review state. id may be base or a sibling.
+export const deletePassage = id => req('DELETE', 'passage', { query: { id } })

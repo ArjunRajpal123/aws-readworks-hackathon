@@ -200,6 +200,58 @@ def test_localize_matches_passage(table, monkeypatch):
     assert s == 200 and [c["word"] for c in b["cards"]] == ["brillan"]
 
 
-def test_unknown_resource_404(table):
+class FakeS3:
+    def __init__(self):
+        self.deleted = []
+
+    def list_objects_v2(self, Bucket, Prefix, ContinuationToken=None):
+        # Pretend one object exists per prefix.
+        return {"Contents": [{"Key": Prefix.rstrip("/") + "/obj"}]}
+
+    def delete_objects(self, Bucket, Delete):
+        self.deleted += [o["Key"] for o in Delete["Objects"]]
+
+
+def test_delete_passage_removes_records_cards_review_and_s3(table, monkeypatch):
+    import os
+    monkeypatch.setenv("TTS_MEDIA_BUCKET", "test-bucket")
+    fake_s3 = FakeS3()
+    monkeypatch.setattr(h, "_s3", fake_s3)
+    monkeypatch.setattr(h, "_s3_client", lambda: fake_s3)
+    # Seed both siblings: product records (bare id), pcards and review (typed).
+    for pid in ("p-demo-en", "p-demo-es"):
+        table.items[pid] = {"id": pid, "lang": pid[-2:], "tracks": [{"voiceId": "Danielle"}]}
+        data_store.put("pcards", pid, {"pid": pid, "cards": [{"word": "x"}]})
+        data_store.put("review", pid, {"pid": pid, "state": "review"})
+
+    s, b = call("DELETE", "passage", qs={"id": "p-demo-en"})
+    assert s == 200
+    assert set(b["products"]) == {"p-demo-en", "p-demo-es"}
+    assert b["s3Objects"] == 4  # 2 prefixes x 2 siblings
+    # Everything is gone.
+    for pid in ("p-demo-en", "p-demo-es"):
+        assert pid not in table.items
+        assert data_store.get("pcards", pid) is None
+        assert data_store.get("review", pid) is None
+
+
+def test_delete_passage_accepts_base_or_sibling(table, monkeypatch):
+    monkeypatch.setenv("TTS_MEDIA_BUCKET", "test-bucket")
+    fake_s3 = FakeS3()
+    monkeypatch.setattr(h, "_s3", fake_s3)
+    monkeypatch.setattr(h, "_s3_client", lambda: fake_s3)
+    table.items["p-x-es"] = {"id": "p-x-es", "lang": "es", "tracks": [{"voiceId": "Lupe"}]}
+    # Pass the -es sibling; it should normalize to the base and still delete it.
+    s, b = call("DELETE", "passage", qs={"id": "p-x-es"})
+    assert s == 200 and "p-x-es" in b["products"]
+
+
+def test_delete_passage_404_when_nothing(table):
+    assert call("DELETE", "passage", qs={"id": "p-nope"})[0] == 404
+
+
+def test_delete_passage_requires_id(table):
+    assert call("DELETE", "passage")[0] == 400
+
     assert call("GET", "nope")[0] == 404
     assert call("PUT", "roster")[0] == 404  # method not routed

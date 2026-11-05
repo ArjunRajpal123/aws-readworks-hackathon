@@ -4,7 +4,7 @@
 // the right is the shape the team's pipeline would receive, and the queue progress is simulated.
 import { detect, aiSuggest } from './assist.js'
 import { createProduct } from './api.js'
-import { postReview, translate, genCards, genStops, localizeCards, putPassageCards } from './data_api.js'
+import { postReview, translate, genCards, genStops, localizeCards, putPassageCards, deletePassage } from './data_api.js'
 import { RW_KNOWN } from './vocab_db.js'
 import { loadRatings, clearRatings } from './rate.js'
 
@@ -631,7 +631,18 @@ export function initAdmin(t) {
   $('#adQueue').addEventListener('click', async e => {
     const b = e.target.closest('button[data-act]'); if (!b) return
     const i = queue.findIndex(x => x.id === b.dataset.id); if (i < 0) return
-    if (b.dataset.act === 'remove') { queue.splice(i, 1); save(); renderQueue(); return }
+    if (b.dataset.act === 'remove') {
+      const entry = queue[i]
+      // Delete everything generated for this passage (both -en/-es siblings:
+      // product records, audio, vocab cards, review state) when it has a pid.
+      if (entry.pid) {
+        if (!confirm(t('adRemoveConfirm'))) return
+        b.disabled = true; entry.error = t('adRemoving'); renderQueue()
+        try { await deletePassage(entry.pid) } catch { /* leave the row so the admin can retry */
+          entry.error = t('adRemoveFail'); renderQueue(); return }
+      }
+      queue.splice(i, 1); save(); renderQueue(); return
+    }
     // Approve: record the real publish decision, then mark the row done.
     const entry = queue[i]
     if (entry.pid) await postReview({ pid: entry.pid, state: 'published', by: val('adRevers') || undefined })

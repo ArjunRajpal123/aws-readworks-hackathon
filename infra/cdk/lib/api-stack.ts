@@ -160,6 +160,10 @@ export class ApiStack extends cdk.Stack {
     });
     referenceTable.grantReadWriteData(dataFn);
     referenceTable.encryptionKey?.grantEncryptDecrypt(dataFn);
+    // The DELETE /passage resource removes a passage's S3 artifacts
+    // (sa/product + sa/audio) along with its records, so it needs list+delete
+    // (and read) on the media bucket. grantReadWrite covers the KMS key too.
+    mediaBucket.grantReadWrite(dataFn);
     // The /translate resource turns an English passage into Spanish text
     // (Amazon Translate has no resource-level permissions, only "*").
     dataFn.addToRolePolicy(
