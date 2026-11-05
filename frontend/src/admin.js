@@ -453,6 +453,15 @@ export function initAdmin(t) {
     await postReview({ pid: e.pid, state, by: val('adRevers') || undefined, notes: val('adNotes') || undefined })
   }
 
+  // A stable, title-derived queue id so submitting the SAME passage twice
+  // resolves to the same product id (<base>-en/-es) and the API rejects the
+  // duplicate (409) instead of creating a new random-id record each time.
+  function slugId(title) {
+    const slug = (title || 'passage').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'passage'
+    return slug
+  }
+
   async function submit() {
     if (missing().length) return
     const p = payload()
@@ -466,7 +475,7 @@ export function initAdmin(t) {
     const n = Math.max(1, itemCount())
     const title = p.passage.title || (p.input.readworksId ? 'ReadWorks ' + p.input.readworksId.slice(0, 8) : p.input.bulkFile || 'Untitled')
     const entry = {
-      id: Date.now().toString(36), title: n > 1 && method() !== 'paste' ? `${title} (+${n - 1})` : title,
+      id: slugId(title), title: n > 1 && method() !== 'paste' ? `${title} (+${n - 1})` : title,
       src: p.passage.language === 'es-US' ? 'es' : 'en', both: !!p.pipeline.otherLanguage,
       band: p.passage.gradeBand ? BANDS.find(b => b[0] === p.passage.gradeBand)[1] : '—',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -487,8 +496,15 @@ export function initAdmin(t) {
     const e = queue.find(x => x.id === entry.id)
     if (!e) return // removed while it was running
     e.api = false
-    if (res && res.ok) {
-      e.pid = res.record.id; e.at = e.stages.length; e.state = e.review === 'required' ? 'review' : 'done'
+    // The English passage is "ready" if just created OR it already exists (409
+    // on the stable id) — in both cases we have a valid English id to build on.
+    const enId = `${base}-${srcLang.slice(0, 2)}`
+    const already = res && !res.ok && /already exists/i.test(res.error || '')
+    if ((res && res.ok) || already) {
+      e.pid = res && res.ok ? res.record.id : enId
+      e.at = e.stages.length
+      e.state = e.review === 'required' ? 'review' : 'done'
+      if (already) e.error = t('adDupe')
       await publishReview(e)
       // Vocabulary cards and Word Stops (real Bedrock drafts) when requested.
       if (on('adCards') || on('adStops')) { e.gen = 'pending'; save(); renderQueue(); await makeCardsAndStops(e, text, srcLang) }
