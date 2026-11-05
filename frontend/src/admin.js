@@ -2,8 +2,9 @@
 // read-from-file passage is sent to POST /api/v1/text-to-speech and opens in the player when it's done. Everything
 // else (ReadWorks IDs, bulk CSVs, translation, cards, Word Stops, review) is still a demo: the "request" shown on
 // the right is the shape the team's pipeline would receive, and the queue progress is simulated.
-import { detect, aiSuggest, validateText } from './assist.js'
-import { createProduct, translatePassage, approvePassage } from './api.js'
+import { detect, aiSuggest } from './assist.js'
+import { createProduct } from './api.js'
+import { postReview, translate, genCards, genStops } from './data_api.js'
 import { RW_KNOWN } from './vocab_db.js'
 import { loadRatings, clearRatings } from './rate.js'
 
@@ -223,7 +224,7 @@ export function initAdmin(t) {
     const est = estimate()
     const stages = { tokenize: true }
     if (on('adAud')) stages.audio = { engine: 'polly-neural', languages: audioLangs(), voices: { 'en-US': ['Danielle', 'Stephen'], 'es-US': ['Lupe', 'Pedro'] } }
-    if (on('adTrans')) stages.spanishVersion = { mode: 'ai-draft', reviewRequired: true }
+    if (on('adTrans')) stages.otherLanguage = { mode: 'ai-draft', reviewRequired: true }
     if (on('adCards')) {
       const words = [
         ...(det && det.vocab ? det.vocab.map(v => ({ word: v.word, source: 'database' })) : []),
@@ -266,7 +267,7 @@ export function initAdmin(t) {
   function stagesFor(p) {
     const s = ['stQueued', 'stTok']
     if (p.pipeline.audio) s.push('stAud')
-    if (p.pipeline.spanishVersion) s.push('stTrans')
+    if (p.pipeline.otherLanguage) s.push('stTrans')
     if (p.pipeline.vocabularyCards) s.push('stCards')
     if (p.pipeline.wordStops) s.push('stStops')
     if (p.questions && p.questions.source !== 'none') s.push('stQs')
@@ -299,6 +300,13 @@ export function initAdmin(t) {
     if (e.state === 'done') return t(e.vis === 'published' ? 'stPub' : e.vis === 'staging' ? 'stStage' : 'stDraft')
     return t(e.stages[Math.min(e.at, e.stages.length - 1)])
   }
+  // "EN · ES ✓": the source language, then the generated other language and how it went.
+  function langLine(e) {
+    if (e.langs) return e.langs // rows saved before both-language passages
+    const other = e.src === 'es' ? 'en' : 'es'
+    const mark = { pending: ' …', done: ' ✓', error: ' ✗' }[e.other] || ''
+    return e.src.toUpperCase() + (e.both ? ' + ' + other.toUpperCase() + mark : '')
+  }
   function renderQueue() {
     const q = $('#adQueue')
     $('#adClear').hidden = queue.length === 0
@@ -306,12 +314,7 @@ export function initAdmin(t) {
     q.innerHTML = `<div class="ad-tw"><table><thead><tr><th>${t('adColPass')}</th><th>${t('adColStatus')}</th><th>${t('adColProg')}</th><th>${t('adColAct')}</th></tr></thead><tbody>${queue.map(e => {
       const total = e.stages.length
       const pct = e.state === 'running' ? Math.round(100 * e.at / total) : 100
-      // Spanish (AI-translated) status line + actions, when a translation was produced.
-      const esLine = e.esState ? `<br><span class="ad-help">ES: ${esc(t('adEsState_' + e.esState) || e.esState)}${e.esError ? ' · ' + esc(e.esError) : ''}</span>` : ''
-      const esActs = e.esPid && (e.esState === 'review' || e.esState === 'reviewed')
-        ? `<a class="ad-btn ad-small" href="?m=${encodeURIComponent(e.esPid)}">${t('adOpenEs')}</a>${e.esState === 'review' ? `<button type="button" class="ad-btn ad-small" data-act="approveEs" data-id="${e.id}">${t('adApproveEs')}</button>` : ''}`
-        : ''
-      return `<tr><td><strong>${esc(e.title)}</strong><br><span class="ad-help">${esc(e.langs)} · ${esc(e.band)} · ${esc(e.time)}</span>${e.error ? `<br><span class="ad-help">${esc(e.error)}</span>` : ''}${esLine}</td>
+      return `<tr><td><strong>${esc(e.title)}</strong><br><span class="ad-help">${esc(langLine(e))} · ${esc(e.band)} · ${esc(e.time)}</span>${e.error ? `<br><span class="ad-help">${esc(e.error)}</span>` : ''}</td>
         <td><span class="ad-pill ad-${e.state}">${stageLabel(e)}</span></td>
         <td><div class="ad-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div></td>
         <td class="ad-acts">${e.state === 'review' ? `<button type="button" class="ad-btn ad-small" data-act="approve" data-id="${e.id}">${t('adApprove')}</button>` : ''}${e.pid && e.state !== 'running' && e.state !== 'error' ? `<a class="ad-btn ad-small" href="?m=${encodeURIComponent(e.pid)}">${t('adOpen')}</a>` : ''}${esActs}<button type="button" class="ad-btn ad-ghost ad-small" data-act="remove" data-id="${e.id}">${t('adRemove')}</button></td></tr>`
@@ -352,7 +355,6 @@ export function initAdmin(t) {
       setField('adRWId', k.uuid, 'det'); setField('adRights', 'readworks', 'det'); setField('adGrade', k.grade, 'det'); setField('adBand', '35', 'det')
     }
     if (jsonMeta) { setField('adTitle', jsonMeta.title, 'det'); setField('adAuthor', jsonMeta.author, 'det'); setField('adRWId', jsonMeta.uuid, 'det'); setField('adLexile', jsonMeta.lexile, 'det') }
-    if (!touched.has('adTrans')) $('#adTrans').checked = det.lang === 'en-US'
   }
   function runDetect() {
     if (method() === 'rw') {
@@ -453,9 +455,9 @@ export function initAdmin(t) {
     if (slot && wrap.parentElement !== slot) slot.appendChild(wrap)
     wrap.hidden = !(m === 'paste' || m === 'file')
   }
-  function renderFeedback() {
+  async function renderFeedback() {
     const box = $('#adFb'); if (!box) return
-    const r = loadRatings()
+    const r = await loadRatings()
     $('#adFbClear').hidden = !r.length
     if (!r.length) { box.innerHTML = `<p class="ad-help">${t('adFbNone')}</p>`; return }
     const h = Math.round(100 * r.filter(x => x.helpful).length / r.length), a = Math.round(100 * r.filter(x => x.audioGood).length / r.length)
@@ -464,14 +466,16 @@ export function initAdmin(t) {
   }
   function render() { renderSummary(); renderQueue(); renderDetect(); renderFeedback() }
 
-  // simulated progress through the stages
+  // Queue rows advance only on real API progress now (see submit()). While a
+  // passage is being generated we sweep the running stages up to the last one
+  // for a live progress bar, but the final stage and the done/error state come
+  // from the API's actual answer -- nothing is simulated to "succeed".
   setInterval(() => {
     let changed = false
     for (const e of queue) {
-      if (e.state !== 'running') continue
-      if (e.api && e.at >= e.stages.length - 1) continue // the last stage waits for the API's answer
+      if (e.state !== 'running' || !e.api) continue
+      if (e.at >= e.stages.length - 1) continue // hold at the last stage until the API answers
       e.at += 1; changed = true
-      if (e.at >= e.stages.length) e.state = e.review === 'required' ? 'review' : 'done'
     }
     if (changed) { save(); renderQueue() }
   }, STAGE_MS)
@@ -488,48 +492,56 @@ export function initAdmin(t) {
     return `user-${slug}-${lang === 'es-US' ? 'es' : 'en'}`
   }
 
+  // Record the review state for a freshly generated passage: "review" when a
+  // reviewer must sign off, "published" when the admin chose auto-publish.
+  async function publishReview(e) {
+    if (!e.pid) return
+    const state = e.review === 'required' ? 'review' : 'published'
+    await postReview({ pid: e.pid, state, by: val('adRevers') || undefined, notes: val('adNotes') || undefined })
+  }
+
   async function submit() {
     if (missing().length) return
     const p = payload()
     const text = apiText()
-    if (text.length > API_MAX_CHARS && window.SA_API_URL) { $('#adMsg').textContent = t('adTooLong', API_MAX_CHARS); return }
+    // Everything runs through the cloud pipeline now. The paste and single-file
+    // methods have the passage text to send; ReadWorks-id and bulk uploads have
+    // no server-side fetch/CSV path, so they are refused rather than faked.
+    if (!text) { $('#adMsg').textContent = t('adNoApiMethod'); return }
+    if (!window.SA_API_URL) { $('#adMsg').textContent = t('adNoApi'); return }
+    if (text.length > API_MAX_CHARS) { $('#adMsg').textContent = t('adTooLong', API_MAX_CHARS); return }
     const n = Math.max(1, itemCount())
     const title = p.passage.title || (p.input.readworksId ? 'ReadWorks ' + p.input.readworksId.slice(0, 8) : p.input.bulkFile || 'Untitled')
     const entry = {
       id: Date.now().toString(36), title: n > 1 && method() !== 'paste' ? `${title} (+${n - 1})` : title,
-      langs: [p.passage.language === 'es-US' ? 'ES' : 'EN', ...(p.pipeline.spanishVersion ? ['+ES draft'] : [])].join(' '),
+      src: p.passage.language === 'es-US' ? 'es' : 'en', both: !!p.pipeline.otherLanguage,
       band: p.passage.gradeBand ? BANDS.find(b => b[0] === p.passage.gradeBand)[1] : '—',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       stages: stagesFor(p), at: 0, state: 'running', review: p.review.mode, vis: p.review.afterApproval,
-      api: !!(text && window.SA_API_URL),
+      api: true,
     }
     queue.unshift(entry)
     save(); $('#adMsg').textContent = ''; render()
     $('#adQH').scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
-    if (!entry.api) return
 
     // Voices come from etl/voices.json on the server; "audio" on means every configured voice, as the request shows.
-    // The kept AI vocab cards ride along so the player can underline them and open the card.
-    const vocabularyCards = on('adCards')
-      ? keptCards().map(c => ({ word: c.word, pos: c.pos, def: c.def, ex: c.ex }))
-      : []
-    const lang = p.passage.language || 'en-US'
-    const id = stableId(title, lang)
-    const res = await createProduct({ id, text, title: title.slice(0, 200), languageCode: lang, allVoices: on('adAud'), vocabularyCards })
+    // The pipeline runs synchronously, so the 201 response is the real result -- the queue reflects it, nothing is simulated.
+    // Both languages share a base id (<base>-en / <base>-es) so the player's
+    // language toggle and GET ?lang= resolve each one's sibling.
+    const srcLang = p.passage.language || 'en-US'
+    const base = 'p-' + entry.id
+    const res = await createProduct({ text, id: `${base}-${srcLang.slice(0, 2)}`, title: title.slice(0, 200), languageCode: srcLang, allVoices: on('adAud') })
     const e = queue.find(x => x.id === entry.id)
     if (!e) return // removed while it was running
     e.api = false
-    // Did we end up with a usable English passage? Either freshly created, OR
-    // it already existed (409) — in both cases we have a valid English id and
-    // can still add/refresh the Spanish version.
-    const englishReady = !!(res && res.ok) || !!(res && /already exists/i.test(res.error || ''))
-    if (res && res.ok) { e.pid = res.record.id; e.at = e.stages.length; e.state = e.review === 'required' ? 'review' : 'done' }
-    else if (res && /already exists/i.test(res.error || '')) {
-      // Same title submitted again: the passage already exists, so point at it
-      // rather than creating a duplicate. This is the duplicate-reference guard.
-      e.pid = id; e.at = e.stages.length; e.state = 'done'; e.error = t('adDupe')
-    }
-    else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
+    if (res && res.ok) {
+      e.pid = res.record.id; e.at = e.stages.length; e.state = e.review === 'required' ? 'review' : 'done'
+      await publishReview(e)
+      // Vocabulary cards and Word Stops (real Bedrock drafts) when requested.
+      if (on('adCards') || on('adStops')) { e.gen = 'pending'; save(); renderQueue(); await makeCardsAndStops(e, text, srcLang) }
+      // Other language: translate and generate the sibling (en <-> es) through the same pipeline.
+      if (on('adTrans')) { e.other = 'pending'; save(); renderQueue(); await makeOtherLanguage(e, text, srcLang, base) }
+    } else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
     save(); renderQueue()
 
     // Auto-deploy a Spanish version when translation is on and the source is
@@ -564,6 +576,34 @@ export function initAdmin(t) {
     e.esState = r && r.ok ? 'reviewed' : 'review'
     if (!(r && r.ok)) e.esError = (r && r.error) || 'Approve failed'
     save(); renderQueue()
+  }
+
+  // Draft vocabulary cards and/or Word Stops with Bedrock. Word Stops are
+  // anchored on the card words and server-side pass the four publish checks.
+  async function makeCardsAndStops(entry, text, srcLang) {
+    const lang = srcLang.startsWith('es') ? 'es' : 'en'
+    let cards = []
+    if (on('adCards')) { const r = await genCards(text, lang); cards = (r && r.cards) || [] }
+    let stops = []
+    if (on('adStops')) { const r = await genStops(text, cards.map(c => c.word), lang); stops = (r && r.stops) || [] }
+    entry.cards = cards.length; entry.stops = stops.length; entry.gen = 'done'
+  }
+
+  // Translate the passage into the other language (en <-> es) and generate that
+  // sibling through the same pipeline (Amazon Translate + Polly voices for that
+  // language), with its own cards and Word Stops. Best-effort: a failure is
+  // noted on the row but does not fail the source passage.
+  async function makeOtherLanguage(entry, srcText, srcLang, base) {
+    const src = srcLang.slice(0, 2), dst = src === 'es' ? 'en' : 'es'
+    const tr = await translate(srcText, src, dst)
+    if (!tr || !tr.text) { entry.other = 'error'; return }
+    const title = await translate(entry.title, src, dst)
+    const id = `${base}-${dst}`
+    const res = await createProduct({ text: tr.text, id, title: ((title && title.text) || entry.title).slice(0, 200), languageCode: dst === 'es' ? 'es-US' : 'en-US', allVoices: on('adAud') })
+    entry.other = res && res.ok ? 'done' : 'error'
+    if (!res || !res.ok) return
+    await postReview({ pid: id, state: entry.review === 'required' ? 'review' : 'published' })
+    if (on('adCards') || on('adStops')) await makeCardsAndStops(entry, tr.text, dst === 'es' ? 'es-US' : 'en-US')
   }
 
   // ---- events ----
@@ -616,12 +656,15 @@ export function initAdmin(t) {
     setTimeout(() => { b.textContent = t('adCopy') }, 1500)
   })
   $('#adClear').addEventListener('click', () => { queue = []; save(); render() })
-  $('#adQueue').addEventListener('click', e => {
+  $('#adQueue').addEventListener('click', async e => {
     const b = e.target.closest('button[data-act]'); if (!b) return
     const i = queue.findIndex(x => x.id === b.dataset.id); if (i < 0) return
-    if (b.dataset.act === 'remove') { queue.splice(i, 1); save(); renderQueue() }
-    else if (b.dataset.act === 'approveEs') { approveEs(b.dataset.id) }
-    else { queue[i].state = 'done'; save(); renderQueue() }
+    if (b.dataset.act === 'remove') { queue.splice(i, 1); save(); renderQueue(); return }
+    // Approve: record the real publish decision, then mark the row done.
+    const entry = queue[i]
+    if (entry.pid) await postReview({ pid: entry.pid, state: 'published', by: val('adRevers') || undefined })
+    entry.state = 'done'; entry.vis = 'published'
+    save(); renderQueue()
   })
   // sub-options follow their parent toggle
   const syncParents = () => {

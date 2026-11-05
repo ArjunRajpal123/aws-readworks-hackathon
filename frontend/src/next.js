@@ -1,6 +1,6 @@
 // "What to read next": readings assigned by a teacher or parent, related readings, and a step up.
 import { art } from './art.js'
-import { byPid, related, stepUp, gradeText } from './catalog.js'
+import { byPid, related, stepUp, gradeText, titleOf } from './content.js'
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 const DAY = 86400000
@@ -17,7 +17,7 @@ export function createNext({ t, getCurrent, getAssigned, getLang, onOpen }) {
   const es = () => getLang() === 'es'
   const due = iso => { const d = Math.ceil((new Date(iso) - Date.now()) / DAY); return d <= 0 ? t('fDueToday') : d === 1 ? t('fDueTomorrow') : t('fDueIn', d) }
   const item = (e, why, extra = '') => '<li><button type="button" class="nx-item" data-pid="' + e.pid + '"><span class="fm-thumb" aria-hidden="true">' + art(e.pid) + '<img src="img/' + e.pid + '.jpg" alt="" loading="lazy" onerror="this.remove()"></span>'
-    + '<span class="nx-info"><b>' + esc(e.title) + '</b><span class="fm-sub">' + esc(gradeText(e, es())) + ' · ' + esc(t('nxMin', e.minutes)) + (extra ? ' · ' + esc(extra) : '') + '</span><span class="nx-why">' + esc(why) + '</span></span><span class="nx-go" aria-hidden="true">›</span></button></li>'
+    + '<span class="nx-info"><b>' + esc(titleOf(e, es())) + '</b><span class="fm-sub">' + esc(gradeText(e, es())) + ' · ' + esc(t('nxMin', e.minutes)) + (extra ? ' · ' + esc(extra) : '') + '</span><span class="nx-why">' + esc(why) + '</span></span><span class="nx-go" aria-hidden="true">›</span></button></li>'
 
   function count() { return getAssigned().length }
   function open() {

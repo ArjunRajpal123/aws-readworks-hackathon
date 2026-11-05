@@ -32,25 +32,16 @@ export function parasFromProduct(prod, cardKeys) {
     .filter(Boolean)
 }
 
-// A mode-local card map {normalizedWord: {word, pos, def, ex}} from the
-// product's vocabulary, plus the set of normalized keys to underline.
-function cardsFromProduct(prod) {
-  const cards = {}, keys = new Set()
-  for (const c of prod.vocabulary || []) {
-    const k = normWord(c && c.word)
-    if (!k || cards[k]) continue
-    cards[k] = { word: c.word, pos: c.pos || '', def: c.def || '', ex: c.ex || '', syn: [], es: [] }
-    keys.add(k)
-  }
-  return { cards, keys }
+// The sibling-language id, matching the GET handler's resolution
+// (lambda/text_to_speech_get/handler.py sibling_id): <id>-en <-> <id>-es, else <id> <-> <id>es.
+export function siblingId(id, lang) {
+  const m = /^(.*)-(en|es)$/.exec(id)
+  if (m) return `${m[1]}-${lang}`
+  const base = id.endsWith('es') ? id.slice(0, -2) : id
+  return lang === 'es' ? base + 'es' : base
 }
 
-// Fetches the product record and adds a mode for it to MODES. Returns the mode, or null if there is
-// no such product (the caller then opens the default passage).
-export async function addPipelineMode(MODES, id, { band = '35' } = {}) {
-  if (!ID_RE.test(id)) return null
-  const prod = await fetchProduct(id)
-  if (!prod || !Array.isArray(prod.tracks)) return null
+function buildMode(id, prod, band, MODES) {
   const es = prod.lang === 'es'
   const look = MODES.find(m => m.id === band + (es ? 'es' : '')) || MODES.find(m => m.id === band)
   const voices = prod.tracks.map(t => t.voiceId).filter(Boolean).join(', ')
@@ -75,7 +66,42 @@ export async function addPipelineMode(MODES, id, { band = '35' } = {}) {
     // without them being in the global CARDS (engine.js falls back to this).
     cards,
   }
-  if (!mode.paras.length) return null
-  MODES.push(mode)
+  return mode.paras.length ? mode : null
+}
+
+// Fetches the product record and adds a mode for it to MODES. Records the
+// other-language sibling id on mode.sibId (resolved lazily by the language
+// toggle via ensureSibling, so the initial load stays a single fetch).
+// Returns the mode for `id`, or null if there is no such product.
+export async function addPipelineMode(MODES, id, { band = '35' } = {}) {
+  if (!ID_RE.test(id)) return null
+  const prod = await fetchProduct(id)
+  if (!prod || !Array.isArray(prod.tracks)) return null
+  const mode = buildMode(id, prod, band, MODES)
+  if (!mode) return null
+  // The possible sibling id (may or may not exist on the backend).
+  mode.sibId = siblingId(id, prod.lang === 'es' ? 'en' : 'es')
+  if (!MODES.some(m => m.id === id)) MODES.push(mode)
   return mode
+}
+
+// Register the sibling-language passage if the backend has one, link it, and
+// return its id. Called by the language toggle on demand. Returns null if
+// there is no sibling (toggle then just keeps the current text).
+export async function ensureSibling(MODES, mode) {
+  if (!mode || !mode.pipeline) return null
+  if (mode.sib && MODES.some(m => m.id === mode.sib)) return mode.sib
+  const sib = mode.sibId
+  if (!sib || sib === mode.id || !ID_RE.test(sib)) return null
+  let sibMode = MODES.find(m => m.id === sib)
+  if (!sibMode) {
+    const sibProd = await fetchProduct(sib)
+    if (!sibProd || !Array.isArray(sibProd.tracks)) return null
+    sibMode = buildMode(sib, sibProd, mode.band, MODES)
+    if (!sibMode) return null
+    sibMode.sibId = mode.id
+    MODES.push(sibMode)
+  }
+  mode.sib = sib; sibMode.sib = mode.id
+  return sib
 }

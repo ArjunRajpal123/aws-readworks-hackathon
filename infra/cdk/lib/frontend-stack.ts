@@ -15,8 +15,8 @@ export interface FrontendStackProps extends cdk.StackProps {
   readonly mediaBucket: s3.Bucket;
   /** ApiStack's apiUrl — written into the running pod as SA_API_URL (see docker-entrypoint.d/10-write-config.sh). */
   readonly apiUrl: string;
-  /** ApiStack's assistUrl — written into the pod as SA_AI_ENDPOINT for the admin "Fill in with AI" button. */
-  readonly assistUrl: string;
+  /** ApiStack's dataUrl — written into the pod as SA_DATA_URL for the app-data API. */
+  readonly dataUrl: string;
 }
 
 const APP = "sound-along-web";
@@ -36,7 +36,7 @@ const NAMESPACE = "default";
 export class FrontendStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: FrontendStackProps) {
     super(scope, id, props);
-    const { config, mediaBucket, apiUrl, assistUrl } = props;
+    const { config, mediaBucket, apiUrl, dataUrl } = props;
 
     const vpc = new ec2.Vpc(this, "Vpc", {
       vpcName: resourceName(config, "vpc", "web"),
@@ -103,11 +103,11 @@ export class FrontendStack extends cdk.Stack {
                 image: image.imageUri,
                 ports: [{ containerPort: 80 }],
                 // Read by docker-entrypoint.d/10-write-config.sh at container start, which writes
-                // it into /usr/share/nginx/html/config.js (window.SA_API_URL) for src/api.js to
-                // read at runtime -- the image itself is built with no API URL baked in.
+                // it into /usr/share/nginx/html/config.js (window.SA_API_URL / SA_DATA_URL) for
+                // src/api.js and src/data_api.js to read -- the image is built with no URL baked in.
                 env: [
                   { name: "SA_API_URL", value: apiUrl },
-                  { name: "SA_AI_ENDPOINT", value: assistUrl },
+                  { name: "SA_DATA_URL", value: dataUrl },
                 ],
                 volumeMounts: [{ name: "sa-data", mountPath: "/data/sa", readOnly: true }],
                 resources: { requests: { cpu: "50m", memory: "64Mi" }, limits: { memory: "128Mi" } },

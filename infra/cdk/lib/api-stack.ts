@@ -51,7 +51,7 @@ const ETL_RUNTIME_FILES = [
  * No Docker required: the pipeline only needs boto3/botocore, which ship
  * with the Lambda Python runtime, so this is a plain file copy.
  */
-export function functionCode(functionDir: string): lambda.Code {
+export function functionCode(functionDir: string, withEtl = true): lambda.Code {
   return lambda.Code.fromAsset(functionDir, {
     // Default asset hashing only looks at `functionDir`, but tryBundle below
     // also pulls in lambda/common from outside it -- hash the bundled
@@ -67,11 +67,14 @@ export function functionCode(functionDir: string): lambda.Code {
             recursive: true,
             filter: skipPycache,
           });
-          for (const name of ETL_RUNTIME_FILES) {
-            fs.cpSync(path.join(ETL_DIR, name), path.join(outputDir, name), {
-              recursive: true,
-              filter: skipPycache,
-            });
+          // The data API doesn't run the pipeline, so it skips the etl modules.
+          if (withEtl) {
+            for (const name of ETL_RUNTIME_FILES) {
+              fs.cpSync(path.join(ETL_DIR, name), path.join(outputDir, name), {
+                recursive: true,
+                filter: skipPycache,
+              });
+            }
           }
           return true;
         },
@@ -93,8 +96,8 @@ export function functionCode(functionDir: string): lambda.Code {
 export class ApiStack extends cdk.Stack {
   /** `/api/v1/text-to-speech` endpoint URL — FrontendStack wires this into the player at deploy time. */
   public readonly apiUrl: string;
-  /** `/api/v1/assist` endpoint URL — injected into the admin UI as window.SA_AI_ENDPOINT. */
-  public readonly assistUrl: string;
+  /** `/api/v1/data` base URL for the app-data API (roster, sessions, ratings, ...). */
+  public readonly dataUrl: string;
 
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
@@ -162,6 +165,41 @@ export class ApiStack extends cdk.Stack {
     const assistFn = makeFunction("AssistFn", "assist", "assist", 256, assistEnv);
     // APPROVE flips an AI passage's review status to reviewed (S3 + DynamoDB).
     const approveFn = makeFunction("PassageApproveFn", "passage_approve", "approve", 256);
+
+    // App data API (roster, sessions, assignments, practice, ratings, review).
+    // No pipeline bundle; just common/ + the shared table.
+    const dataFn = new lambda.Function(this, "DataApiFn", {
+      functionName: resourceName(config, "lambda", "data"),
+      runtime: lambda.Runtime.PYTHON_3_13,
+      handler: "handler.handler",
+      code: functionCode(path.join(LAMBDA_ROOT, "data_api"), false),
+      environment: ttsEnv,
+      // Bedrock card/Word-Stop generation can take several seconds.
+      timeout: cdk.Duration.seconds(25),
+      memorySize: 256,
+    });
+    referenceTable.grantReadWriteData(dataFn);
+    referenceTable.encryptionKey?.grantEncryptDecrypt(dataFn);
+    // The /translate resource turns an English passage into Spanish text
+    // (Amazon Translate has no resource-level permissions, only "*").
+    dataFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["translate:TranslateText"],
+        resources: ["*"],
+      })
+    );
+    // The /cards and /stops resources call Bedrock (Converse) through a
+    // cross-region inference profile, so allow both the region models and the
+    // profile ARNs for this account.
+    dataFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["bedrock:InvokeModel"],
+        resources: [
+          `arn:${cdk.Aws.PARTITION}:bedrock:*::foundation-model/*`,
+          `arn:${cdk.Aws.PARTITION}:bedrock:*:${cdk.Aws.ACCOUNT_ID}:inference-profile/*`,
+        ],
+      })
+    );
 
     // grantReadWrite/grantRead also grant the needed KMS actions on the
     // bucket's and table's customer-managed keys.
@@ -232,7 +270,11 @@ export class ApiStack extends cdk.Stack {
       description: "ReadWorks Sound Along — text-to-speech API",
       corsPreflight: {
         allowOrigins: ["*"],
-        allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST],
+        allowMethods: [
+          apigwv2.CorsHttpMethod.GET,
+          apigwv2.CorsHttpMethod.POST,
+          apigwv2.CorsHttpMethod.DELETE,
+        ],
         allowHeaders: ["Content-Type"],
       },
     });
@@ -268,9 +310,17 @@ export class ApiStack extends cdk.Stack {
       integration: new HttpLambdaIntegration("ApproveIntegration", approveFn),
     });
 
+    // App data API — one Lambda, resource is the last path segment.
+    const dataIntegration = new HttpLambdaIntegration("DataIntegration", dataFn);
+    httpApi.addRoutes({
+      path: "/api/v1/data/{resource+}",
+      methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST, apigwv2.HttpMethod.DELETE],
+      integration: dataIntegration,
+    });
+
     this.apiUrl = `${httpApi.apiEndpoint}/api/v1/text-to-speech`;
+    this.dataUrl = `${httpApi.apiEndpoint}/api/v1/data`;
     new cdk.CfnOutput(this, "ApiUrl", { value: this.apiUrl });
-    this.assistUrl = `${httpApi.apiEndpoint}/api/v1/assist`;
-    new cdk.CfnOutput(this, "AssistUrl", { value: this.assistUrl });
+    new cdk.CfnOutput(this, "DataUrl", { value: this.dataUrl });
   }
 }
