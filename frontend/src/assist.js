@@ -97,18 +97,12 @@ export function detect(text, fileName) {
   return { lang, confidence, words: nWords, sentences, grade, band, vocab: matchVocab(words), known: matchKnown(text), titleGuess }
 }
 
-// What an AI service would suggest. Replace by setting window.SA_AI_ENDPOINT (POST {text, language} -> {fields, vocabulary}).
+// Form fields are derived locally (fast, free) from the text; the VOCABULARY
+// comes from real Bedrock cards via the data API (POST /api/v1/data/cards),
+// which is the live AI path. The old window.SA_AI_ENDPOINT (/api/v1/assist)
+// was removed when we adopted the data API, so we no longer call it.
 export async function aiSuggest(text, det) {
-  const endpoint = typeof window !== 'undefined' && window.SA_AI_ENDPOINT
-  if (endpoint) {
-    const r = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, language: det && det.lang }) })
-    const j = await r.json()
-    const ids = { title: 'adTitle', author: 'adAuthor', genre: 'adGenre', topic: 'adTopic', gradeBand: 'adBand', grade: 'adGrade', language: 'adSrcLang', lexile: 'adLexile' }
-    const fields = {}
-    for (const [k, v] of Object.entries(j.fields || {})) fields[ids[k] || k] = v
-    return { mode: 'service', fields, vocabulary: j.vocabulary || [] }
-  }
-  await new Promise(r => setTimeout(r, 700))
+  // ---- local heuristics for the simple form fields ----
   const words = wordsOf(text)
   const stop = det && det.lang === 'es-US' ? ES_STOP : EN_STOP
   const freq = new Map()
@@ -117,10 +111,22 @@ export async function aiSuggest(text, det) {
   const quotes = (text.match(/["“”«»]/g) || []).length
   const pronouns = (text.match(/\b(he|she|they|él|ella|ellos|ellas)\b/gi) || []).length
   const genre = quotes >= 6 || pronouns / Math.max(1, words.length) > 0.03 ? 'fiction' : 'nonfiction'
-  const known = new Set(DB.keys())
-  const candidates = [...new Set(words.map(w => w.toLowerCase()).filter(w => w.length >= 8 && !stop.has(w) && !known.has(w)))].slice(0, 6)
   const fields = { adGenre: genre }
   if (top.length) fields.adTopic = top.slice(0, 2).map(w => w[0].toUpperCase() + w.slice(1)).join(', ')
   if (top.length) fields.adTitle = (det && det.lang === 'es-US' ? 'Texto sobre ' : 'Passage about ') + top[0]
-  return { mode: 'simulated', fields, vocabulary: candidates }
+
+  // ---- vocabulary: real Bedrock cards via the data API (guardrailed) ----
+  let vocabulary, mode = 'simulated'
+  try {
+    const { hasDataApi, genCards } = await import('./data_api.js')
+    if (hasDataApi()) {
+      const r = await genCards(text, (det && det.lang === 'es-US') ? 'es' : 'en')
+      if (r && Array.isArray(r.cards)) { vocabulary = r.cards.map(c => c.word).filter(Boolean); mode = 'service' }
+    }
+  } catch { /* fall back to local candidates below */ }
+  if (!vocabulary) {
+    const known = new Set(DB.keys())
+    vocabulary = [...new Set(words.map(w => w.toLowerCase()).filter(w => w.length >= 8 && !stop.has(w) && !known.has(w)))].slice(0, 6)
+  }
+  return { mode, fields, vocabulary }
 }
