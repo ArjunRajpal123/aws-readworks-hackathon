@@ -32,12 +32,18 @@ segment; the method decides the action.
   to /text-to-speech as a normal passage (same pipeline, es-US voices).
     POST /api/v1/data/translate  {text, source?, target?}  -> {text}
 
+  Generation (Amazon Bedrock): vocabulary cards and Word Stops drafted from a
+  passage. Word Stops pass four publish checks server-side; failures drop.
+    POST /api/v1/data/cards  {text, lang?}          -> {cards: [...]}
+    POST /api/v1/data/stops  {text, vocab:[...], lang?} -> {stops: [...]}
+
 CORS and preflight are handled by the HTTP API (infra/cdk ApiStack).
 """
 
 import json
 
 from common import data_store as db
+from common import generate as gen
 from common.responses import error_response, json_response
 from common.translate import translate_text
 
@@ -226,9 +232,31 @@ def post_translate(event):
     return json_response(200, {"text": out})
 
 
+# ---- generation (Bedrock) -------------------------------------------------
+def post_cards(event):
+    b = _body(event)
+    if b is None or not b.get("text") or not str(b["text"]).strip():
+        return error_response(400, "text is required")
+    cards = gen.vocab_cards(str(b["text"]), b.get("lang", "en"))
+    return json_response(200, {"cards": cards})
+
+
+def post_stops(event):
+    b = _body(event)
+    if b is None or not b.get("text") or not str(b["text"]).strip():
+        return error_response(400, "text is required")
+    vocab = b.get("vocab") or []
+    if not isinstance(vocab, list):
+        return error_response(400, "vocab must be an array of words")
+    stops = gen.word_stops(str(b["text"]), [str(v) for v in vocab], b.get("lang", "en"))
+    return json_response(200, {"stops": stops})
+
+
 ROUTES = {
     ("roster", "GET"): get_roster,
     ("translate", "POST"): post_translate,
+    ("cards", "POST"): post_cards,
+    ("stops", "POST"): post_stops,
     ("sessions", "GET"): get_sessions,
     ("sessions", "POST"): post_session,
     ("assignments", "GET"): get_assignments,

@@ -139,7 +139,8 @@ export class ApiStack extends cdk.Stack {
       handler: "handler.handler",
       code: functionCode(path.join(LAMBDA_ROOT, "data_api"), false),
       environment: ttsEnv,
-      timeout: cdk.Duration.seconds(10),
+      // Bedrock card/Word-Stop generation can take several seconds.
+      timeout: cdk.Duration.seconds(25),
       memorySize: 256,
     });
     referenceTable.grantReadWriteData(dataFn);
@@ -150,6 +151,18 @@ export class ApiStack extends cdk.Stack {
       new iam.PolicyStatement({
         actions: ["translate:TranslateText"],
         resources: ["*"],
+      })
+    );
+    // The /cards and /stops resources call Bedrock (Converse) through a
+    // cross-region inference profile, so allow both the region models and the
+    // profile ARNs for this account.
+    dataFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["bedrock:InvokeModel"],
+        resources: [
+          `arn:${cdk.Aws.PARTITION}:bedrock:*::foundation-model/*`,
+          `arn:${cdk.Aws.PARTITION}:bedrock:*:${cdk.Aws.ACCOUNT_ID}:inference-profile/*`,
+        ],
       })
     );
 

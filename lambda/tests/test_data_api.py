@@ -129,6 +129,50 @@ def test_translate_same_language_is_passthrough(table, monkeypatch):
     assert s == 200 and b["text"] == "Hola"
 
 
+def _fake_bedrock(reply):
+    """A bedrock-runtime client whose converse() returns `reply` as the text."""
+    return type("B", (), {"converse": lambda self, **kw: {
+        "output": {"message": {"content": [{"text": reply}]}}}})()
+
+
+def test_cards_keeps_only_in_passage_words(table, monkeypatch):
+    from common import generate as gen
+    text = "The fox lives in a warm burrow under the hill."
+    reply = json.dumps([
+        {"word": "burrow", "def": "a hole an animal digs to live in", "ex": "The fox slept in its burrow."},
+        {"word": "spaceship", "def": "not in the passage", "ex": "x"},  # dropped: not present
+    ])
+    monkeypatch.setattr(gen, "_client", _fake_bedrock(reply))
+    s, b = call("POST", "cards", {"text": text})
+    assert s == 200 and [c["word"] for c in b["cards"]] == ["burrow"]
+
+
+def test_stops_pass_the_four_checks(table, monkeypatch):
+    from common import generate as gen
+    text = "Erosion slowly wears away the rock along the river over many years."
+    good = {"word": "erosion", "def": "the wearing away of rock",
+            "clue": "wears away the rock",
+            "choices": [{"text": "the wearing away of rock", "correct": True},
+                        {"text": "a kind of fish", "correct": False},
+                        {"text": "a loud sound", "correct": False},
+                        {"text": "a type of cloud", "correct": False}]}
+    bad_clue = {**good, "word": "erosion", "clue": "volcanoes erupt loudly"}  # clue words not in passage
+    two_correct = {**good, "choices": [{"text": "the wearing away of rock", "correct": True},
+                                       {"text": "a kind of fish", "correct": True},
+                                       {"text": "x", "correct": False}, {"text": "y", "correct": False}]}
+    not_vocab = {**good, "word": "river"}  # not in the target vocab list
+    monkeypatch.setattr(gen, "_client", _fake_bedrock(json.dumps([good, bad_clue, two_correct, not_vocab])))
+    s, b = call("POST", "stops", {"text": text, "vocab": ["erosion"]})
+    assert s == 200 and len(b["stops"]) == 1
+    assert b["stops"][0]["word"] == "erosion"
+    assert sum(1 for c in b["stops"][0]["choices"] if c["correct"]) == 1
+
+
+def test_cards_and_stops_require_text(table):
+    assert call("POST", "cards", {})[0] == 400
+    assert call("POST", "stops", {"vocab": ["x"]})[0] == 400
+
+
 def test_unknown_resource_404(table):
     assert call("GET", "nope")[0] == 404
     assert call("PUT", "roster")[0] == 404  # method not routed

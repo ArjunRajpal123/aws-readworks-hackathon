@@ -4,7 +4,7 @@
 // the right is the shape the team's pipeline would receive, and the queue progress is simulated.
 import { detect, aiSuggest } from './assist.js'
 import { createProduct } from './api.js'
-import { postReview, translate } from './data_api.js'
+import { postReview, translate, genCards, genStops } from './data_api.js'
 import { RW_KNOWN } from './vocab_db.js'
 import { loadRatings, clearRatings } from './rate.js'
 
@@ -481,10 +481,23 @@ export function initAdmin(t) {
     if (res && res.ok) {
       e.pid = res.record.id; e.at = e.stages.length; e.state = e.review === 'required' ? 'review' : 'done'
       await publishReview(e)
+      // Vocabulary cards and Word Stops (real Bedrock drafts) when requested.
+      if (on('adCards') || on('adStops')) { e.gen = 'pending'; save(); renderQueue(); await makeCardsAndStops(e, text, srcLang) }
       // Spanish version: translate the English text and generate the es sibling (<id>-es, es-US voices).
       if (on('adTrans') && srcLang.startsWith('en')) { e.es = 'pending'; save(); renderQueue(); await makeSpanish(e, text, res.record.id) }
     } else { e.state = 'error'; e.error = (res && res.error) || 'Request failed' }
     save(); renderQueue()
+  }
+
+  // Draft vocabulary cards and/or Word Stops with Bedrock. Word Stops are
+  // anchored on the card words and server-side pass the four publish checks.
+  async function makeCardsAndStops(entry, text, srcLang) {
+    const lang = srcLang.startsWith('es') ? 'es' : 'en'
+    let cards = []
+    if (on('adCards')) { const r = await genCards(text, lang); cards = (r && r.cards) || [] }
+    let stops = []
+    if (on('adStops')) { const r = await genStops(text, cards.map(c => c.word), lang); stops = (r && r.stops) || [] }
+    entry.cards = cards.length; entry.stops = stops.length; entry.gen = 'done'
   }
 
   // Translate the English passage and generate its Spanish sibling through the

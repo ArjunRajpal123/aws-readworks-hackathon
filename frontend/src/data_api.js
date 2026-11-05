@@ -50,3 +50,7 @@ export const postReview = rec => req('POST', 'review', { body: rec })
 
 // translate (Spanish version): returns {text} or null
 export const translate = (text, source = 'en', target = 'es') => req('POST', 'translate', { body: { text, source, target } })
+
+// generation (Bedrock): vocabulary cards and Word Stops drafted from a passage
+export const genCards = (text, lang = 'en') => req('POST', 'cards', { body: { text, lang } })
+export const genStops = (text, vocab, lang = 'en') => req('POST', 'stops', { body: { text, vocab, lang } })
